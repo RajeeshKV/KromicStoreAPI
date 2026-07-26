@@ -336,11 +336,19 @@ if (hgConfig.GetValue<bool>("Enabled"))
 /// <summary>
 /// Converts DATABASE_URL from URL format to Npgsql connection string format.
 /// Example: postgresql://user:password@host:port/db -> Host=host;Port=port;Database=db;Username=user;Password=password
+/// If already in connection string format, returns as-is.
 /// </summary>
 static string ConvertDatabaseUrlToConnectionString(string databaseUrl)
 {
     try
     {
+        // Check if it's already in connection string format (contains '=')
+        if (databaseUrl.Contains('='))
+        {
+            return databaseUrl;
+        }
+
+        // Parse as URI
         var uri = new Uri(databaseUrl);
         var userInfo = uri.UserInfo.Split(':');
         var username = userInfo[0];
@@ -353,7 +361,7 @@ static string ConvertDatabaseUrlToConnectionString(string databaseUrl)
     }
     catch (Exception ex)
     {
-        throw new InvalidOperationException($"Failed to parse DATABASE_URL: {ex.Message}", ex);
+        throw new InvalidOperationException($"Failed to parse DATABASE_URL: {ex.Message}. Value: {databaseUrl}", ex);
     }
 }
 
