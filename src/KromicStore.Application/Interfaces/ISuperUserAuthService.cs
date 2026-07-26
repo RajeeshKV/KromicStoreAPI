@@ -25,5 +25,10 @@ public interface ISuperUserAuthService
     /// <summary>
     /// Generates a JWT access token for a SuperUser.
     /// </summary>
-    string GenerateAccessToken(Guid superUserId, string email, string[] roles);
+    string GenerateAccessToken(Guid superUserId, string email, string[] roles, int tokenVersion = 1);
+
+    /// <summary>
+    /// Logs out a SuperUser by incrementing their token version to invalidate all existing tokens.
+    /// </summary>
+    Task LogoutAsync(Guid superUserId, CancellationToken cancellationToken = default);
 }

@@ -6,6 +6,7 @@ using KromicStore.Domain.Entities;
 using KromicStore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -18,11 +19,13 @@ public class SuperUserAuthService : ISuperUserAuthService
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<SuperUserAuthService> _logger;
 
-    public SuperUserAuthService(AppDbContext context, IConfiguration configuration)
+    public SuperUserAuthService(AppDbContext context, IConfiguration configuration, ILogger<SuperUserAuthService> logger)
     {
         _context = context;
         _configuration = configuration;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -46,8 +49,8 @@ public class SuperUserAuthService : ISuperUserAuthService
         superUser.RecordLogin();
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Generate tokens
-        var accessToken = GenerateAccessToken(superUser.Id, superUser.Email, new[] { "SuperUser" });
+        // Generate tokens with token version
+        var accessToken = GenerateAccessToken(superUser.Id, superUser.Email, new[] { "SuperUser" }, superUser.TokenVersion);
         var refreshToken = GenerateRefreshToken();
 
         var response = new AuthResponse(
@@ -98,7 +101,7 @@ public class SuperUserAuthService : ISuperUserAuthService
     }
 
     /// <inheritdoc />
-    public string GenerateAccessToken(Guid superUserId, string email, string[] roles)
+    public string GenerateAccessToken(Guid superUserId, string email, string[] roles, int tokenVersion = 1)
     {
         var key = Encoding.ASCII.GetBytes(_configuration["JWT_SECRET"] ?? throw new InvalidOperationException("JWT_SECRET not configured"));
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -108,7 +111,8 @@ public class SuperUserAuthService : ISuperUserAuthService
                 new Claim(ClaimTypes.NameIdentifier, superUserId.ToString()),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, "SuperUser"),
-                new Claim("type", "superuser")
+                new Claim("type", "superuser"),
+                new Claim("token_version", tokenVersion.ToString())
             }),
             Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -117,6 +121,25 @@ public class SuperUserAuthService : ISuperUserAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    /// <inheritdoc />
+    public async Task LogoutAsync(Guid superUserId, CancellationToken cancellationToken = default)
+    {
+        var superUser = await _context.SuperUsers
+            .FirstOrDefaultAsync(su => su.Id == superUserId, cancellationToken);
+
+        if (superUser == null)
+        {
+            _logger.LogWarning("SuperUser logout failed - user not found: {SuperUserId}", superUserId);
+            throw new InvalidOperationException("SuperUser not found");
+        }
+
+        // Increment token version to invalidate all existing tokens
+        superUser.IncrementTokenVersion();
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("SuperUser logged out successfully: {SuperUserId}, New Token Version: {TokenVersion}", superUserId, superUser.TokenVersion);
     }
 
     private string GenerateRefreshToken()

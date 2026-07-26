@@ -3,6 +3,7 @@ using System;
 using KromicStore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KromicStore.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260726155605_AddTokenVersionFields")]
+    partial class AddTokenVersionFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1237,53 +1240,6 @@ namespace KromicStore.Infrastructure.Migrations
                     b.ToTable("TenantConfigurations", (string)null);
                 });
 
-            modelBuilder.Entity("KromicStore.Domain.Entities.TenantDomain", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<bool>("IsPrimary")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("TenantId1")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Domain");
-
-                    b.HasIndex("TenantId1");
-
-                    b.HasIndex("TenantId", "Domain")
-                        .IsUnique();
-
-                    b.ToTable("TenantDomains", (string)null);
-                });
-
             modelBuilder.Entity("KromicStore.Domain.Entities.TenantPaymentMethod", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1344,91 +1300,6 @@ namespace KromicStore.Infrastructure.Migrations
                         .HasDatabaseName("UX_TenantPaymentMethods_TenantId_Provider");
 
                     b.ToTable("TenantPaymentMethods", (string)null);
-                });
-
-            modelBuilder.Entity("KromicStore.Domain.Entities.TenantTheme", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AccentColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<string>("BackgroundColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<int>("BorderRadius")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ComponentOverrides")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FontFamily")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LayoutOptions")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("PrimaryColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<string>("SecondaryColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<int>("SpacingUnit")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("TenantId1")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TextColor")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("character varying(7)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId1");
-
-                    b.HasIndex("TenantId", "IsActive");
-
-                    b.ToTable("TenantThemes", (string)null);
                 });
 
             modelBuilder.Entity("KromicStore.Domain.Entities.ThemeEntity", b =>
@@ -2368,21 +2239,6 @@ namespace KromicStore.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("KromicStore.Domain.Entities.TenantDomain", b =>
-                {
-                    b.HasOne("KromicStore.Domain.Entities.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("KromicStore.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId1");
-
-                    b.Navigation("Tenant");
-                });
-
             modelBuilder.Entity("KromicStore.Domain.Entities.TenantPaymentMethod", b =>
                 {
                     b.HasOne("KromicStore.Domain.Entities.Tenant", null)
@@ -2390,21 +2246,6 @@ namespace KromicStore.Infrastructure.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("KromicStore.Domain.Entities.TenantTheme", b =>
-                {
-                    b.HasOne("KromicStore.Domain.Entities.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("KromicStore.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId1");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("KromicStore.Domain.Entities.Order", b =>

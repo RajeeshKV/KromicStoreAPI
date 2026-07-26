@@ -24,25 +24,24 @@ public class SuperUser : BaseEntity
     /// <summary>Gets the date when the super user was last logged in.</summary>
     public DateTime? LastLoginAt { get; private set; }
 
+    /// <summary>Gets the token version for token invalidation.</summary>
+    public int TokenVersion { get; private set; } = 1;
+
     /// <summary>
     /// Creates a new instance of SuperUser.
     /// </summary>
-    public static SuperUser Create(string email, string firstName, string lastName, string passwordHash)
+    public static SuperUser Create(string email, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email is required.", nameof(email));
-        if (string.IsNullOrWhiteSpace(firstName))
-            throw new ArgumentException("First name is required.", nameof(firstName));
-        if (string.IsNullOrWhiteSpace(lastName))
-            throw new ArgumentException("Last name is required.", nameof(lastName));
         if (string.IsNullOrWhiteSpace(passwordHash))
             throw new ArgumentException("Password hash is required.", nameof(passwordHash));
 
         return new SuperUser
         {
             Email = email.ToLowerInvariant(),
-            FirstName = firstName,
-            LastName = lastName,
+            FirstName = "SuperUser",
+            LastName = "Admin",
             PasswordHash = passwordHash,
             IsActive = true
         };
@@ -64,6 +63,14 @@ public class SuperUser : BaseEntity
     public void RecordLogin()
     {
         LastLoginAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Increments the token version to invalidate all existing tokens.
+    /// </summary>
+    public void IncrementTokenVersion()
+    {
+        TokenVersion++;
     }
 
     /// <summary>

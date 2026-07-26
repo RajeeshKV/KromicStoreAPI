@@ -35,5 +35,10 @@ public interface IAuthService
     /// <summary>
     /// Generates a JWT access token for a user.
     /// </summary>
-    string GenerateAccessToken(Guid userId, Guid tenantId, string email, string[] roles);
+    string GenerateAccessToken(Guid userId, Guid tenantId, string email, string[] roles, int tokenVersion = 1);
+
+    /// <summary>
+    /// Logs out a user by incrementing their token version to invalidate all existing tokens.
+    /// </summary>
+    Task LogoutAsync(Guid userId, CancellationToken cancellationToken = default);
 }

@@ -45,22 +45,41 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User login attempt for email {Email} in tenant {TenantId}", email, tenantId);
 
-        // In real implementation, would:
-        // 1. Find user by email and tenantId
-        // 2. Verify password hash
-        // 3. Generate JWT token
-        // 4. Generate refresh token
-        // For now, return stub response
+        // Find user by email and tenantId
+        var user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower() && u.TenantId == tenantId, cancellationToken)).FirstOrDefault();
+        
+        if (user == null)
+        {
+            _logger.LogWarning("User not found: {Email} in tenant {TenantId}", email, tenantId);
+            throw new UnauthorizedAccessException("Invalid email or password");
+        }
 
-        var userId = Guid.NewGuid();
-        var accessToken = GenerateAccessToken(userId, tenantId, email, new[] { "User" });
+        if (!user.IsActive)
+        {
+            _logger.LogWarning("User account is inactive: {Email}", email);
+            throw new UnauthorizedAccessException("Account is inactive");
+        }
+
+        // Verify password (simple comparison for now - TODO: implement BCrypt)
+        if (user.PasswordHash != password)
+        {
+            _logger.LogWarning("Invalid password for user: {Email}", email);
+            throw new UnauthorizedAccessException("Invalid email or password");
+        }
+
+        // Record login
+        user.RecordLogin();
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Generate JWT token with token version
+        var accessToken = GenerateAccessToken(user.Id, tenantId, email, new[] { user.Role.ToString() }, user.TokenVersion);
         var refreshToken = GenerateRefreshToken();
 
         var response = new AuthResponse(
-            UserId: userId,
+            UserId: user.Id,
             Email: email,
-            FirstName: "User",
-            LastName: "Account",
+            FirstName: user.FirstName,
+            LastName: user.LastName,
             AccessToken: accessToken,
             RefreshToken: refreshToken,
             ExpiresAt: DateTime.UtcNow.AddHours(1)
@@ -68,7 +87,7 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User {Email} logged in successfully in tenant {TenantId}", email, tenantId);
 
-        return await Task.FromResult(response);
+        return response;
     }
 
     /// <summary>
@@ -230,9 +249,29 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
+    /// Logs out a user by incrementing their token version to invalidate all existing tokens.
+    /// </summary>
+    public async Task LogoutAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = (await _unitOfWork.Users.FindAsync(u => u.Id == userId, cancellationToken)).FirstOrDefault();
+        
+        if (user == null)
+        {
+            _logger.LogWarning("Logout failed - user not found: {UserId}", userId);
+            throw new InvalidOperationException("User not found");
+        }
+
+        // Increment token version to invalidate all existing tokens
+        user.IncrementTokenVersion();
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("User logged out successfully: {UserId}, New Token Version: {TokenVersion}", userId, user.TokenVersion);
+    }
+
+    /// <summary>
     /// Generates a JWT access token.
     /// </summary>
-    public string GenerateAccessToken(Guid userId, Guid tenantId, string email, string[] roles)
+    public string GenerateAccessToken(Guid userId, Guid tenantId, string email, string[] roles, int tokenVersion = 1)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
             _configuration["Auth:JwtSecret"] ?? "your-secret-key-change-this-in-production"));
@@ -243,6 +282,7 @@ public class AuthService : IAuthService
             new Claim("sub", userId.ToString()),
             new Claim("tenant_id", tenantId.ToString()),
             new Claim("email", email),
+            new Claim("token_version", tokenVersion.ToString())
         };
 
         foreach (var role in roles)

@@ -108,6 +108,16 @@ public class AppDbContext : DbContext
     public DbSet<SuperUserConfig> SuperUserConfigs { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the TenantDomains table (supports multiple domains per tenant).
+    /// </summary>
+    public DbSet<TenantDomain> TenantDomains { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the TenantThemes table (tenant-specific theme configurations).
+    /// </summary>
+    public DbSet<TenantTheme> TenantThemes { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets the Storefronts table.
     /// </summary>
     public DbSet<Storefront> Storefronts { get; set; } = null!;
@@ -188,6 +198,48 @@ public class AppDbContext : DbContext
             entity.Property(e => e.ConfigValue).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.HasIndex(e => e.ConfigKey).IsUnique();
+        });
+
+        // Configure TenantDomain entity
+        modelBuilder.Entity<TenantDomain>(entity =>
+        {
+            entity.ToTable("TenantDomains");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.Domain).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.IsPrimary).IsRequired();
+            entity.Property(e => e.IsVerified).IsRequired();
+            entity.HasIndex(e => new { e.TenantId, e.Domain }).IsUnique();
+            entity.HasIndex(e => e.Domain);
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure TenantTheme entity
+        modelBuilder.Entity<TenantTheme>(entity =>
+        {
+            entity.ToTable("TenantThemes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.PrimaryColor).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.SecondaryColor).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.AccentColor).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.BackgroundColor).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.TextColor).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.FontFamily).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.BorderRadius).IsRequired();
+            entity.Property(e => e.SpacingUnit).IsRequired();
+            entity.Property(e => e.ComponentOverrides).IsRequired();
+            entity.Property(e => e.LayoutOptions).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.HasIndex(e => new { e.TenantId, e.IsActive });
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure Product entity

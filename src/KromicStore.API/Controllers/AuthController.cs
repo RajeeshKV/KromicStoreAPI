@@ -353,6 +353,63 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Logs out the current user by invalidating their tokens.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success response.</returns>
+    /// <response code="200">Logout successful.</response>
+    /// <response code="401">User not authenticated.</response>
+    /// <response code="500">Server error during logout.</response>
+    [HttpPost("logout")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> LogoutAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Get user ID from claims
+            var userIdClaim = User.FindFirst("sub")?.Value;
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogWarning("Logout failed - invalid user claim");
+                return Unauthorized(new ErrorResponse
+                {
+                    Code = "INVALID_TOKEN",
+                    Message = "Invalid authentication token."
+                });
+            }
+
+            _logger.LogInformation("Logout request for UserId: {UserId}", userId);
+
+            // Call auth service to increment token version
+            await _authService.LogoutAsync(userId, cancellationToken);
+
+            _logger.LogInformation("Logout successful for UserId: {UserId}", userId);
+
+            return Ok(new { message = "Logout successful" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning("Logout failed: {Message}", ex.Message);
+            return Unauthorized(new ErrorResponse
+            {
+                Code = "LOGOUT_FAILED",
+                Message = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Logout error for UserId");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Code = "LOGOUT_ERROR",
+                Message = "An error occurred during logout."
+            });
+        }
+    }
+
+    /// <summary>
     /// Validates a register request.
     /// </summary>
     private string? ValidateRegisterRequest(RegisterRequest request)

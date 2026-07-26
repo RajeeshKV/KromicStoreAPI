@@ -34,6 +34,9 @@ public class User : BaseEntity
     /// <summary>Gets the date when the user was last logged in.</summary>
     public DateTime? LastLoginAt { get; private set; }
 
+    /// <summary>Gets the token version for token invalidation.</summary>
+    public int TokenVersion { get; private set; } = 1;
+
     /// <summary>Gets the external authentication provider (e.g., Google, GitHub).</summary>
     public string? ExternalAuthProvider { get; private set; }
 
@@ -83,6 +86,14 @@ public class User : BaseEntity
     public void RecordLogin()
     {
         LastLoginAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Increments the token version to invalidate all existing tokens.
+    /// </summary>
+    public void IncrementTokenVersion()
+    {
+        TokenVersion++;
     }
 
     /// <summary>

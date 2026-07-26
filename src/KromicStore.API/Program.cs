@@ -158,6 +158,7 @@ builder.Services.AddScoped<IEncryptionService>(sp => new EncryptionService(encKe
 
 // Services
 builder.Services.AddScoped<ITenantProvider, TenantProvider>();
+builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISuperUserAuthService, SuperUserAuthService>();
 builder.Services.AddScoped<IWebhookService, WebhookService>();
@@ -186,6 +187,7 @@ builder.Services.AddScoped<RazorpayProductPaymentWebhookHandler>();
 builder.Services.AddScoped<ThemeCloneService>();
 builder.Services.AddScoped<DefaultDataPopulator>();
 builder.Services.AddScoped<IStorefrontCreationService, StorefrontCreationService>();
+builder.Services.AddScoped<IStoreBootstrapService, StoreBootstrapService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -433,6 +435,7 @@ app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.Health
 });
 
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<DomainTenantResolutionMiddleware>();
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<RateLimitingMiddleware>();
