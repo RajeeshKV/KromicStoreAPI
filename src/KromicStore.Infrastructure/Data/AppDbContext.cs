@@ -257,7 +257,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.WebhookConfigurationId);
             entity.HasIndex(e => e.WebhookEventLogId);
             entity.HasIndex(e => new { e.WebhookConfigurationId, e.CreatedAt });
-            entity.HasIndex(e => new { e.NextRetryAt }).HasFilter("[NextRetryAt] IS NOT NULL");
+            entity.HasIndex(e => new { e.NextRetryAt }).HasFilter("\"NextRetryAt\" IS NOT NULL");
         });
 
         // Configure TenantConfiguration entity
@@ -567,7 +567,7 @@ public class AppDbContext : DbContext
         // Product partial index: only active/published products
         modelBuilder.Entity<Product>()
             .HasIndex(e => new { e.TenantId, e.Status })
-            .HasFilter("[Status] IN (0, 1)") // Draft, Active
+            .HasFilter("\"Status\" IN (0, 1)") // Draft, Active
             .HasDatabaseName("IX_Products_TenantId_Status_Active");
 
         // Customer Indexes
@@ -607,7 +607,7 @@ public class AppDbContext : DbContext
         // Order partial index: orders requiring action
         modelBuilder.Entity<Order>()
             .HasIndex(e => new { e.TenantId, e.Status })
-            .HasFilter("[Status] IN (0, 2, 3)") // Pending, Processing, Shipped
+            .HasFilter("\"Status\" IN (0, 2, 3)") // Pending, Processing, Shipped
             .HasDatabaseName("IX_Orders_TenantId_Status_Active");
 
         // OrderItem Indexes
@@ -644,7 +644,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<WebhookDeliveryLog>()
             .HasIndex(e => new { e.NextRetryAt })
-            .HasFilter("[NextRetryAt] IS NOT NULL")
+            .HasFilter("\"NextRetryAt\" IS NOT NULL")
             .HasDatabaseName("IX_WebhookDeliveryLogs_NextRetryAt_Pending");
 
         // TenantConfiguration Indexes
