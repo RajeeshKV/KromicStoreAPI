@@ -42,8 +42,8 @@ var requiredEnvVars = new[]
 { 
     "DATABASE_URL", 
     "JWT_SECRET", 
-    "ENCRYPTION_KEY",
-    "RAZORPAY_KEY",
+    "SECURITY_ENCRYPTION_KEY",
+    "RAZORPAY_KEY_ID",
     "GOOGLE_CLIENT_ID",
     "CLOUDINARY_API_KEY",
     "BREVO_API_KEY"
@@ -66,11 +66,11 @@ if (missingVars.Count > 0)
 }
 
 // Validate encryption key length
-var encryptionKey = Environment.GetEnvironmentVariable("ENCRYPTION_KEY");
+var encryptionKey = Environment.GetEnvironmentVariable("SECURITY_ENCRYPTION_KEY");
 if (encryptionKey?.Length < 32)
 {
     throw new InvalidOperationException(
-        "ENCRYPTION_KEY must be at least 32 characters long for security. " +
+        "SECURITY_ENCRYPTION_KEY must be at least 32 characters long for security. " +
         "Generate a secure key using: openssl rand -base64 32");
 }
 
@@ -120,7 +120,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 });
 
 // Cache
-var redisConn = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+var redisConn = Environment.GetEnvironmentVariable("REDIS_URL") ?? "localhost:6379";
 var redisOpts = ConfigurationOptions.Parse(redisConn);
 var redis = ConnectionMultiplexer.Connect(redisOpts);
 builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
@@ -130,7 +130,7 @@ builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Crypto
-var encKey = builder.Configuration["Security:EncryptionKey"] ?? throw new InvalidOperationException("Missing Security:EncryptionKey");
+var encKey = Environment.GetEnvironmentVariable("SECURITY_ENCRYPTION_KEY") ?? throw new InvalidOperationException("Missing SECURITY_ENCRYPTION_KEY");
 builder.Services.AddScoped<IEncryptionService>(sp => new EncryptionService(encKey));
 
 // Services
@@ -209,8 +209,8 @@ builder.Services.Configure<RateLimitingOptions>(builder.Configuration.GetSection
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
-        opt.Authority = builder.Configuration["Auth:Authority"];
-        opt.Audience = builder.Configuration["Auth:Audience"];
+        opt.Authority = Environment.GetEnvironmentVariable("JWT_AUTHORITY");
+        opt.Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
         opt.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     });
 
@@ -287,7 +287,7 @@ builder.Services.AddCors(opt => opt.AddPolicy("AllowAll", p => p.AllowAnyOrigin(
 var hgConfig = builder.Configuration.GetSection("Hangfire");
 if (hgConfig.GetValue<bool>("Enabled"))
 {
-    var hgConnStr = builder.Configuration.GetConnectionString("DefaultConnection");
+    var hgConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
     builder.Services.AddHangfire(cfg => cfg
         .SetDataCompatibilityLevel(Hangfire.CompatibilityLevel.Version_180)
         .UseSimpleAssemblyNameTypeSerializer()
