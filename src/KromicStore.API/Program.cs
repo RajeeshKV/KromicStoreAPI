@@ -7,6 +7,7 @@ using KromicStore.Infrastructure.Services.StorefrontServices;
 using KromicStore.Infrastructure.Configuration;
 using KromicStore.Infrastructure.Proxies;
 using KromicStore.Infrastructure.BackgroundJobs;
+using KromicStore.Infrastructure.Services.Webhooks;
 using KromicStore.API.Configuration;
 using KromicStore.API.Extensions;
 using KromicStore.API.HealthChecks;
@@ -132,9 +133,21 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<ISubscriptionPaymentService, SubscriptionPaymentService>();
+builder.Services.AddScoped<ITenantPaymentConfigurationService, TenantPaymentConfigurationService>();
 builder.Services.AddScoped<TenantConfigurationSeeder>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<SendWelcomeEmailJob>();
+
+// Razorpay Services
+builder.Services.AddScoped<IRazorpayService, RazorpayService>();
+
+// Order Payment Service
+builder.Services.AddScoped<IOrderPaymentService, OrderPaymentService>();
+
+// Razorpay Webhook Handlers
+builder.Services.AddScoped<RazorpaySubscriptionWebhookHandler>();
+builder.Services.AddScoped<RazorpayProductPaymentWebhookHandler>();
 
 // Storefront Services
 builder.Services.AddScoped<ThemeCloneService>();

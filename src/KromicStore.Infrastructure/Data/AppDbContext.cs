@@ -83,6 +83,15 @@ public class AppDbContext : DbContext
     /// </summary>
     public DbSet<Subscription> Subscriptions { get; set; } = null!;
 
+    /// <summary>Gets the tenant payment methods DbSet.</summary>
+    public DbSet<TenantPaymentMethod> TenantPaymentMethods { get; set; } = null!;
+
+    /// <summary>Gets the Razorpay subscription events DbSet (audit log).</summary>
+    public DbSet<RazorpaySubscriptionEvent> RazorpaySubscriptionEvents { get; set; } = null!;
+
+    /// <summary>Gets the order payments DbSet.</summary>
+    public DbSet<OrderPayment> OrderPayments { get; set; } = null!;
+
     /// <summary>
     /// Gets or sets the Themes table (platform-wide themes, not tenant-scoped).
     /// </summary>
@@ -335,10 +344,100 @@ public class AppDbContext : DbContext
             entity.Property(e => e.StartDate).IsRequired();
             entity.Property(e => e.Status).IsRequired();
             entity.Property(e => e.BillingCycleDay).IsRequired();
+            entity.Property(e => e.RazorpaySubscriptionId).HasMaxLength(100);
+            entity.Property(e => e.RazorpayCustomerId).HasMaxLength(100);
+            entity.Property(e => e.PaymentStatus).IsRequired().HasMaxLength(50).HasDefaultValue("Pending");
+            entity.Property(e => e.FailedPaymentCount).IsRequired().HasDefaultValue(0);
             entity.HasIndex(e => new { e.TenantId, e.Status })
                 .HasDatabaseName("IX_Subscriptions_TenantId_Status");
             entity.HasIndex(e => new { e.TenantId, e.PlanType })
                 .HasDatabaseName("IX_Subscriptions_TenantId_PlanType");
+            entity.HasIndex(e => e.RazorpaySubscriptionId);
+            entity.HasIndex(e => new { e.TenantId, e.PaymentStatus });
+        });
+
+        // Configure TenantPaymentMethod
+        modelBuilder.Entity<TenantPaymentMethod>(entity =>
+        {
+            entity.ToTable("TenantPaymentMethods");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.Provider).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.EncryptedApiKey).IsRequired();
+            entity.Property(e => e.EncryptedApiSecret).IsRequired();
+            entity.Property(e => e.EncryptedWebhookSecret).IsRequired();
+            entity.Property(e => e.IsEnabled).IsRequired();
+            entity.Property(e => e.TestModeEnabled).IsRequired();
+
+            // Indexes
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => new { e.TenantId, e.Provider }).IsUnique();
+
+            // Foreign key to Tenant
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure RazorpaySubscriptionEvent
+        modelBuilder.Entity<RazorpaySubscriptionEvent>(entity =>
+        {
+            entity.ToTable("RazorpaySubscriptionEvents");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SubscriptionId).IsRequired();
+            entity.Property(e => e.RazorpaySubscriptionId).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.EventType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.RazorpayEventId).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.EventData).IsRequired();
+            entity.Property(e => e.ProcessedAt).IsRequired();
+
+            // Indexes for audit trail and idempotency
+            entity.HasIndex(e => e.SubscriptionId);
+            entity.HasIndex(e => e.RazorpayEventId).IsUnique();
+            entity.HasIndex(e => e.EventType);
+
+            // Foreign key
+            entity.HasOne<Subscription>()
+                .WithMany()
+                .HasForeignKey(e => e.SubscriptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure OrderPayment
+        modelBuilder.Entity<OrderPayment>(entity =>
+        {
+            entity.ToTable("OrderPayments");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.OrderId).IsRequired();
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.RazorpayOrderId).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.RazorpayPaymentId).HasMaxLength(100);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+
+            // Amount as value object
+            entity.OwnsOne(e => e.Amount, ownedBuilder =>
+            {
+                ownedBuilder.Property(m => m.Amount).HasColumnName("Amount").IsRequired();
+                ownedBuilder.Property(m => m.Currency).HasColumnName("Currency").HasMaxLength(3).IsRequired();
+            });
+
+            // Indexes
+            entity.HasIndex(e => e.OrderId);
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.RazorpayOrderId).IsUnique();
+            entity.HasIndex(e => e.Status);
+
+            // Foreign keys
+            entity.HasOne<Order>()
+                .WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure ThemeEntity
@@ -625,6 +724,72 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Subscription>()
             .HasIndex(e => e.CreatedAt)
             .HasDatabaseName("IX_Subscriptions_CreatedAt");
+
+        modelBuilder.Entity<Subscription>()
+            .HasIndex(e => e.RazorpaySubscriptionId)
+            .HasDatabaseName("IX_Subscriptions_RazorpaySubscriptionId");
+
+        modelBuilder.Entity<Subscription>()
+            .HasIndex(e => new { e.TenantId, e.PaymentStatus })
+            .HasDatabaseName("IX_Subscriptions_TenantId_PaymentStatus");
+
+        // TenantPaymentMethod Indexes
+        modelBuilder.Entity<TenantPaymentMethod>()
+            .HasIndex(e => e.TenantId)
+            .HasDatabaseName("IX_TenantPaymentMethods_TenantId");
+
+        modelBuilder.Entity<TenantPaymentMethod>()
+            .HasIndex(e => new { e.TenantId, e.Provider })
+            .IsUnique()
+            .HasDatabaseName("UX_TenantPaymentMethods_TenantId_Provider");
+
+        modelBuilder.Entity<TenantPaymentMethod>()
+            .HasIndex(e => e.IsEnabled)
+            .HasDatabaseName("IX_TenantPaymentMethods_IsEnabled");
+
+        // RazorpaySubscriptionEvent Indexes
+        modelBuilder.Entity<RazorpaySubscriptionEvent>()
+            .HasIndex(e => e.SubscriptionId)
+            .HasDatabaseName("IX_RazorpaySubscriptionEvents_SubscriptionId");
+
+        modelBuilder.Entity<RazorpaySubscriptionEvent>()
+            .HasIndex(e => e.RazorpayEventId)
+            .IsUnique()
+            .HasDatabaseName("UX_RazorpaySubscriptionEvents_RazorpayEventId");
+
+        modelBuilder.Entity<RazorpaySubscriptionEvent>()
+            .HasIndex(e => e.EventType)
+            .HasDatabaseName("IX_RazorpaySubscriptionEvents_EventType");
+
+        modelBuilder.Entity<RazorpaySubscriptionEvent>()
+            .HasIndex(e => e.CreatedAt)
+            .HasDatabaseName("IX_RazorpaySubscriptionEvents_CreatedAt");
+
+        // OrderPayment Indexes
+        modelBuilder.Entity<OrderPayment>()
+            .HasIndex(e => e.OrderId)
+            .HasDatabaseName("IX_OrderPayments_OrderId");
+
+        modelBuilder.Entity<OrderPayment>()
+            .HasIndex(e => e.TenantId)
+            .HasDatabaseName("IX_OrderPayments_TenantId");
+
+        modelBuilder.Entity<OrderPayment>()
+            .HasIndex(e => e.RazorpayOrderId)
+            .IsUnique()
+            .HasDatabaseName("UX_OrderPayments_RazorpayOrderId");
+
+        modelBuilder.Entity<OrderPayment>()
+            .HasIndex(e => e.Status)
+            .HasDatabaseName("IX_OrderPayments_Status");
+
+        modelBuilder.Entity<OrderPayment>()
+            .HasIndex(e => e.CreatedAt)
+            .HasDatabaseName("IX_OrderPayments_CreatedAt");
+
+        modelBuilder.Entity<OrderPayment>()
+            .HasIndex(e => new { e.TenantId, e.Status })
+            .HasDatabaseName("IX_OrderPayments_TenantId_Status");
 
         // Theme Indexes (Platform-wide, not tenant-scoped)
         modelBuilder.Entity<ThemeEntity>()

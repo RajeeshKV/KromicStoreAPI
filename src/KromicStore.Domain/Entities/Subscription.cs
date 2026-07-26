@@ -53,6 +53,24 @@ public class Subscription : BaseEntity
     /// <summary>Gets the last renewal date.</summary>
     public DateTime? LastRenewalAt { get; private set; }
 
+    /// <summary>Gets the Razorpay subscription ID for recurring billing.</summary>
+    public string? RazorpaySubscriptionId { get; private set; }
+
+    /// <summary>Gets the Razorpay customer ID.</summary>
+    public string? RazorpayCustomerId { get; private set; }
+
+    /// <summary>Gets the date of the last payment.</summary>
+    public DateTime? LastPaymentDate { get; private set; }
+
+    /// <summary>Gets the date of the next scheduled payment.</summary>
+    public DateTime? NextPaymentDate { get; private set; }
+
+    /// <summary>Gets the payment status (Active, Failed, Pending).</summary>
+    public string PaymentStatus { get; private set; } = "Pending";
+
+    /// <summary>Gets the count of consecutive failed payment attempts.</summary>
+    public int FailedPaymentCount { get; private set; } = 0;
+
     /// <summary>
     /// Creates a new instance of Subscription for a regular (paid) plan.
     /// </summary>
@@ -244,5 +262,51 @@ public class Subscription : BaseEntity
         Status = SubscriptionStatus.Active;
         TrialEndsAt = null;
         MonthlyPrice = monthlyPrice;
+    }
+
+    /// <summary>
+    /// Associates this subscription with a Razorpay subscription.
+    /// </summary>
+    public void LinkRazorpaySubscription(string razorpaySubscriptionId, string customerId, DateTime nextPaymentDate)
+    {
+        if (string.IsNullOrWhiteSpace(razorpaySubscriptionId))
+            throw new ArgumentException("Razorpay subscription ID is required", nameof(razorpaySubscriptionId));
+        if (string.IsNullOrWhiteSpace(customerId))
+            throw new ArgumentException("Customer ID is required", nameof(customerId));
+
+        RazorpaySubscriptionId = razorpaySubscriptionId;
+        RazorpayCustomerId = customerId;
+        NextPaymentDate = nextPaymentDate;
+        PaymentStatus = "Active";
+        FailedPaymentCount = 0;
+    }
+
+    /// <summary>
+    /// Records a successful payment.
+    /// </summary>
+    public void RecordPayment(DateTime paymentDate, DateTime nextPaymentDate)
+    {
+        LastPaymentDate = paymentDate;
+        NextPaymentDate = nextPaymentDate;
+        PaymentStatus = "Active";
+        FailedPaymentCount = 0;
+    }
+
+    /// <summary>
+    /// Records a failed payment attempt.
+    /// </summary>
+    public void RecordPaymentFailure()
+    {
+        FailedPaymentCount++;
+        PaymentStatus = "Failed";
+    }
+
+    /// <summary>
+    /// Resets failed payment count.
+    /// </summary>
+    public void ResetPaymentFailures()
+    {
+        FailedPaymentCount = 0;
+        PaymentStatus = "Active";
     }
 }

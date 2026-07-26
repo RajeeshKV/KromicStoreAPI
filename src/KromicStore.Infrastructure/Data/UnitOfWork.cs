@@ -20,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<Order>? _orderRepository;
     private IRepository<TenantConfiguration>? _tenantConfigurationRepository;
     private IRepository<ConfigurationAuditLog>? _configurationAuditLogRepository;
+    private IRepository<TenantPaymentMethod>? _tenantPaymentMethodRepository;
     private IRepository<Subscription>? _subscriptionRepository;
     private IThemeRepository? _themeRepository;
     private IStorefrontRepository? _storefrontRepository;
@@ -56,6 +57,9 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public IRepository<ConfigurationAuditLog> ConfigurationAuditLogs => _configurationAuditLogRepository ??= new Repository<ConfigurationAuditLog>(_context, _loggerFactory.CreateLogger<Repository<ConfigurationAuditLog>>());
+
+    /// <inheritdoc />
+    public IRepository<TenantPaymentMethod> TenantPaymentMethods => _tenantPaymentMethodRepository ??= new Repository<TenantPaymentMethod>(_context, _loggerFactory.CreateLogger<Repository<TenantPaymentMethod>>());
 
     /// <inheritdoc />
     public IRepository<Subscription> Subscriptions => _subscriptionRepository ??= new Repository<Subscription>(_context, _loggerFactory.CreateLogger<Repository<Subscription>>());

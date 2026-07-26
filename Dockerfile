@@ -17,16 +17,15 @@ COPY ["src/KromicStore.Domain/KromicStore.Domain.csproj", "src/KromicStore.Domai
 COPY ["src/KromicStore.Application/KromicStore.Application.csproj", "src/KromicStore.Application/"]
 COPY ["src/KromicStore.Infrastructure/KromicStore.Infrastructure.csproj", "src/KromicStore.Infrastructure/"]
 COPY ["src/KromicStore.Contracts/KromicStore.Contracts.csproj", "src/KromicStore.Contracts/"]
-COPY ["tests/KromicStore.Tests/KromicStore.Tests.csproj", "tests/KromicStore.Tests/"]
 
-# Restore NuGet packages
-RUN dotnet restore "KromicStore.sln"
+# Restore NuGet packages (only API project, which implicitly restores dependencies)
+RUN dotnet restore "src/KromicStore.API/KromicStore.API.csproj"
 
 # Copy source code
 COPY . .
 
 # Build the application in Release configuration
-RUN dotnet build "KromicStore.sln" --configuration Release --no-restore
+RUN dotnet build "src/KromicStore.API/KromicStore.API.csproj" --configuration Release --no-restore
 
 # Publish the application
 RUN dotnet publish "src/KromicStore.API/KromicStore.API.csproj" \

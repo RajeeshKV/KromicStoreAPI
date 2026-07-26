@@ -48,6 +48,11 @@ public interface IUnitOfWork : IDisposable
     IRepository<ConfigurationAuditLog> ConfigurationAuditLogs { get; }
 
     /// <summary>
+    /// Gets the tenant payment methods repository.
+    /// </summary>
+    IRepository<TenantPaymentMethod> TenantPaymentMethods { get; }
+
+    /// <summary>
     /// Gets the subscription repository.
     /// </summary>
     IRepository<Subscription> Subscriptions { get; }

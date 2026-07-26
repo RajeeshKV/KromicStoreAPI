@@ -2,6 +2,7 @@
 
 using KromicStore.API.Handlers;
 using KromicStore.Infrastructure.Proxies;
+using KromicStore.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -27,6 +28,32 @@ public static class HttpClientServiceCollectionExtensions
 
         var externalServicesConfig = configuration.GetSection("ExternalServices");
         var defaultTimeoutSeconds = externalServicesConfig.GetValue("RequestTimeoutSeconds", 30);
+
+        // Razorpay Service (Direct API calls for subscriptions and payments)
+        // Timeout: 30 seconds (payments are typically quick)
+        services.AddHttpClient<RazorpayService>(nameof(RazorpayService), client =>
+            {
+                client.BaseAddress = new Uri("https://api.razorpay.com/v1/");
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("User-Agent", "KromicStore/1.0");
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            })
+            .ConfigureHttpMessageHandlerBuilder(builder =>
+            {
+                builder.PrimaryHandler = new SocketsHttpHandler
+                {
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+                    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+                    MaxConnectionsPerServer = 10,
+                    AutomaticDecompression = System.Net.DecompressionMethods.GZip | 
+                                            System.Net.DecompressionMethods.Deflate
+                };
+
+                builder.AdditionalHandlers.Add(new CompressionHttpMessageHandler());
+                builder.AdditionalHandlers.Add(
+                    new LoggingHttpMessageHandler(
+                        builder.Services.GetRequiredService<ILogger<LoggingHttpMessageHandler>>()));
+            });
 
         // Payment Proxy (Razorpay)
         // Timeout: 30 seconds (payments are typically quick)
