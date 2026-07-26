@@ -254,6 +254,7 @@ builder.Services.Configure<GzipCompressionProviderOptions>(opt => opt.Level = Sy
 builder.Services.Configure<BrotliCompressionProviderOptions>(opt => opt.Level = System.IO.Compression.CompressionLevel.Optimal);
 
 // Swagger
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
