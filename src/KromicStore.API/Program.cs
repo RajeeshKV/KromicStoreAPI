@@ -299,6 +299,9 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
+    // Use full type names for schema IDs to avoid conflicts
+    options.CustomSchemaIds(type => type.FullName);
+
     // Include XML comments if file present
     var xmlPath = Path.Combine(AppContext.BaseDirectory, "KromicStore.API.xml");
     if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
