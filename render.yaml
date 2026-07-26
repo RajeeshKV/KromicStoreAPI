@@ -68,6 +68,11 @@ services:
         value: "false"
       - key: CORS_ALLOWED_ORIGINS
         value: https://app.kromicstore.com,https://admin.kromicstore.com
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: kromic-store-redis
+          property: connectionString
       - key: REDIS_DB
         value: "0"
       - key: REDIS_TIMEOUT_MS
