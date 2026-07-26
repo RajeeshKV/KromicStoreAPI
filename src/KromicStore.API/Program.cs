@@ -333,6 +333,30 @@ if (hgConfig.GetValue<bool>("Enabled"))
     });
 }
 
+/// <summary>
+/// Converts DATABASE_URL from URL format to Npgsql connection string format.
+/// Example: postgresql://user:password@host:port/db -> Host=host;Port=port;Database=db;Username=user;Password=password
+/// </summary>
+static string ConvertDatabaseUrlToConnectionString(string databaseUrl)
+{
+    try
+    {
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':');
+        var username = userInfo[0];
+        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+
+        return $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+    }
+    catch (Exception ex)
+    {
+        throw new InvalidOperationException($"Failed to parse DATABASE_URL: {ex.Message}", ex);
+    }
+}
+
 // App Insights
 var aiConfig = builder.Configuration.GetSection("ApplicationInsights");
 if (aiConfig.GetValue<bool>("Enabled"))
