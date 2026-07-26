@@ -31,7 +31,6 @@ TestResults/
 *.coverage
 
 # Entity Framework
-Migrations/
 *.db
 *.db-shm
 *.db-wal
