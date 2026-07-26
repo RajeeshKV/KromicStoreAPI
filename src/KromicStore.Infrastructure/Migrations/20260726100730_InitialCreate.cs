@@ -6,11 +6,23 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace KromicStore.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddRazorpayIntegration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_WebhookDeliveryLogs_NextRetryAt_Pending",
+                table: "WebhookDeliveryLogs");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Products_TenantId_Status_Active",
+                table: "Products");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Orders_TenantId_Status_Active",
+                table: "Orders");
+
             migrationBuilder.AddColumn<int>(
                 name: "FailedPaymentCount",
                 table: "Subscriptions",
@@ -143,6 +155,12 @@ namespace KromicStore.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_WebhookDeliveryLogs_NextRetryAt_Pending",
+                table: "WebhookDeliveryLogs",
+                column: "NextRetryAt",
+                filter: "\"NextRetryAt\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Subscriptions_RazorpaySubscriptionId",
                 table: "Subscriptions",
                 column: "RazorpaySubscriptionId");
@@ -151,6 +169,18 @@ namespace KromicStore.Infrastructure.Migrations
                 name: "IX_Subscriptions_TenantId_PaymentStatus",
                 table: "Subscriptions",
                 columns: new[] { "TenantId", "PaymentStatus" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_TenantId_Status_Active",
+                table: "Products",
+                columns: new[] { "TenantId", "Status" },
+                filter: "\"Status\" IN (0, 1)");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_TenantId_Status_Active",
+                table: "Orders",
+                columns: new[] { "TenantId", "Status" },
+                filter: "\"Status\" IN (0, 2, 3)");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderPayments_CreatedAt",
@@ -234,12 +264,24 @@ namespace KromicStore.Infrastructure.Migrations
                 name: "TenantPaymentMethods");
 
             migrationBuilder.DropIndex(
+                name: "IX_WebhookDeliveryLogs_NextRetryAt_Pending",
+                table: "WebhookDeliveryLogs");
+
+            migrationBuilder.DropIndex(
                 name: "IX_Subscriptions_RazorpaySubscriptionId",
                 table: "Subscriptions");
 
             migrationBuilder.DropIndex(
                 name: "IX_Subscriptions_TenantId_PaymentStatus",
                 table: "Subscriptions");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Products_TenantId_Status_Active",
+                table: "Products");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Orders_TenantId_Status_Active",
+                table: "Orders");
 
             migrationBuilder.DropColumn(
                 name: "FailedPaymentCount",
@@ -264,6 +306,24 @@ namespace KromicStore.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "RazorpaySubscriptionId",
                 table: "Subscriptions");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WebhookDeliveryLogs_NextRetryAt_Pending",
+                table: "WebhookDeliveryLogs",
+                column: "NextRetryAt",
+                filter: "[NextRetryAt] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_TenantId_Status_Active",
+                table: "Products",
+                columns: new[] { "TenantId", "Status" },
+                filter: "[Status] IN (0, 1)");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_TenantId_Status_Active",
+                table: "Orders",
+                columns: new[] { "TenantId", "Status" },
+                filter: "[Status] IN (0, 2, 3)");
         }
     }
 }

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KromicStore.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260726060856_AddRazorpayIntegration")]
-    partial class AddRazorpayIntegration
+    [Migration("20260726100730_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -278,7 +278,7 @@ namespace KromicStore.Infrastructure.Migrations
 
                     b.HasIndex("TenantId", "Status")
                         .HasDatabaseName("IX_Orders_TenantId_Status_Active")
-                        .HasFilter("[Status] IN (0, 2, 3)");
+                        .HasFilter("\"Status\" IN (0, 2, 3)");
 
                     b.ToTable("Orders", (string)null);
                 });
@@ -584,7 +584,7 @@ namespace KromicStore.Infrastructure.Migrations
 
                     b.HasIndex("TenantId", "Status")
                         .HasDatabaseName("IX_Products_TenantId_Status_Active")
-                        .HasFilter("[Status] IN (0, 1)");
+                        .HasFilter("\"Status\" IN (0, 1)");
 
                     b.ToTable("Products", (string)null);
                 });
@@ -1449,7 +1449,7 @@ namespace KromicStore.Infrastructure.Migrations
 
                     b.HasIndex("NextRetryAt")
                         .HasDatabaseName("IX_WebhookDeliveryLogs_NextRetryAt_Pending")
-                        .HasFilter("[NextRetryAt] IS NOT NULL");
+                        .HasFilter("\"NextRetryAt\" IS NOT NULL");
 
                     b.HasIndex("WebhookConfigurationId");
 

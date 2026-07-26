@@ -686,7 +686,7 @@ namespace KromicStore.Infrastructure.Migrations
                 name: "IX_Orders_TenantId_Status_Active",
                 table: "Orders",
                 columns: new[] { "TenantId", "Status" },
-                filter: "[Status] IN (0, 2, 3)");
+                filter: "\"Status\" IN (0, 2, 3)");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_UpdatedAt",
@@ -754,7 +754,7 @@ namespace KromicStore.Infrastructure.Migrations
                 name: "IX_Products_TenantId_Status_Active",
                 table: "Products",
                 columns: new[] { "TenantId", "Status" },
-                filter: "[Status] IN (0, 1)");
+                filter: "\"Status\" IN (0, 1)");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_UpdatedAt",
@@ -914,7 +914,7 @@ namespace KromicStore.Infrastructure.Migrations
                 name: "IX_WebhookDeliveryLogs_NextRetryAt_Pending",
                 table: "WebhookDeliveryLogs",
                 column: "NextRetryAt",
-                filter: "[NextRetryAt] IS NOT NULL");
+                filter: "\"NextRetryAt\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WebhookDeliveryLogs_WebhookConfigurationId",
