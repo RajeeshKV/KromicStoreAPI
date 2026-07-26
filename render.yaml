@@ -4,7 +4,6 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerCommand: dotnet KromicStore.API.dll
-    preDeployCommand: chmod +x ./entrypoint.sh && ./entrypoint.sh
     branch: main
     region: oregon
     plan: standard
@@ -27,30 +26,185 @@ services:
         value: "8080"
       - key: LOG_LEVEL
         value: Information
+      - key: DB_CONNECTION_POOL_MIN
+        value: "20"
+      - key: DB_CONNECTION_POOL_MAX
+        value: "100"
+      - key: DB_CONNECTION_TIMEOUT_SECONDS
+        value: "30"
+      - key: DB_IDLE_TIMEOUT_SECONDS
+        value: "300"
+      - key: DB_MAX_AGE_SECONDS
+        value: "1800"
+      - key: JWT_AUTHORITY
+        value: https://auth.kromicstore.com
+      - key: JWT_AUDIENCE
+        value: kromic-store-api
+      - key: JWT_EXPIRATION_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_EXPIRATION_DAYS
+        value: "7"
+      - key: PASSWORD_MIN_LENGTH
+        value: "8"
+      - key: PASSWORD_REQUIRE_UPPERCASE
+        value: "true"
+      - key: PASSWORD_REQUIRE_NUMBERS
+        value: "true"
+      - key: PASSWORD_REQUIRE_SPECIAL
+        value: "true"
+      - key: SECURITY_REQUIRE_HTTPS
+        value: "true"
+      - key: CORS_ALLOW_ANY_ORIGIN
+        value: "false"
+      - key: CORS_ALLOW_CREDENTIALS
+        value: "true"
+      - key: API_BASE_URL
+        value: https://api.kromicstore.com
+      - key: FRONTEND_BASE_URL
+        value: https://app.kromicstore.com
+      - key: SWAGGER_ENABLED
+        value: "false"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://app.kromicstore.com,https://admin.kromicstore.com
+      - key: REDIS_DB
+        value: "0"
+      - key: REDIS_TIMEOUT_MS
+        value: "5000"
+      - key: CACHE_TTL_PRODUCTS_MINUTES
+        value: "60"
+      - key: CACHE_TTL_ORDERS_MINUTES
+        value: "5"
+      - key: CACHE_TTL_CONFIG_MINUTES
+        value: "30"
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "100"
+      - key: RATE_LIMIT_BY_PLAN
+        value: '{"starter":100,"professional":500,"enterprise":5000}'
+      - key: RATE_LIMIT_CACHE_KEY_PREFIX
+        value: rate_limit_prod
+      - key: LOG_OUTPUT_FORMAT
+        value: json
+      - key: LOG_FILE_PATH
+        value: /var/log/kromic-store-prod.log
+      - key: LOG_FILE_SIZE_MB
+        value: "500"
+      - key: LOG_FILES_TO_KEEP
+        value: "30"
+      - key: CORRELATION_ID_ENABLED
+        value: "true"
+      - key: RAZORPAY_TIMEOUT_SECONDS
+        value: "30"
+      - key: RAZORPAY_RETRY_ENABLED
+        value: "true"
+      - key: RAZORPAY_CIRCUIT_BREAKER_THRESHOLD
+        value: "5"
+      - key: GOOGLE_REDIRECT_URI
+        value: https://api.kromicstore.com/api/v1/auth/oauth/google/callback
+      - key: GOOGLE_TOKEN_ENDPOINT
+        value: https://oauth2.googleapis.com/token
+      - key: GOOGLE_USER_INFO_ENDPOINT
+        value: https://www.googleapis.com/oauth2/v2/userinfo
+      - key: CLOUDINARY_BASE_URL
+        value: https://api.cloudinary.com
+      - key: CLOUDINARY_FOLDER_PATH
+        value: kromic-store
+      - key: CLOUDINARY_QUALITY
+        value: auto
+      - key: CLOUDINARY_MAX_FILE_SIZE_MB
+        value: "100"
+      - key: BREVO_SENDER_EMAIL
+        value: noreply@kromicstore.com
+      - key: BREVO_SENDER_NAME
+        value: KromicStore
+      - key: BREVO_BASE_URL
+        value: https://api.brevo.com
+      - key: BREVO_API_VERSION
+        value: v3
+      - key: BREVO_WELCOME_EMAIL_TEMPLATE_ID
+        value: "1"
+      - key: BREVO_ORDER_CONFIRMATION_TEMPLATE_ID
+        value: "2"
+      - key: BREVO_SHIPMENT_NOTIFICATION_TEMPLATE_ID
+        value: "3"
+      - key: BREVO_PAYMENT_FAILURE_TEMPLATE_ID
+        value: "4"
+      - key: HANGFIRE_ENABLED
+        value: "true"
+      - key: HANGFIRE_WORKER_COUNT
+        value: "16"
+      - key: HANGFIRE_QUEUES
+        value: default,webhooks,scheduled
+      - key: HANGFIRE_SUCCESS_JOB_EXPIRY_MINUTES
+        value: "60"
+      - key: HANGFIRE_FAILED_JOB_EXPIRY_DAYS
+        value: "7"
+      - key: MAX_UPLOAD_SIZE_MB
+        value: "100"
+      - key: SESSION_TIMEOUT_MINUTES
+        value: "30"
+      - key: PAGINATION_DEFAULT_PAGE_SIZE
+        value: "20"
+      - key: PAGINATION_MAX_PAGE_SIZE
+        value: "100"
+      - key: TENANT_TRIAL_DURATION_DAYS
+        value: "14"
+      - key: TENANT_MAX_USERS_STARTER
+        value: "5"
+      - key: TENANT_MAX_USERS_PROFESSIONAL
+        value: "50"
+      - key: TENANT_MAX_PRODUCTS_STARTER
+        value: "100"
+      - key: TENANT_MAX_PRODUCTS_PROFESSIONAL
+        value: "1000"
+      - key: TENANT_MAX_API_CALLS_STARTER
+        value: "10000"
+      - key: TENANT_MAX_API_CALLS_PROFESSIONAL
+        value: "100000"
+      - key: SUBSCRIPTION_PLAN_STARTER_PRICE
+        value: "0"
+      - key: SUBSCRIPTION_PLAN_PROFESSIONAL_PRICE
+        value: "799"
+      - key: SUBSCRIPTION_PLAN_ENTERPRISE_PRICE
+        value: "2499"
+      - key: SUBSCRIPTION_PLAN_CURRENCY
+        value: INR
+      - key: EXTERNAL_SERVICE_TIMEOUT_SECONDS
+        value: "30"
+      - key: EXTERNAL_SERVICE_MAX_RETRIES
+        value: "4"
+      - key: EXTERNAL_SERVICE_RETRY_DELAYS_MS
+        value: "[100,1000,10000,30000]"
+      - key: CIRCUIT_BREAKER_FAILURE_THRESHOLD
+        value: "5"
+      - key: CIRCUIT_BREAKER_TIMEOUT_SECONDS
+        value: "30"
+      - key: MONITORING_ENABLED
+        value: "false"
+      - key: MONITORING_LOG_LEVEL
+        value: Warning
+      - key: MONITORING_RESPONSE_TIME_THRESHOLD_MS
+        value: "500"
+      - key: MONITORING_DB_QUERY_THRESHOLD_MS
+        value: "100"
     secretFiles: []
-    # Environment variables below should be configured via Render dashboard
-    # DO NOT commit actual secrets to this file
-    # Required environment variables (set in Render dashboard):
-    # - DATABASE_URL (PostgreSQL connection string)
-    # - REDIS_URL (Redis connection string)
+    # SECRET environment variables (set in Render dashboard as secrets):
+    # - DATABASE_URL (PostgreSQL connection string - use Render's internal database)
+    # - REDIS_URL (Redis connection string - use Render's internal Redis)
+    # - REDIS_PASSWORD (Redis password - use Render's internal Redis)
     # - JWT_SECRET (minimum 32 characters)
-    # - JWT_AUTHORITY (JWT token issuer)
-    # - JWT_AUDIENCE (JWT token audience)
     # - ENCRYPTION_KEY (minimum 32 characters)
-    # - RAZORPAY_KEY (Razorpay API key)
-    # - RAZORPAY_SECRET (Razorpay API secret)
+    # - RAZORPAY_KEY_ID (Razorpay API key)
+    # - RAZORPAY_KEY_SECRET (Razorpay API secret)
+    # - RAZORPAY_WEBHOOK_SECRET (Razorpay webhook secret)
     # - GOOGLE_CLIENT_ID (Google OAuth client ID)
     # - GOOGLE_CLIENT_SECRET (Google OAuth client secret)
     # - CLOUDINARY_CLOUD_NAME (Cloudinary cloud name)
     # - CLOUDINARY_API_KEY (Cloudinary API key)
     # - CLOUDINARY_API_SECRET (Cloudinary API secret)
     # - BREVO_API_KEY (Brevo/Sendinblue API key)
-    # - BREVO_SENDER_EMAIL (Verified sender email)
-    # - BREVO_WELCOME_EMAIL_TEMPLATE_ID (Email template ID)
-    # - BREVO_ORDER_CONFIRMATION_TEMPLATE_ID (Email template ID)
-    # - BREVO_PAYMENT_SUCCESS_TEMPLATE_ID (Email template ID)
-    # - CORS_ALLOWED_ORIGINS (Comma-separated allowed origins)
-    # - APPLICATION_INSIGHTS_KEY (Optional: Azure Application Insights)
+    # - APPLICATION_INSTANCE_ID (Unique instance identifier)
 
 databases:
   - name: kromicstore-postgres
