@@ -3,6 +3,8 @@ services:
     name: kromic-store-api
     runtime: docker
     dockerfilePath: ./Dockerfile
+    dockerCommand: dotnet KromicStore.API.dll
+    preDeployCommand: chmod +x ./entrypoint.sh && ./entrypoint.sh
     branch: main
     region: oregon
     plan: standard
@@ -16,7 +18,6 @@ services:
     healthCheckStartupFailureThresholdCount: 3
     healthCheckThreshold: 5
     buildCommand: dotnet build KromicStore.sln --configuration Release
-    startCommand: /app/entrypoint.sh
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production

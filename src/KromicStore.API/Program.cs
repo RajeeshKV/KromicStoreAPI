@@ -372,6 +372,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+if (args.Contains("--migrate-only", StringComparer.OrdinalIgnoreCase))
+{
+    Log.Information("Migrations completed. Exiting due to --migrate-only flag.");
+    return;
+}
+
 Log.Information("KromicStore API started successfully. Version: 1.0.0, Environment: {Environment}", 
     builder.Environment.EnvironmentName);
 Log.Information("Application ready to receive requests");
