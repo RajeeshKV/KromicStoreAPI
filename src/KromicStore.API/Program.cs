@@ -310,7 +310,15 @@ builder.Services.AddCors(opt => opt.AddPolicy("AllowAll", p => p.AllowAnyOrigin(
 var hgConfig = builder.Configuration.GetSection("Hangfire");
 if (hgConfig.GetValue<bool>("Enabled"))
 {
-    var hgConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
+    var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+    if (string.IsNullOrWhiteSpace(databaseUrl))
+    {
+        throw new InvalidOperationException("DATABASE_URL is required for Hangfire");
+    }
+
+    // Convert DATABASE_URL from URL format to Npgsql connection string format
+    var hgConnStr = ConvertDatabaseUrlToConnectionString(databaseUrl);
+    
     builder.Services.AddHangfire(cfg => cfg
         .SetDataCompatibilityLevel(Hangfire.CompatibilityLevel.Version_180)
         .UseSimpleAssemblyNameTypeSerializer()
