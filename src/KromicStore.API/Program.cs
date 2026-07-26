@@ -337,6 +337,7 @@ if (hgConfig.GetValue<bool>("Enabled"))
 /// Converts DATABASE_URL from URL format to Npgsql connection string format.
 /// Example: postgresql://user:password@host:port/db -> Host=host;Port=port;Database=db;Username=user;Password=password
 /// If already in connection string format, returns as-is.
+/// Handles passwords with special characters by using proper URI parsing.
 /// </summary>
 static string ConvertDatabaseUrlToConnectionString(string databaseUrl)
 {
@@ -348,11 +349,18 @@ static string ConvertDatabaseUrlToConnectionString(string databaseUrl)
             return databaseUrl;
         }
 
-        // Parse as URI
+        // Parse as URI - handle passwords with special characters
         var uri = new Uri(databaseUrl);
-        var userInfo = uri.UserInfo.Split(':');
-        var username = userInfo[0];
-        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        var userInfo = uri.UserInfo;
+        
+        // Split on last ':' to handle passwords containing ':'
+        var lastColonIndex = userInfo.LastIndexOf(':');
+        var username = lastColonIndex > 0 ? userInfo.Substring(0, lastColonIndex) : userInfo;
+        var password = lastColonIndex > 0 ? userInfo.Substring(lastColonIndex + 1) : "";
+        
+        // URL decode the password to handle special characters like @
+        password = System.Net.WebUtility.UrlDecode(password);
+        
         var host = uri.Host;
         var port = uri.Port > 0 ? uri.Port : 5432;
         var database = uri.AbsolutePath.TrimStart('/');
