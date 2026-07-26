@@ -49,6 +49,22 @@ public class TenantResolutionMiddleware
             return;
         }
 
+        // Check if user is SuperUser - they don't require tenant association
+        var userTypeClaim = context.User?.FindFirst("type")?.Value;
+        var isSuperUser = userTypeClaim == "superuser";
+
+        if (isSuperUser)
+        {
+            _logger.LogInformation(
+                "SuperUser request - No tenant association - Path: {Path}, CorrelationId: {CorrelationId}, User: {User}",
+                context.Request.Path,
+                correlationId,
+                context.User?.Identity?.Name ?? "ANONYMOUS");
+
+            await _next(context);
+            return;
+        }
+
         // Check if user is PlatformAdmin - they don't require tenant association
         var roleClaim = context.User?.FindFirst("role")?.Value;
         var isPlatformAdmin = roleClaim == "1" || roleClaim == "PlatformAdmin";

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to KromicStore</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px;
+        }
+        .content h2 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to KromicStore! 🎉</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{name}},</h2>
+            <p>Welcome to KromicStore! We're thrilled to have you on board.</p>
+            <p>Your account has been successfully created and you're now ready to start building your online store.</p>
+            <p>Here are your account details:</p>
+            <ul>
+                <li><strong>Email:</strong> {{email}}</li>
+                <li><strong>Company:</strong> {{company_name}}</li>
+                <li><strong>Plan:</strong> {{plan}}</li>
+            </ul>
+            <p>To get started, please log in to your dashboard and complete your store setup.</p>
+            <a href="{{login_url}}" class="button">Access Your Dashboard</a>
+            <p>If you have any questions, feel free to reach out to our support team at {{support_email}}.</p>
+            <p>Best regards,<br>The KromicStore Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 KromicStore. All rights reserved.</p>
+            <p>Need help? <a href="mailto:{{support_email}}">{{support_email}}</a></p>
+        </div>
+    </div>
+</body>
+</html>

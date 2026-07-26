@@ -12,12 +12,15 @@ This comprehensive guide provides frontend developers with everything needed to 
 2. [API Fundamentals](#api-fundamentals)
 3. [Authentication & Authorization](#authentication--authorization)
 4. [Tenant Identification](#tenant-identification)
-5. [Request/Response Patterns](#requestresponse-patterns)
-6. [Error Handling](#error-handling)
-7. [Multi-Tenancy](#multi-tenancy)
-8. [Caching & Performance](#caching--performance)
-9. [Webhooks](#webhooks)
-10. [Best Practices](#best-practices)
+5. [Subdomain Management](#subdomain-management)
+6. [Public Endpoints](#public-endpoints)
+7. [SuperUser Authentication](#superuser-authentication)
+8. [Request/Response Patterns](#requestresponse-patterns)
+9. [Error Handling](#error-handling)
+10. [Multi-Tenancy](#multi-tenancy)
+11. [Caching & Performance](#caching--performance)
+12. [Webhooks](#webhooks)
+13. [Best Practices](#best-practices)
 
 ---
 
@@ -27,8 +30,8 @@ This comprehensive guide provides frontend developers with everything needed to 
 
 ```
 Development:  http://localhost:8080/api/v1
-Staging:      https://staging.kromic-store.com/api/v1
-Production:   https://api.kromic-store.com/api/v1
+Staging:      https://staging.kromic.in/api/v1
+Production:   https://api.kromic.in/api/v1
 ```
 
 ### Authentication Methods
@@ -330,6 +333,346 @@ ETag: "abc123def456"
 | VALIDATION_ERROR | 422 | Request validation failed |
 | EXTERNAL_SERVICE_ERROR | 503 | External service (Razorpay, etc.) unavailable |
 | RATE_LIMIT_EXCEEDED | 429 | Too many requests in time window |
+
+---
+
+## Subdomain Management
+
+### Subdomain Selection
+
+Each tenant selects a unique subdomain during registration (e.g., `mystore.kromic.in`). This subdomain serves as:
+- The tenant's unique identifier
+- The URL for their storefront
+- The routing key for multi-tenancy
+
+### Subdomain Validation
+
+Subdomains must follow these rules:
+- **Length**: 3-63 characters
+- **Characters**: Alphanumeric (a-z, 0-9) and hyphens (-) only
+- **Format**: Must start and end with alphanumeric character
+- **Case**: Automatically converted to lowercase
+- **Reserved**: Cannot use reserved subdomains
+
+### Reserved Subdomains
+
+The following subdomains are reserved and cannot be used:
+- `api` - API endpoint
+- `admin` - Admin panel
+- `www` - Web redirect
+- `mail` - Email services
+- `ftp` - File transfer
+- `cdn` - Content delivery
+- `static` - Static assets
+- `assets` - Asset files
+- `echoroom`, `mallu-masala`, `spinema`, `flowapi`, `flow`, `storeapi`, `store` - Platform services
+
+### Check Subdomain Availability
+
+Before registration, check if a subdomain is available:
+
+```bash
+GET /api/v1/public/subdomain/check?subdomain=mystore
+```
+
+**Response (Available):**
+```json
+{
+  "available": true
+}
+```
+
+**Response (Not Available):**
+```json
+{
+  "available": false,
+  "reason": "Subdomain is already taken"
+}
+```
+
+**Response (Reserved):**
+```json
+{
+  "available": false,
+  "reason": "Subdomain is reserved"
+}
+```
+
+**Response (Invalid Format):**
+```json
+{
+  "available": false,
+  "reason": "Invalid subdomain format. Only alphanumeric characters and hyphens are allowed."
+}
+```
+
+### Subdomain Routing
+
+When users visit a tenant's subdomain (`https://mystore.kromic.in`), the system:
+1. Extracts the subdomain from the request host
+2. Looks up the tenant by subdomain
+3. Redirects to the tenant's frontend URL
+4. Preserves the path and query string for login flows
+
+### Tenant Registration with Subdomain
+
+When registering a new tenant, include the subdomain:
+
+```bash
+POST /api/v1/auth/register
+{
+  "companyName": "My Store",
+  "subdomain": "mystore",
+  "email": "admin@mystore.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "password": "SecurePassword123!",
+  "country": "IN"
+}
+```
+
+The subdomain is validated for:
+- Format compliance
+- Uniqueness across all tenants
+- Reserved subdomain exclusion
+
+### Subdomain-Based Login
+
+Users can login directly via their tenant's subdomain:
+
+```
+https://mystore.kromic.in/login?redirect=/dashboard
+```
+
+The subdomain routing middleware:
+- Identifies the tenant from the subdomain
+- Redirects to the tenant's frontend
+- Preserves the login redirect parameter
+
+---
+
+## Public Endpoints
+
+Public endpoints are accessible without authentication and provide essential information for the landing page and registration flow.
+
+### Get Subscription Plans
+
+Retrieve available subscription plans for new tenant sign-ups.
+
+**Endpoint:** `GET /api/v1/public/plans`
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "price": 0,
+      "currency": "INR",
+      "features": [
+        "5 Users",
+        "100 Products",
+        "10,000 API Calls/month"
+      ]
+    },
+    {
+      "id": "professional",
+      "name": "Professional",
+      "price": 799,
+      "currency": "INR",
+      "features": [
+        "50 Users",
+        "1,000 Products",
+        "100,000 API Calls/month"
+      ]
+    },
+    {
+      "id": "enterprise",
+      "name": "Enterprise",
+      "price": 2499,
+      "currency": "INR",
+      "features": [
+        "Unlimited Users",
+        "Unlimited Products",
+        "Unlimited API Calls",
+        "Priority Support"
+      ]
+    }
+  ]
+}
+```
+
+**Usage:** Display plans on the pricing page of the landing page.
+
+### Get Platform Configuration
+
+Retrieve platform-wide configuration including contact details for footer/contact page.
+
+**Endpoint:** `GET /api/v1/public/config`
+
+**Response:**
+```json
+{
+  "data": {
+    "contactEmail": "support@kromic.in",
+    "contactPhone": "+91-9876543210",
+    "supportEmail": "support@kromic.in",
+    "companyName": "KromicStore",
+    "websiteUrl": "https://kromic.in",
+    "instagramUrl": "https://instagram.com/kromicstore"
+  }
+}
+```
+
+**Usage:** 
+- Display contact information in footer
+- Show social media links (Instagram if configured)
+- Display company branding
+
+### Contact Us Form
+
+Submit a contact us form inquiry.
+
+**Endpoint:** `POST /api/v1/public/contactus`
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "+91-9876543210",
+  "subject": "Partnership Inquiry",
+  "message": "I would like to discuss a potential partnership..."
+}
+```
+
+**Required Fields:**
+- `name` - Contact person's name
+- `email` - Contact person's email
+- `message` - The message content
+
+**Optional Fields:**
+- `phone` - Contact phone number
+- `subject` - Subject line for the email
+
+**Response (Success):**
+```json
+{
+  "message": "Contact form submitted successfully"
+}
+```
+
+**Response (Error):**
+```json
+{
+  "error": "Name, email, and message are required"
+}
+```
+
+**Usage:** Implement the contact form on the contact page.
+
+---
+
+## SuperUser Authentication
+
+SuperUser is a separate authentication flow for platform administrators. SuperUsers have full platform-wide access and bypass tenant resolution.
+
+### SuperUser Login
+
+**Endpoint:** `POST /api/v1/superuser/auth/login`
+
+**Request Body:**
+```json
+{
+  "email": "admin@kromic.in",
+  "password": "SecurePassword123!"
+}
+```
+
+**Response:**
+```json
+{
+  "userId": "super-user-uuid",
+  "email": "admin@kromic.in",
+  "firstName": "Admin",
+  "lastName": "User",
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": "2024-01-15T11:30:00Z"
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized` - Invalid email or password
+- `500 Internal Server Error` - Server error during login
+
+### SuperUser JWT Token Structure
+
+The SuperUser JWT token contains special claims:
+
+```json
+{
+  "sub": "super-user-uuid",
+  "email": "admin@kromic.in",
+  "role": "SuperUser",
+  "type": "superuser",
+  "exp": 1234567890
+}
+```
+
+**Key Claims:**
+- `type: "superuser"` - Bypasses tenant resolution middleware
+- `role: "SuperUser"` - Platform-wide authorization
+- `sub` - SuperUser ID (UUID)
+- `email` - SuperUser email
+
+### SuperUser vs Regular User Authentication
+
+| Feature | SuperUser | Regular User |
+|---------|-----------|--------------|
+| Endpoint | `/superuser/auth/login` | `/auth/login` |
+| Tenant Association | None (null) | Required |
+| Token Type Claim | `type: superuser` | Not present |
+| Tenant Resolution | Bypassed | Required |
+| Access Scope | Platform-wide | Tenant-specific |
+| Registration | No public endpoint | Available |
+
+### Using SuperUser Token
+
+Include the SuperUser access token in requests:
+
+```bash
+GET /api/v1/admin/config
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+The `type: superuser` claim allows the request to bypass tenant resolution.
+
+### SuperUser Refresh Token
+
+**Endpoint:** `POST /api/v1/superuser/auth/refresh`
+
+**Request Body:**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Note:** This endpoint is currently not fully implemented.
+
+### SuperUser Account Creation
+
+SuperUser accounts are created directly in the database (no public registration). Use database migrations or direct database operations.
+
+**Example SQL:**
+```sql
+INSERT INTO "SuperUsers" ("Id", "Email", "FirstName", "LastName", "PasswordHash", "IsActive", "CreatedAt", "UpdatedAt")
+VALUES (gen_random_uuid(), 'admin@kromic.in', 'Admin', 'User', '<hashed_password>', true, NOW(), NOW());
+```
+
+**Password Hashing:** Use BCrypt or similar secure hashing algorithm.
 
 ---
 
@@ -681,13 +1024,16 @@ To upgrade to a new API version:
 ### Register a New Tenant
 
 ```bash
-curl -X POST https://api.kromic-store.com/api/v1/auth/register \
+curl -X POST https://api.kromic.in/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "companyName": "My Store",
+    "subdomain": "mystore",
     "email": "admin@mystore.com",
+    "firstName": "John",
+    "lastName": "Doe",
     "password": "SecurePassword123!",
-    "country": "US"
+    "country": "IN"
   }'
 
 # Response
@@ -705,7 +1051,7 @@ curl -X POST https://api.kromic-store.com/api/v1/auth/register \
 ### Create a Product
 
 ```bash
-curl -X POST https://api.kromic-store.com/api/v1/products \
+curl -X POST https://api.kromic.in/api/v1/products \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbGc..." \
   -d '{
@@ -734,7 +1080,7 @@ curl -X POST https://api.kromic-store.com/api/v1/products \
 ### Publish a Product
 
 ```bash
-curl -X POST https://api.kromic-store.com/api/v1/products/product-123/publish \
+curl -X POST https://api.kromic.in/api/v1/products/product-123/publish \
   -H "Authorization: Bearer eyJhbGc..."
 
 # Response
@@ -750,7 +1096,7 @@ curl -X POST https://api.kromic-store.com/api/v1/products/product-123/publish \
 ### Place an Order
 
 ```bash
-curl -X POST https://api.kromic-store.com/api/v1/orders \
+curl -X POST https://api.kromic.in/api/v1/orders \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbGc..." \
   -d '{
@@ -799,7 +1145,7 @@ curl -X POST https://api.kromic-store.com/api/v1/orders \
 ### Confirm Payment
 
 ```bash
-curl -X POST https://api.kromic-store.com/api/v1/payments/verify \
+curl -X POST https://api.kromic.in/api/v1/payments/verify \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbGc..." \
   -d '{

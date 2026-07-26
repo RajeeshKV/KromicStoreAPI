@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px;
+        }
+        .content h2 {
+            color: #f5576c;
+            margin-top: 0;
+        }
+        .error-details {
+            background-color: #fff5f5;
+            padding: 20px;
+            border-left: 4px solid #f5576c;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .error-details p {
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Payment Failed ❌</h1>
+        </div>
+        <div class="content">
+            <h2>We're sorry, {{customer_name}}</h2>
+            <p>Unfortunately, your payment could not be processed successfully.</p>
+            
+            <div class="error-details">
+                <h3>Error Details</h3>
+                <p><strong>Order Number:</strong> {{order_number}}</p>
+                <p><strong>Amount:</strong> {{amount}}</p>
+                <p><strong>Error Code:</strong> {{error_code}}</p>
+                <p><strong>Error Message:</strong> {{error_message}}</p>
+                <p><strong>Attempted At:</strong> {{attempted_at}}</p>
+            </div>
+            
+            <p>This could be due to:</p>
+            <ul>
+                <li>Insufficient funds</li>
+                <li>Card declined by bank</li>
+                <li>Incorrect card details</li>
+                <li>Network connectivity issues</li>
+            </ul>
+            
+            <p>Please try again or use a different payment method.</p>
+            <a href="{{retry_url}}" class="button">Retry Payment</a>
+            
+            <p>If you continue to experience issues, please contact our support team at {{support_email}}.</p>
+            <p>Best regards,<br>The {{company_name}} Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2024 {{company_name}}. All rights reserved.</p>
+            <p>Need help? <a href="mailto:{{support_email}}">{{support_email}}</a></p>
+        </div>
+    </div>
+</body>
+</html>

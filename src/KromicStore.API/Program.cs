@@ -159,6 +159,7 @@ builder.Services.AddScoped<IEncryptionService>(sp => new EncryptionService(encKe
 // Services
 builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ISuperUserAuthService, SuperUserAuthService>();
 builder.Services.AddScoped<IWebhookService, WebhookService>();
 builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -398,6 +399,7 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 // Pipeline
+app.UseMiddleware<SubdomainRoutingMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {

@@ -17,6 +17,15 @@ namespace KromicStore.Application.DTOs.Tenant
         public string CompanyName { get; set; } = string.Empty;
 
         /// <summary>
+        /// Subdomain for the tenant (e.g., "mystore" for mystore.kromic.in).
+        /// Required and must be unique. Only alphanumeric characters and hyphens allowed.
+        /// </summary>
+        [Required(ErrorMessage = "Subdomain is required")]
+        [StringLength(63, MinimumLength = 3, ErrorMessage = "Subdomain must be between 3 and 63 characters")]
+        [RegularExpression(@"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", ErrorMessage = "Subdomain must contain only alphanumeric characters and hyphens, and must start and end with alphanumeric")]
+        public string Subdomain { get; set; } = string.Empty;
+
+        /// <summary>
         /// Primary contact email address for the tenant.
         /// Must be a valid email format and unique across all tenants.
         /// </summary>

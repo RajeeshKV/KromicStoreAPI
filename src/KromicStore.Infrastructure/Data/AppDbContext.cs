@@ -98,6 +98,16 @@ public class AppDbContext : DbContext
     public DbSet<ThemeEntity> Themes { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the SuperUsers table (platform admins, separate from tenant users).
+    /// </summary>
+    public DbSet<SuperUser> SuperUsers { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the SuperUserConfigs table (platform-wide configuration).
+    /// </summary>
+    public DbSet<SuperUserConfig> SuperUserConfigs { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets the Storefronts table.
     /// </summary>
     public DbSet<Storefront> Storefronts { get; set; } = null!;
@@ -155,6 +165,29 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
             entity.Property(e => e.PasswordHash).IsRequired();
             entity.HasIndex(e => new { e.TenantId, e.Email }).IsUnique();
+        });
+
+        // Configure SuperUser entity
+        modelBuilder.Entity<SuperUser>(entity =>
+        {
+            entity.ToTable("SuperUsers");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PasswordHash).IsRequired();
+            entity.HasIndex(e => e.Email).IsUnique();
+        });
+
+        // Configure SuperUserConfig entity
+        modelBuilder.Entity<SuperUserConfig>(entity =>
+        {
+            entity.ToTable("SuperUserConfigs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ConfigKey).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.ConfigValue).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.HasIndex(e => e.ConfigKey).IsUnique();
         });
 
         // Configure Product entity

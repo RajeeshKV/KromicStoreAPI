@@ -82,14 +82,22 @@ namespace KromicStore.Infrastructure.Services
                     throw new InvalidOperationException("Email address is already registered.");
                 }
 
+                // 1.5. Validate subdomain uniqueness
+                var existingTenant = (await _unitOfWork.Tenants.FindAsync(t => t.Subdomain.ToLower() == request.Subdomain.ToLower(), cancellationToken)).FirstOrDefault();
+                if (existingTenant != null)
+                {
+                    _logger.LogWarning("Registration failed: Subdomain {Subdomain} already in use", request.Subdomain);
+                    throw new InvalidOperationException("Subdomain is already taken.");
+                }
+
                 // 2. Create Tenant entity using factory method
                 var tenantId = Guid.NewGuid();
                 var tenantSlug = GenerateTenantId();
-                var tenant = Tenant.Create(tenantSlug, request.CompanyName, string.Empty, request.Email);
+                var tenant = Tenant.Create(tenantSlug, request.CompanyName, request.Subdomain, string.Empty, request.Email);
                 // Override the ID if needed (EF Core will handle it)
                 await _unitOfWork.Tenants.AddAsync(tenant, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation("Tenant created: TenantId={TenantId}, Name={Name}", tenant.Id, request.CompanyName);
+                _logger.LogInformation("Tenant created: TenantId={TenantId}, Name={Name}, Subdomain={Subdomain}", tenant.Id, request.CompanyName, request.Subdomain);
 
                 // 3. Create TenantOwner User
                 var passwordHash = HashPassword(request.Password);
