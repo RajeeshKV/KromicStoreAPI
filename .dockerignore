@@ -1,0 +1,74 @@
+# Build artifacts
+bin/
+obj/
+*.dll
+*.pdb
+
+# Test projects and test results
+tests/
+*.trx
+*.coverage
+coverage/
+TestResults/
+
+# IDE and editor files
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+*.user
+*.user.*
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+
+# Build and log files
+*.log
+build-log.txt
+build_output.log
+build_result.log
+domain_build.log
+infrastructure_build.log
+final_build.log
+application_build.log
+
+# NPM, Node, and other non-backend tools
+node_modules/
+npm-debug.log
+package-lock.json
+yarn.lock
+
+# NuGet
+*.nupkg
+.nuget/
+
+# Local database/data files
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files (do not include in image; use environment variables)
+.env
+.env.local
+.env.*.local
+
+# CI/CD and container configuration (not needed in image)
+docker-compose.*.yml
+.github/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Misc
+LICENSE
+.editorconfig

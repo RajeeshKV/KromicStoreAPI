@@ -1,0 +1,277 @@
+{
+  "id": "modern",
+  "slug": "modern",
+  "name": "Modern",
+  "description": "Contemporary storefront with advanced layouts, featured products, and testimonials",
+  "version": "1.0.0",
+  "defaultPages": [
+    {
+      "name": "Home",
+      "slug": "index",
+      "layoutType": "default",
+      "displayOrder": 0,
+      "sections": [
+        {
+          "name": "Hero Section",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "hero-slider",
+              "props": {
+                "autoplay": true,
+                "duration": 5000,
+                "showArrows": true,
+                "showDots": true,
+                "slides": [
+                  {
+                    "title": "Summer Collection",
+                    "subtitle": "Up to 50% off",
+                    "backgroundColor": "#E8F4F8",
+                    "cta": {
+                      "text": "Shop Now",
+                      "url": "/shop?collection=summer"
+                    }
+                  },
+                  {
+                    "title": "New Arrivals",
+                    "subtitle": "Explore what's new",
+                    "backgroundColor": "#F8E8F4",
+                    "cta": {
+                      "text": "Discover",
+                      "url": "/shop?sort=newest"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Categories Section",
+          "displayOrder": 1,
+          "components": [
+            {
+              "type": "category-showcase",
+              "props": {
+                "columns": 4,
+                "displayStyle": "cards",
+                "showImage": true,
+                "showProductCount": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "Featured Products",
+          "displayOrder": 2,
+          "components": [
+            {
+              "type": "featured-products",
+              "props": {
+                "title": "Bestsellers",
+                "columns": 4,
+                "itemsCount": 8,
+                "showPrice": true,
+                "showRating": true,
+                "showBadge": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "Testimonials",
+          "displayOrder": 3,
+          "components": [
+            {
+              "type": "testimonial-carousel",
+              "props": {
+                "autoplay": true,
+                "duration": 8000,
+                "showArrows": true,
+                "testimonials": [
+                  {
+                    "name": "Sarah Johnson",
+                    "role": "Customer",
+                    "text": "Excellent quality and fast delivery!",
+                    "rating": 5,
+                    "avatar": null
+                  },
+                  {
+                    "name": "Michael Chen",
+                    "role": "Verified Buyer",
+                    "text": "Great customer service and amazing products.",
+                    "rating": 5,
+                    "avatar": null
+                  },
+                  {
+                    "name": "Emma Williams",
+                    "role": "Customer",
+                    "text": "Best online shopping experience ever!",
+                    "rating": 5,
+                    "avatar": null
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Newsletter",
+          "displayOrder": 4,
+          "components": [
+            {
+              "type": "newsletter-signup",
+              "props": {
+                "title": "Stay Updated",
+                "description": "Subscribe to get exclusive offers and updates",
+                "backgroundColor": "#1A1A1A",
+                "textColor": "#FFFFFF",
+                "placeholderText": "Enter your email"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Shop",
+      "slug": "shop",
+      "layoutType": "grid",
+      "displayOrder": 1,
+      "sections": [
+        {
+          "name": "Shop Layout",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "sidebar-filters",
+              "props": {
+                "width": "250px",
+                "sticky": true,
+                "filters": ["category", "price", "rating", "brand"]
+              }
+            },
+            {
+              "type": "product-grid-advanced",
+              "props": {
+                "columns": 4,
+                "sortOptions": ["featured", "newest", "price-low", "price-high", "rating"],
+                "defaultSort": "featured",
+                "showPrice": true,
+                "showRating": true,
+                "showWishlist": true,
+                "showQuickView": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "About",
+      "slug": "about",
+      "layoutType": "default",
+      "displayOrder": 2,
+      "sections": [
+        {
+          "name": "About Section",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "rich-text",
+              "props": {
+                "title": "About Us",
+                "content": "We are passionate about delivering quality products and exceptional service to our customers."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Stats",
+          "displayOrder": 1,
+          "components": [
+            {
+              "type": "stat-cards",
+              "props": {
+                "stats": [
+                  { "label": "Happy Customers", "value": "50K+" },
+                  { "label": "Products", "value": "10K+" },
+                  { "label": "Years in Business", "value": "10+" },
+                  { "label": "Countries", "value": "50+" }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "defaultBranding": {
+    "primaryColor": "#1A1A1A",
+    "secondaryColor": "#FFFFFF",
+    "accentColor": "#007AFF",
+    "fontFamily": "'Poppins', 'Segoe UI', Roboto, sans-serif",
+    "fontSize": "16px",
+    "logoUrl": null,
+    "faviconUrl": null
+  },
+  "defaultNavigation": [
+    {
+      "label": "Home",
+      "url": "/",
+      "displayOrder": 0
+    },
+    {
+      "label": "Shop",
+      "url": "/shop",
+      "displayOrder": 1
+    },
+    {
+      "label": "About",
+      "url": "/about",
+      "displayOrder": 2
+    },
+    {
+      "label": "Contact",
+      "url": "/contact",
+      "displayOrder": 3
+    }
+  ],
+  "defaultFooter": [
+    {
+      "section": "Shop",
+      "items": [
+        { "label": "New Arrivals", "url": "/shop?sort=newest" },
+        { "label": "Best Sellers", "url": "/shop?sort=bestsellers" },
+        { "label": "Sale", "url": "/shop?collection=sale" },
+        { "label": "All Products", "url": "/shop" }
+      ]
+    },
+    {
+      "section": "Customer Care",
+      "items": [
+        { "label": "Contact Us", "url": "/contact" },
+        { "label": "FAQ", "url": "/faq" },
+        { "label": "Shipping Info", "url": "/shipping" },
+        { "label": "Returns & Exchanges", "url": "/returns" }
+      ]
+    },
+    {
+      "section": "Company",
+      "items": [
+        { "label": "About Us", "url": "/about" },
+        { "label": "Blog", "url": "/blog" },
+        { "label": "Careers", "url": "/careers" },
+        { "label": "Press", "url": "/press" }
+      ]
+    },
+    {
+      "section": "Legal",
+      "items": [
+        { "label": "Privacy Policy", "url": "/privacy" },
+        { "label": "Terms of Service", "url": "/terms" },
+        { "label": "Cookie Policy", "url": "/cookies" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- No additional package references needed for Domain -->
+  </ItemGroup>
+
+</Project>

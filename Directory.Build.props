@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Assembly Info -->
+    <Company>KromicStore</Company>
+    <Product>KromicStore</Product>
+    <Version>1.0.0</Version>
+    <Authors>KromicStore Development Team</Authors>
+    
+    <!-- Code Analysis -->
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    
+    <!-- Suppress NuGet package version warnings and uninitialized property warnings -->
+    <NoWarn>$(NoWarn);NU1603;CS8618</NoWarn>
+  </PropertyGroup>
+</Project>

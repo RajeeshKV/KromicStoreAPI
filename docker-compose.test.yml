@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: kromic-postgres-test
+    environment:
+      POSTGRES_USER: kromic_user
+      POSTGRES_PASSWORD: kromic_password_test_12345
+      POSTGRES_DB: kromic_test
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kromic_user -d kromic_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kromic-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: kromic-redis-test
+    command: redis-server --requirepass redis_password_test_12345
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_test:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kromic-network
+
+  # KromicStore API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kromic-api-test
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      DATABASE_URL: postgresql://kromic_user:kromic_password_test_12345@postgres:5432/kromic_test
+      REDIS_URL: redis://:redis_password_test_12345@redis:6379
+      
+      # JWT Configuration
+      JWT_SECRET: development_jwt_secret_key_minimum_32_characters_long
+      JWT_AUTHORITY: https://dev.example.com
+      JWT_AUDIENCE: kromic-store-api
+      
+      # Encryption
+      ENCRYPTION_KEY: development_encryption_key_minimum_32_characters_long
+      
+      # Razorpay (Test Credentials - Use test mode)
+      RAZORPAY_KEY: rzp_test_1234567890
+      RAZORPAY_SECRET: razorpay_test_secret_key
+      
+      # Google OAuth (Test Credentials)
+      GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: test-client-secret
+      
+      # Cloudinary (Test Credentials)
+      CLOUDINARY_CLOUD_NAME: test-cloud
+      CLOUDINARY_API_KEY: test-api-key
+      CLOUDINARY_API_SECRET: test-api-secret
+      
+      # Brevo Email Service (Test Credentials)
+      BREVO_API_KEY: test-brevo-api-key
+      BREVO_SENDER_EMAIL: test@example.com
+      BREVO_WELCOME_EMAIL_TEMPLATE_ID: "1"
+      BREVO_ORDER_CONFIRMATION_TEMPLATE_ID: "2"
+      BREVO_PAYMENT_SUCCESS_TEMPLATE_ID: "3"
+      
+      # Logging
+      LOG_LEVEL: Debug
+    
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - kromic-network
+    volumes:
+      - ./logs:/app/logs
+
+networks:
+  kromic-network:
+    driver: bridge
+
+volumes:
+  postgres_data_test:
+    driver: local
+  redis_data_test:
+    driver: local
+
+# Usage:
+# Build and start services: docker-compose -f docker-compose.test.yml up --build
+# Stop services: docker-compose -f docker-compose.test.yml down
+# View logs: docker-compose -f docker-compose.test.yml logs -f api
+# Clean up: docker-compose -f docker-compose.test.yml down -v

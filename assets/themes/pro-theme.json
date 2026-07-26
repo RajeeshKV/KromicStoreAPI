@@ -1,0 +1,401 @@
+{
+  "id": "pro",
+  "slug": "pro",
+  "name": "Pro",
+  "description": "Professional enterprise theme with advanced layouts, FAQs, category sections, and comprehensive features",
+  "version": "1.0.0",
+  "defaultPages": [
+    {
+      "name": "Home",
+      "slug": "index",
+      "layoutType": "default",
+      "displayOrder": 0,
+      "sections": [
+        {
+          "name": "Hero Banner",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "fullwidth-hero",
+              "props": {
+                "minHeight": "600px",
+                "title": "Premium Shopping Experience",
+                "subtitle": "Discover excellence in every product",
+                "backgroundGradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                "cta": {
+                  "text": "Start Shopping",
+                  "url": "/shop",
+                  "style": "primary"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Category Section",
+          "displayOrder": 1,
+          "components": [
+            {
+              "type": "category-carousel",
+              "props": {
+                "title": "Shop by Category",
+                "columns": 5,
+                "displayStyle": "large-cards",
+                "showImage": true,
+                "showProductCount": true,
+                "autoplay": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "Featured Collection",
+          "displayOrder": 2,
+          "components": [
+            {
+              "type": "featured-collection",
+              "props": {
+                "title": "Exclusive Collection",
+                "description": "Handpicked items just for you",
+                "columns": 4,
+                "itemsCount": 12,
+                "showFilters": true,
+                "showSort": true,
+                "showPrice": true,
+                "showRating": true,
+                "showReviews": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trust Indicators",
+          "displayOrder": 3,
+          "components": [
+            {
+              "type": "trust-badges",
+              "props": {
+                "badges": [
+                  { "icon": "truck", "text": "Free Shipping Over $50" },
+                  { "icon": "shield", "text": "100% Secure Checkout" },
+                  { "icon": "undo", "text": "30-Day Returns" },
+                  { "icon": "headset", "text": "24/7 Support" }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Social Proof",
+          "displayOrder": 4,
+          "components": [
+            {
+              "type": "reviews-carousel",
+              "props": {
+                "title": "What Our Customers Say",
+                "autoplay": true,
+                "duration": 6000,
+                "reviewsCount": 5,
+                "minRating": 4
+              }
+            }
+          ]
+        },
+        {
+          "name": "Newsletter CTA",
+          "displayOrder": 5,
+          "components": [
+            {
+              "type": "email-capture",
+              "props": {
+                "title": "Exclusive Deals & Updates",
+                "description": "Be the first to know about new products, sales, and exclusive offers",
+                "backgroundColor": "#667eea",
+                "textColor": "#FFFFFF",
+                "incentive": "Get 10% OFF your first order",
+                "placeholderText": "your@email.com"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Shop",
+      "slug": "shop",
+      "layoutType": "advanced-grid",
+      "displayOrder": 1,
+      "sections": [
+        {
+          "name": "Advanced Shop",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "multi-column-filters",
+              "props": {
+                "filterPosition": "left",
+                "width": "280px",
+                "sticky": true,
+                "collapsible": true,
+                "filters": ["category", "price", "rating", "brand", "availability", "tags"],
+                "enableSearch": true
+              }
+            },
+            {
+              "type": "advanced-product-grid",
+              "props": {
+                "columns": 4,
+                "sortOptions": ["featured", "newest", "bestsellers", "price-low", "price-high", "rating", "reviews"],
+                "defaultSort": "featured",
+                "viewOptions": ["grid", "list"],
+                "defaultView": "grid",
+                "itemsPerPage": 24,
+                "showPrice": true,
+                "showRating": true,
+                "showReviews": true,
+                "showWishlist": true,
+                "showQuickView": true,
+                "showCompare": true,
+                "enablePagination": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "FAQ",
+      "slug": "faq",
+      "layoutType": "default",
+      "displayOrder": 2,
+      "sections": [
+        {
+          "name": "FAQ Content",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "faq-section",
+              "props": {
+                "title": "Frequently Asked Questions",
+                "enableSearch": true,
+                "categories": ["General", "Shipping & Delivery", "Returns & Refunds", "Payment", "Product Care"],
+                "faqs": [
+                  {
+                    "category": "General",
+                    "question": "How do I place an order?",
+                    "answer": "Simply browse our products, add items to your cart, and proceed to checkout."
+                  },
+                  {
+                    "category": "Shipping & Delivery",
+                    "question": "What are the shipping options?",
+                    "answer": "We offer standard and expedited shipping options. Delivery times vary by location."
+                  },
+                  {
+                    "category": "Returns & Refunds",
+                    "question": "What is your return policy?",
+                    "answer": "We accept returns within 30 days of purchase. Items must be in original condition."
+                  },
+                  {
+                    "category": "Payment",
+                    "question": "What payment methods do you accept?",
+                    "answer": "We accept all major credit cards, digital wallets, and bank transfers."
+                  },
+                  {
+                    "category": "Product Care",
+                    "question": "How should I care for my purchases?",
+                    "answer": "Each product comes with specific care instructions. Please refer to the product details."
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "About",
+      "slug": "about",
+      "layoutType": "default",
+      "displayOrder": 3,
+      "sections": [
+        {
+          "name": "Company Story",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "rich-content",
+              "props": {
+                "title": "Our Story",
+                "content": "Founded in 2014, we have been committed to delivering exceptional products and service to our customers worldwide."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Company Stats",
+          "displayOrder": 1,
+          "components": [
+            {
+              "type": "stats-grid",
+              "props": {
+                "columns": 4,
+                "stats": [
+                  { "label": "Customers Served", "value": "500K+", "icon": "users" },
+                  { "label": "Products Offered", "value": "50K+", "icon": "package" },
+                  { "label": "Years in Business", "value": "10+", "icon": "calendar" },
+                  { "label": "Countries", "value": "120+", "icon": "globe" }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mission & Values",
+          "displayOrder": 2,
+          "components": [
+            {
+              "type": "values-showcase",
+              "props": {
+                "title": "Our Mission & Values",
+                "values": [
+                  { "title": "Quality", "description": "We ensure every product meets our high standards", "icon": "star" },
+                  { "title": "Customer First", "description": "Your satisfaction is our top priority", "icon": "heart" },
+                  { "title": "Innovation", "description": "We continuously improve our products and services", "icon": "lightbulb" },
+                  { "title": "Sustainability", "description": "We care about the environment and society", "icon": "leaf" }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Contact",
+      "slug": "contact",
+      "layoutType": "default",
+      "displayOrder": 4,
+      "sections": [
+        {
+          "name": "Contact Header",
+          "displayOrder": 0,
+          "components": [
+            {
+              "type": "section-header",
+              "props": {
+                "title": "Get in Touch",
+                "subtitle": "We'd love to hear from you. Send us a message!"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contact Layout",
+          "displayOrder": 1,
+          "components": [
+            {
+              "type": "contact-form-with-info",
+              "props": {
+                "formColumns": 2,
+                "infoPosition": "right",
+                "contactInfo": {
+                  "email": "support@store.com",
+                  "phone": "+1 (555) 123-4567",
+                  "address": "123 Main Street, City, State 12345",
+                  "hours": "Monday - Friday: 9AM - 6PM EST"
+                },
+                "socialLinks": [
+                  { "platform": "facebook", "url": "https://facebook.com" },
+                  { "platform": "twitter", "url": "https://twitter.com" },
+                  { "platform": "instagram", "url": "https://instagram.com" },
+                  { "platform": "linkedin", "url": "https://linkedin.com" }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "defaultBranding": {
+    "primaryColor": "#667eea",
+    "secondaryColor": "#764ba2",
+    "accentColor": "#FF6B6B",
+    "backgroundColor": "#F8F9FA",
+    "textColor": "#2D3748",
+    "fontFamily": "'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
+    "fontSize": "16px",
+    "borderRadius": "8px",
+    "logoUrl": null,
+    "faviconUrl": null
+  },
+  "defaultNavigation": [
+    {
+      "label": "Home",
+      "url": "/",
+      "displayOrder": 0
+    },
+    {
+      "label": "Shop",
+      "url": "/shop",
+      "displayOrder": 1,
+      "submenu": [
+        { "label": "New Arrivals", "url": "/shop?sort=newest" },
+        { "label": "Best Sellers", "url": "/shop?sort=bestsellers" },
+        { "label": "Sale", "url": "/shop?collection=sale" }
+      ]
+    },
+    {
+      "label": "About",
+      "url": "/about",
+      "displayOrder": 2
+    },
+    {
+      "label": "FAQ",
+      "url": "/faq",
+      "displayOrder": 3
+    },
+    {
+      "label": "Contact",
+      "url": "/contact",
+      "displayOrder": 4
+    }
+  ],
+  "defaultFooter": [
+    {
+      "section": "Shop",
+      "items": [
+        { "label": "New Arrivals", "url": "/shop?sort=newest" },
+        { "label": "Best Sellers", "url": "/shop?sort=bestsellers" },
+        { "label": "Sale", "url": "/shop?collection=sale" },
+        { "label": "Browse All", "url": "/shop" }
+      ]
+    },
+    {
+      "section": "Support",
+      "items": [
+        { "label": "Contact Us", "url": "/contact" },
+        { "label": "FAQ", "url": "/faq" },
+        { "label": "Shipping Information", "url": "/shipping" },
+        { "label": "Track Order", "url": "/track" }
+      ]
+    },
+    {
+      "section": "Company",
+      "items": [
+        { "label": "About Us", "url": "/about" },
+        { "label": "Blog", "url": "/blog" },
+        { "label": "Careers", "url": "/careers" },
+        { "label": "News", "url": "/news" }
+      ]
+    },
+    {
+      "section": "Legal",
+      "items": [
+        { "label": "Privacy Policy", "url": "/privacy" },
+        { "label": "Terms of Service", "url": "/terms" },
+        { "label": "Cookie Policy", "url": "/cookies" },
+        { "label": "Accessibility", "url": "/accessibility" }
+      ]
+    }
+  ]
+}

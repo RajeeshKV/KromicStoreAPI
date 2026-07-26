@@ -1,0 +1,79 @@
+services:
+  - type: web
+    name: kromic-store-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    branch: main
+    region: oregon
+    plan: standard
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+    healthCheckPath: /health
+    healthCheckInterval: 30
+    healthCheckStartupFailureThresholdCount: 3
+    healthCheckThreshold: 5
+    buildCommand: dotnet build KromicStore.sln --configuration Release
+    startCommand: /app/entrypoint.sh
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: PORT
+        value: "8080"
+      - key: LOG_LEVEL
+        value: Information
+    secretFiles: []
+    # Environment variables below should be configured via Render dashboard
+    # DO NOT commit actual secrets to this file
+    # Required environment variables (set in Render dashboard):
+    # - DATABASE_URL (PostgreSQL connection string)
+    # - REDIS_URL (Redis connection string)
+    # - JWT_SECRET (minimum 32 characters)
+    # - JWT_AUTHORITY (JWT token issuer)
+    # - JWT_AUDIENCE (JWT token audience)
+    # - ENCRYPTION_KEY (minimum 32 characters)
+    # - RAZORPAY_KEY (Razorpay API key)
+    # - RAZORPAY_SECRET (Razorpay API secret)
+    # - GOOGLE_CLIENT_ID (Google OAuth client ID)
+    # - GOOGLE_CLIENT_SECRET (Google OAuth client secret)
+    # - CLOUDINARY_CLOUD_NAME (Cloudinary cloud name)
+    # - CLOUDINARY_API_KEY (Cloudinary API key)
+    # - CLOUDINARY_API_SECRET (Cloudinary API secret)
+    # - BREVO_API_KEY (Brevo/Sendinblue API key)
+    # - BREVO_SENDER_EMAIL (Verified sender email)
+    # - BREVO_WELCOME_EMAIL_TEMPLATE_ID (Email template ID)
+    # - BREVO_ORDER_CONFIRMATION_TEMPLATE_ID (Email template ID)
+    # - BREVO_PAYMENT_SUCCESS_TEMPLATE_ID (Email template ID)
+    # - CORS_ALLOWED_ORIGINS (Comma-separated allowed origins)
+    # - APPLICATION_INSIGHTS_KEY (Optional: Azure Application Insights)
+
+databases:
+  - name: kromicstore-postgres
+    databaseName: kromicstore
+    user: kromicuser
+    plan: standard
+    postgresMajorVersion: "15"
+    region: oregon
+
+redis:
+  - name: kromicstore-redis
+    plan: standard
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+
+# Post-deployment hooks
+postDeployHooks:
+  - command: |
+      echo "KromicStore API deployment completed successfully"
+      echo "Health check endpoint: https://<your-render-url>/health"
+      echo "Readiness check endpoint: https://<your-render-url>/health/ready"
+      echo "API documentation: https://<your-render-url>/swagger"
+
+# Deployment options
+deployOnPush: true
+pullRequestPreviewsEnabled: true
+notifyOnFail: true
