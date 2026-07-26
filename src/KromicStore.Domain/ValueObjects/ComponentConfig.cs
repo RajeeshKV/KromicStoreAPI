@@ -20,6 +20,15 @@ public record ComponentConfig
     public string ConfigJson { get; init; } = string.Empty;
 
     /// <summary>
+    /// Parameterless constructor for EF Core.
+    /// </summary>
+    public ComponentConfig()
+    {
+        Type = ComponentType.Hero;
+        ConfigJson = "{}";
+    }
+
+    /// <summary>
     /// Creates a new instance of ComponentConfig.
     /// </summary>
     /// <param name="type">The component type.</param>

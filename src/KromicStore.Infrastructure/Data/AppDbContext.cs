@@ -417,7 +417,11 @@ public class AppDbContext : DbContext
             entity.Property(e => e.DisplayOrder).IsRequired();
             entity.Property(e => e.CssClass).HasMaxLength(500);
             entity.Property(e => e.TrackingId).HasMaxLength(255);
-            entity.OwnsOne(e => e.Config);
+            entity.OwnsOne(e => e.Config, owned =>
+            {
+                owned.Property(c => c.Type).IsRequired();
+                owned.Property(c => c.ConfigJson).IsRequired();
+            });
             entity.HasIndex(e => e.SectionId).HasDatabaseName("IX_StorefrontComponents_SectionId");
         });
 

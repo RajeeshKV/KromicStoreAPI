@@ -17,6 +17,7 @@ COPY ["src/KromicStore.Domain/KromicStore.Domain.csproj", "src/KromicStore.Domai
 COPY ["src/KromicStore.Application/KromicStore.Application.csproj", "src/KromicStore.Application/"]
 COPY ["src/KromicStore.Infrastructure/KromicStore.Infrastructure.csproj", "src/KromicStore.Infrastructure/"]
 COPY ["src/KromicStore.Contracts/KromicStore.Contracts.csproj", "src/KromicStore.Contracts/"]
+COPY ["tests/KromicStore.Tests/KromicStore.Tests.csproj", "tests/KromicStore.Tests/"]
 
 # Restore NuGet packages
 RUN dotnet restore "KromicStore.sln"
