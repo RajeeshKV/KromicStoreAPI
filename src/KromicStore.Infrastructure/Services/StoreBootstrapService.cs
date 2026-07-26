@@ -4,6 +4,7 @@ using KromicStore.Application.Interfaces;
 using KromicStore.Domain.Entities;
 using KromicStore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Service for providing storefront bootstrap data.
@@ -107,7 +108,7 @@ public class StoreBootstrapService : IStoreBootstrapService
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Slug = c.Slug,
+                    Slug = c.Name.ToLowerInvariant().Replace(' ', '-'), // Generate slug from name
                     DisplayOrder = c.DisplayOrder,
                     Children = new List<CategoryItem>() // TODO: Load children recursively
                 }).ToList()
@@ -154,14 +155,15 @@ public class StoreBootstrapService : IStoreBootstrapService
             LayoutType = homePage.LayoutType,
             Sections = homePage.Sections.OrderBy(s => s.DisplayOrder).Select(s => new SectionData
             {
-                Type = s.Type,
+                Type = s.Name, // Use Name as the section type
                 Name = s.Name,
                 DisplayOrder = s.DisplayOrder,
                 Config = new Dictionary<string, object>
                 {
                     { "isVisible", s.IsVisible },
                     { "cssClass", s.CssClass ?? string.Empty },
-                    { "trackingId", s.TrackingId ?? string.Empty }
+                    { "backgroundColor", s.BackgroundColor ?? string.Empty },
+                    { "backgroundImageUrl", s.BackgroundImageUrl ?? string.Empty }
                 }
             }).ToList()
         };
