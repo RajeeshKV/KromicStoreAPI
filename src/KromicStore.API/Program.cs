@@ -283,9 +283,7 @@ if (hgConfig.GetValue<bool>("Enabled"))
         .SetDataCompatibilityLevel(Hangfire.CompatibilityLevel.Version_180)
         .UseSimpleAssemblyNameTypeSerializer()
         .UseRecommendedSerializerSettings()
-#pragma warning disable CS0618
-        .UsePostgreSqlStorage(hgConnStr));
-#pragma warning restore CS0618
+        .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(hgConnStr)));
     
     var workers = hgConfig.GetValue<int>("WorkerCount", Environment.ProcessorCount);
     builder.Services.AddHangfireServer(opt =>
@@ -301,9 +299,11 @@ if (aiConfig.GetValue<bool>("Enabled"))
 {
     var aiKey = aiConfig.GetValue<string>("InstrumentationKey");
     if (!string.IsNullOrEmpty(aiKey))
+    {
 #pragma warning disable CS0618
         builder.Services.AddApplicationInsightsTelemetry(aiKey);
 #pragma warning restore CS0618
+    }
 }
 
 // Health

@@ -38,9 +38,9 @@ public static class HttpClientServiceCollectionExtensions
                 client.DefaultRequestHeaders.Add("User-Agent", "KromicStore/1.0");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             })
-            .ConfigureHttpMessageHandlerBuilder(builder =>
+            .ConfigurePrimaryHttpMessageHandler(() =>
             {
-                builder.PrimaryHandler = new SocketsHttpHandler
+                return new SocketsHttpHandler
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2),
                     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
@@ -48,26 +48,19 @@ public static class HttpClientServiceCollectionExtensions
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip | 
                                             System.Net.DecompressionMethods.Deflate
                 };
-
-                builder.AdditionalHandlers.Add(new CompressionHttpMessageHandler());
-                builder.AdditionalHandlers.Add(
-                    new LoggingHttpMessageHandler(
-                        builder.Services.GetRequiredService<ILogger<LoggingHttpMessageHandler>>()));
             });
 
         // Payment Proxy (Razorpay)
         // Timeout: 30 seconds (payments are typically quick)
-#pragma warning disable CS0618
         services.AddHttpClient<PaymentProxy>(nameof(PaymentProxy), client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
                 client.DefaultRequestHeaders.Add("User-Agent", "KromicStore/1.0");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             })
-            .ConfigureHttpMessageHandlerBuilder(builder =>
+            .ConfigurePrimaryHttpMessageHandler(() =>
             {
-                // Add compression support
-                builder.PrimaryHandler = new SocketsHttpHandler
+                return new SocketsHttpHandler
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2),
                     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
@@ -75,12 +68,6 @@ public static class HttpClientServiceCollectionExtensions
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip | 
                                             System.Net.DecompressionMethods.Deflate
                 };
-
-                // Add handlers in order (first added = outermost layer)
-                builder.AdditionalHandlers.Add(new CompressionHttpMessageHandler());
-                builder.AdditionalHandlers.Add(
-                    new LoggingHttpMessageHandler(
-                        builder.Services.GetRequiredService<ILogger<LoggingHttpMessageHandler>>()));
             });
 
         // OAuth Proxy (Google)
@@ -91,9 +78,9 @@ public static class HttpClientServiceCollectionExtensions
                 client.DefaultRequestHeaders.Add("User-Agent", "KromicStore/1.0");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             })
-            .ConfigureHttpMessageHandlerBuilder(builder =>
+            .ConfigurePrimaryHttpMessageHandler(() =>
             {
-                builder.PrimaryHandler = new SocketsHttpHandler
+                return new SocketsHttpHandler
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2),
                     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
@@ -101,11 +88,6 @@ public static class HttpClientServiceCollectionExtensions
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip | 
                                             System.Net.DecompressionMethods.Deflate
                 };
-
-                builder.AdditionalHandlers.Add(new CompressionHttpMessageHandler());
-                builder.AdditionalHandlers.Add(
-                    new LoggingHttpMessageHandler(
-                        builder.Services.GetRequiredService<ILogger<LoggingHttpMessageHandler>>()));
             });
 
         // Media Proxy (Cloudinary)
@@ -115,9 +97,9 @@ public static class HttpClientServiceCollectionExtensions
                 client.Timeout = TimeSpan.FromSeconds(60);
                 client.DefaultRequestHeaders.Add("User-Agent", "KromicStore/1.0");
             })
-            .ConfigureHttpMessageHandlerBuilder(builder =>
+            .ConfigurePrimaryHttpMessageHandler(() =>
             {
-                builder.PrimaryHandler = new SocketsHttpHandler
+                return new SocketsHttpHandler
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(5),
                     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
@@ -125,11 +107,6 @@ public static class HttpClientServiceCollectionExtensions
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip | 
                                             System.Net.DecompressionMethods.Deflate
                 };
-
-                builder.AdditionalHandlers.Add(new CompressionHttpMessageHandler());
-                builder.AdditionalHandlers.Add(
-                    new LoggingHttpMessageHandler(
-                        builder.Services.GetRequiredService<ILogger<LoggingHttpMessageHandler>>()));
             });
 
         // Notification Proxy (Brevo)
@@ -140,9 +117,9 @@ public static class HttpClientServiceCollectionExtensions
                 client.DefaultRequestHeaders.Add("User-Agent", "KromicStore/1.0");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             })
-            .ConfigureHttpMessageHandlerBuilder(builder =>
+            .ConfigurePrimaryHttpMessageHandler(() =>
             {
-                builder.PrimaryHandler = new SocketsHttpHandler
+                return new SocketsHttpHandler
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2),
                     PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
@@ -150,13 +127,7 @@ public static class HttpClientServiceCollectionExtensions
                     AutomaticDecompression = System.Net.DecompressionMethods.GZip | 
                                             System.Net.DecompressionMethods.Deflate
                 };
-
-                builder.AdditionalHandlers.Add(new CompressionHttpMessageHandler());
-                builder.AdditionalHandlers.Add(
-                    new LoggingHttpMessageHandler(
-                        builder.Services.GetRequiredService<ILogger<LoggingHttpMessageHandler>>()));
             });
-#pragma warning restore CS0618
 
         return services;
     }

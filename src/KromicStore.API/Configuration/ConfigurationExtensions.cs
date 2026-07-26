@@ -11,7 +11,6 @@ public static class ConfigurationExtensions
     /// Validates all required configuration is present on startup.
     /// </summary>
     /// <param name="builder">The WebApplicationBuilder</param>
-    /// <param name="environment">The hosting environment</param>
     public static void ConfigureApplicationSettings(this WebApplicationBuilder builder)
     {
         var environment = builder.Environment.EnvironmentName;
