@@ -12,7 +12,7 @@ services:
       maxInstances: 3
       targetCPUUtilizationPercentage: 70
       targetMemoryUtilizationPercentage: 80
-    healthCheckPath: /health
+    healthCheckPath: /health/ready
     healthCheckInterval: 30
     healthCheckStartupFailureThresholdCount: 3
     healthCheckThreshold: 5
@@ -182,6 +182,32 @@ services:
         value: "5"
       - key: CIRCUIT_BREAKER_TIMEOUT_SECONDS
         value: "30"
+      - key: EXTERNALSERVICES__RAZORPAY__ENDPOINT
+        value: https://api.razorpay.com/v1/
+      - key: EXTERNALSERVICES__RAZORPAY__TIMEOUTSECONDS
+        value: "30"
+      - key: EXTERNALSERVICES__RAZORPAY__RETRYENABLED
+        value: "true"
+      - key: EXTERNALSERVICES__RAZORPAY__CIRCUITBREAKERTHRESHOLD
+        value: "5"
+      - key: EXTERNALSERVICES__GOOGLE__TOKENENDPOINT
+        value: https://oauth2.googleapis.com/token
+      - key: EXTERNALSERVICES__GOOGLE__USERINFOENDPOINT
+        value: https://www.googleapis.com/oauth2/v2/userinfo
+      - key: EXTERNALSERVICES__CLOUDINARY__BASEURL
+        value: https://api.cloudinary.com
+      - key: EXTERNALSERVICES__CLOUDINARY__FOLDERPATH
+        value: kromic-store
+      - key: EXTERNALSERVICES__CLOUDINARY__QUALITY
+        value: auto
+      - key: EXTERNALSERVICES__CLOUDINARY__MAXFILESIZEMB
+        value: "100"
+      - key: EXTERNALSERVICES__BREVO__SENDERNAME
+        value: KromicStore
+      - key: EXTERNALSERVICES__BREVO__BASEURL
+        value: https://api.brevo.com
+      - key: EXTERNALSERVICES__BREVO__APIVERSION
+        value: v3
       - key: MONITORING_ENABLED
         value: "false"
       - key: MONITORING_LOG_LEVEL
@@ -196,16 +222,17 @@ services:
     # - REDIS_URL (Redis connection string - use Render's internal Redis)
     # - REDIS_PASSWORD (Redis password - use Render's internal Redis)
     # - JWT_SECRET (minimum 32 characters)
-    # - ENCRYPTION_KEY (minimum 32 characters)
-    # - RAZORPAY_KEY_ID (Razorpay API key)
-    # - RAZORPAY_KEY_SECRET (Razorpay API secret)
-    # - RAZORPAY_WEBHOOK_SECRET (Razorpay webhook secret)
-    # - GOOGLE_CLIENT_ID (Google OAuth client ID)
-    # - GOOGLE_CLIENT_SECRET (Google OAuth client secret)
-    # - CLOUDINARY_CLOUD_NAME (Cloudinary cloud name)
-    # - CLOUDINARY_API_KEY (Cloudinary API key)
-    # - CLOUDINARY_API_SECRET (Cloudinary API secret)
-    # - BREVO_API_KEY (Brevo/Sendinblue API key)
+    # - SECURITY_ENCRYPTION_KEY (minimum 32 characters)
+    # - EXTERNALSERVICES__RAZORPAY__KEYID (Razorpay API key)
+    # - EXTERNALSERVICES__RAZORPAY__KEYSECRET (Razorpay API secret)
+    # - EXTERNALSERVICES__RAZORPAY__WEBHOOKSECRET (Razorpay webhook secret)
+    # - EXTERNALSERVICES__GOOGLE__CLIENTID (Google OAuth client ID)
+    # - EXTERNALSERVICES__GOOGLE__CLIENTSECRET (Google OAuth client secret)
+    # - EXTERNALSERVICES__CLOUDINARY__CLOUDNAME (Cloudinary cloud name)
+    # - EXTERNALSERVICES__CLOUDINARY__APIKEY (Cloudinary API key)
+    # - EXTERNALSERVICES__CLOUDINARY__APISECRET (Cloudinary API secret)
+    # - EXTERNALSERVICES__BREVO__APIKEY (Brevo/Sendinblue API key)
+    # - EXTERNALSERVICES__BREVO__SENDEREMAIL (Brevo sender email)
     # - APPLICATION_INSTANCE_ID (Unique instance identifier)
 
 databases:

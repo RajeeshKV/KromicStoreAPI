@@ -120,11 +120,34 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 });
 
 // Cache
-var redisConn = Environment.GetEnvironmentVariable("REDIS_URL") ?? "localhost:6379";
-var redisOpts = ConfigurationOptions.Parse(redisConn);
-var redis = ConnectionMultiplexer.Connect(redisOpts);
-builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
-builder.Services.AddSingleton<ICacheService, CacheService>();
+var redisConn = Environment.GetEnvironmentVariable("REDIS_URL");
+IConnectionMultiplexer? redis = null;
+
+if (!string.IsNullOrWhiteSpace(redisConn))
+{
+    try
+    {
+        var redisOpts = ConfigurationOptions.Parse(redisConn);
+        redisOpts.AbortOnConnectFail = false; // Allow retrying
+        redisOpts.ConnectRetry = 3;
+        redisOpts.ConnectTimeout = 5000;
+        redis = ConnectionMultiplexer.Connect(redisOpts);
+        builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+        builder.Services.AddSingleton<ICacheService, CacheService>();
+        Log.Information("Redis cache connected successfully");
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Failed to connect to Redis. Cache functionality will be disabled.");
+        // Register a null cache service that gracefully handles cache misses
+        builder.Services.AddSingleton<ICacheService>(new NullCacheService());
+    }
+}
+else
+{
+    Log.Warning("REDIS_URL not configured. Cache functionality will be disabled.");
+    builder.Services.AddSingleton<ICacheService>(new NullCacheService());
+}
 
 // UoW
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

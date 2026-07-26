@@ -4,6 +4,7 @@ using Application.Interfaces;
 using StackExchange.Redis;
 using System.Text.Json;
 using Caching;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Redis-based cache service implementation with advanced features.
@@ -216,5 +217,60 @@ public class CacheService : ICacheService
         {
             _misses++;
         }
+    }
+}
+
+/// <summary>
+/// Null cache service implementation that gracefully handles cache unavailability.
+/// All cache operations are no-ops, allowing the application to function without Redis.
+/// </summary>
+public class NullCacheService : ICacheService
+{
+    private readonly ILogger<NullCacheService>? _logger;
+
+    public NullCacheService(ILogger<NullCacheService>? logger = null)
+    {
+        _logger = logger;
+    }
+
+    public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+    {
+        _logger?.LogDebug("Cache get operation skipped (Redis unavailable): {Key}", key);
+        return Task.FromResult(default(T));
+    }
+
+    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+    {
+        _logger?.LogDebug("Cache set operation skipped (Redis unavailable): {Key}", key);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+    {
+        _logger?.LogDebug("Cache remove operation skipped (Redis unavailable): {Key}", key);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(false);
+    }
+
+    public Task ClearByPatternAsync(string pattern, CancellationToken cancellationToken = default)
+    {
+        _logger?.LogDebug("Cache clear pattern operation skipped (Redis unavailable): {Pattern}", pattern);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveByPatternAsync(string pattern, CancellationToken cancellationToken = default)
+    {
+        _logger?.LogDebug("Cache remove pattern operation skipped (Redis unavailable): {Pattern}", pattern);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveTenantCacheAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        _logger?.LogDebug("Cache remove tenant operation skipped (Redis unavailable): {TenantId}", tenantId);
+        return Task.CompletedTask;
     }
 }
