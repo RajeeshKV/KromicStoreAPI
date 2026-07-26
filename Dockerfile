@@ -12,7 +12,7 @@ COPY ["src/KromicStore.Domain/KromicStore.Domain.csproj", "src/KromicStore.Domai
 COPY ["src/KromicStore.Application/KromicStore.Application.csproj", "src/KromicStore.Application/"]
 COPY ["src/KromicStore.Infrastructure/KromicStore.Infrastructure.csproj", "src/KromicStore.Infrastructure/"]
 COPY ["src/KromicStore.Contracts/KromicStore.Contracts.csproj", "src/KromicStore.Contracts/"]
-RUN dotnet restore "KromicStore.sln"
+RUN dotnet restore "src/KromicStore.API/KromicStore.API.csproj"
 COPY . .
 RUN dotnet publish "src/KromicStore.API/KromicStore.API.csproj" -c Release -o /app/publish --no-restore
 
