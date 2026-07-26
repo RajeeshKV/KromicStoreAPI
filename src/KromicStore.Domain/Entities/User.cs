@@ -7,8 +7,8 @@ using Enums;
 /// </summary>
 public class User : BaseEntity
 {
-    /// <summary>Gets the tenant ID this user belongs to.</summary>
-    public Guid TenantId { get; private set; }
+    /// <summary>Gets the tenant ID this user belongs to. Null for platform admins.</summary>
+    public Guid? TenantId { get; private set; }
 
     /// <summary>Gets the first name.</summary>
     public string FirstName { get; private set; } = string.Empty;
@@ -43,10 +43,11 @@ public class User : BaseEntity
     /// <summary>
     /// Creates a new instance of User.
     /// </summary>
-    public static User Create(Guid tenantId, string firstName, string lastName, string email, UserRole role)
+    public static User Create(Guid? tenantId, string firstName, string lastName, string email, UserRole role)
     {
-        if (tenantId == Guid.Empty)
-            throw new ArgumentException("Tenant ID is required.", nameof(tenantId));
+        // Tenant ID is required for all roles except PlatformAdmin
+        if (role != UserRole.PlatformAdmin && (tenantId == null || tenantId == Guid.Empty))
+            throw new ArgumentException("Tenant ID is required for non-platform admin users.", nameof(tenantId));
         if (string.IsNullOrWhiteSpace(firstName))
             throw new ArgumentException("First name is required.", nameof(firstName));
         if (string.IsNullOrWhiteSpace(lastName))

@@ -49,6 +49,10 @@ public class TenantResolutionMiddleware
             return;
         }
 
+        // Check if user is PlatformAdmin - they don't require tenant association
+        var roleClaim = context.User?.FindFirst("role")?.Value;
+        var isPlatformAdmin = roleClaim == "1" || roleClaim == "PlatformAdmin";
+
         // Extract tenant ID from JWT token
         var tenantId = ExtractTenantIdFromToken(context);
 
@@ -62,7 +66,8 @@ public class TenantResolutionMiddleware
             }
         }
 
-        if (tenantId == Guid.Empty)
+        // PlatformAdmin users can proceed without tenant ID
+        if (tenantId == Guid.Empty && !isPlatformAdmin)
         {
             _logger.LogWarning(
                 "Request rejected - Missing or invalid tenant information - Path: {Path}, CorrelationId: {CorrelationId}, User: {User}",
@@ -79,15 +84,25 @@ public class TenantResolutionMiddleware
             return;
         }
 
-        // Set tenant in context
-        tenantProvider.SetTenant(tenantId, tenantId.ToString());
-
-        _logger.LogInformation(
-            "Tenant resolved successfully - TenantId: {TenantId}, Path: {Path}, CorrelationId: {CorrelationId}, User: {User}",
-            tenantId,
-            context.Request.Path,
-            correlationId,
-            context.User?.Identity?.Name ?? "ANONYMOUS");
+        // Set tenant in context (null for PlatformAdmin)
+        if (tenantId != Guid.Empty)
+        {
+            tenantProvider.SetTenant(tenantId, tenantId.ToString());
+            _logger.LogInformation(
+                "Tenant resolved successfully - TenantId: {TenantId}, Path: {Path}, CorrelationId: {CorrelationId}, User: {User}",
+                tenantId,
+                context.Request.Path,
+                correlationId,
+                context.User?.Identity?.Name ?? "ANONYMOUS");
+        }
+        else
+        {
+            _logger.LogInformation(
+                "PlatformAdmin request - No tenant association - Path: {Path}, CorrelationId: {CorrelationId}, User: {User}",
+                context.Request.Path,
+                correlationId,
+                context.User?.Identity?.Name ?? "ANONYMOUS");
+        }
 
         try
         {
@@ -97,8 +112,7 @@ public class TenantResolutionMiddleware
         {
             _logger.LogError(
                 ex,
-                "Error processing request for tenant - TenantId: {TenantId}, Path: {Path}, CorrelationId: {CorrelationId}, ExceptionType: {ExceptionType}",
-                tenantId,
+                "Error processing request - Path: {Path}, CorrelationId: {CorrelationId}, ExceptionType: {ExceptionType}",
                 context.Request.Path,
                 correlationId,
                 ex.GetType().Name);
