@@ -28,6 +28,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Load environment variables
 builder.Configuration.AddEnvironmentVariables();
 
+// Disable file watching to avoid inotify issues on Render
+builder.Host.ConfigureAppConfiguration((context, config) =>
+{
+    config.Sources.Clear();
+    config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+          .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+          .AddEnvironmentVariables();
+});
+
 // Validate required environment variables
 var requiredEnvVars = new[] 
 { 
