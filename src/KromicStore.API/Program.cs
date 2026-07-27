@@ -132,11 +132,19 @@ var redisConn = Environment.GetEnvironmentVariable("REDIS_URL");
 var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
 IConnectionMultiplexer? redis = null;
 
+Log.Information("REDIS_URL from environment: {RedisUrl}", redisConn ?? "NULL");
+
 if (!string.IsNullOrWhiteSpace(redisConn))
 {
     try
     {
+        // Log the connection string before parsing
+        Log.Information("Attempting to connect to Redis with URL: {RedisUrl}", redisConn);
+        
         var redisOpts = ConfigurationOptions.Parse(redisConn);
+        
+        // Log parsed endpoints
+        Log.Information("Parsed Redis endpoints: {Endpoints}", string.Join(", ", redisOpts.EndPoints.Select(e => e.ToString())));
         
         // Configure for Render's internal Redis
         redisOpts.AbortOnConnectFail = false;
@@ -156,6 +164,11 @@ if (!string.IsNullOrWhiteSpace(redisConn))
         {
             redisOpts.Ssl = false;
         }
+        
+        Log.Information("Final Redis configuration - EndPoints: {Endpoints}, SSL: {Ssl}, AbortOnConnectFail: {Abort}", 
+            string.Join(", ", redisOpts.EndPoints.Select(e => e.ToString())), 
+            redisOpts.Ssl, 
+            redisOpts.AbortOnConnectFail);
         
         redis = ConnectionMultiplexer.Connect(redisOpts);
         builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
