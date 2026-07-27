@@ -430,7 +430,56 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // CORS
-builder.Services.AddCors(opt => opt.AddPolicy("AllowAll", p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+
+var origins = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+// Check if any origin contains a wildcard pattern
+var hasWildcard = origins.Any(o => o.Contains("*"));
+
+builder.Services.AddCors(opt => 
+{
+    if (hasWildcard)
+    {
+        // Use SetIsOriginAllowed for wildcard support
+        opt.AddPolicy("AllowAll", p => p
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()
+            .SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrWhiteSpace(origin)) return false;
+                
+                // Check against wildcard patterns
+                foreach (var allowed in origins)
+                {
+                    if (allowed.Contains("*"))
+                    {
+                        // Convert wildcard pattern to regex
+                        var pattern = allowed
+                            .Replace(".", "\\.")
+                            .Replace("*", ".*");
+                        if (System.Text.RegularExpressions.Regex.IsMatch(origin, $"^{pattern}$"))
+                            return true;
+                    }
+                    else if (origin.Equals(allowed, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }));
+    }
+    else
+    {
+        // Use WithOrigins for exact matches (more performant)
+        opt.AddPolicy("AllowAll", p => p
+            .WithOrigins(origins)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials());
+    }
+});
 
 // Hangfire
 var hgConfig = builder.Configuration.GetSection("Hangfire");
@@ -521,6 +570,7 @@ var app = builder.Build();
 
 // Pipeline
 app.UseMiddleware<SubdomainRoutingMiddleware>();
+app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -531,7 +581,6 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 app.UseResponseCompression();
-app.UseCors("AllowAll");
 
 if (hgConfig.GetValue<bool>("Enabled"))
 {
