@@ -129,6 +129,7 @@ builder.Services.AddMemoryCache();
 
 // Cache
 var redisConn = Environment.GetEnvironmentVariable("REDIS_URL");
+var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
 IConnectionMultiplexer? redis = null;
 
 if (!string.IsNullOrWhiteSpace(redisConn))
@@ -136,9 +137,26 @@ if (!string.IsNullOrWhiteSpace(redisConn))
     try
     {
         var redisOpts = ConfigurationOptions.Parse(redisConn);
-        redisOpts.AbortOnConnectFail = false; // Allow retrying
-        redisOpts.ConnectRetry = 3;
-        redisOpts.ConnectTimeout = 5000;
+        
+        // Configure for Render's internal Redis
+        redisOpts.AbortOnConnectFail = false;
+        redisOpts.ConnectRetry = 5;
+        redisOpts.ConnectTimeout = 10000;
+        redisOpts.SyncTimeout = 5000;
+        redisOpts.AsyncTimeout = 5000;
+        
+        // Add password if provided
+        if (!string.IsNullOrWhiteSpace(redisPassword))
+        {
+            redisOpts.Password = redisPassword;
+        }
+        
+        // For Render internal Redis, disable SSL if it's an internal URL
+        if (redisConn.Contains("red-") && !redisConn.Contains("rediss://"))
+        {
+            redisOpts.Ssl = false;
+        }
+        
         redis = ConnectionMultiplexer.Connect(redisOpts);
         builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
         builder.Services.AddSingleton<ICacheService, CacheService>();
