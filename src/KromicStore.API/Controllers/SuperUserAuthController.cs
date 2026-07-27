@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Auth;
 using KromicStore.Domain.Entities;
 using KromicStore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 
 namespace KromicStore.API.Controllers;
 
@@ -29,9 +31,29 @@ public class SuperUserAuthController : ControllerBase
     /// <summary>
     /// Register a new SuperUser (platform admin).
     /// </summary>
+    /// <param name="request">Registration request containing email and password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created SuperUser data with ID, email, name, and activation status.</returns>
+    /// <response code="200">SuperUser registered successfully.</response>
+    /// <response code="400">Validation failed or email already registered.</response>
+    /// <response code="500">Server error during registration.</response>
     [HttpPost("register")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Register([FromBody] SuperUserRegisterRequest request, CancellationToken cancellationToken)
     {
+        // Validate model state
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+            _logger.LogWarning("SuperUser registration validation failed: {Errors}", string.Join(", ", errors));
+            return BadRequest(new { error = "Validation failed", details = errors });
+        }
+
         try
         {
             // Check if email already exists
@@ -83,7 +105,16 @@ public class SuperUserAuthController : ControllerBase
     /// <summary>
     /// Login as SuperUser (platform admin).
     /// </summary>
+    /// <param name="request">Login request containing email and password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Authentication response with access token, refresh token, and user info.</returns>
+    /// <response code="200">Login successful.</response>
+    /// <response code="401">Invalid email or password.</response>
+    /// <response code="500">Server error during login.</response>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         try
@@ -107,7 +138,16 @@ public class SuperUserAuthController : ControllerBase
     /// <summary>
     /// Refresh SuperUser authentication token.
     /// </summary>
+    /// <param name="request">Refresh token request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>New authentication response with fresh tokens.</returns>
+    /// <response code="200">Token refreshed successfully.</response>
+    /// <response code="401">Invalid or expired refresh token.</response>
+    /// <response code="500">Server error during token refresh.</response>
     [HttpPost("refresh")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
         try
@@ -130,7 +170,16 @@ public class SuperUserAuthController : ControllerBase
     /// <summary>
     /// Logout SuperUser by invalidating their tokens.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success message confirming logout.</returns>
+    /// <response code="200">Logout successful.</response>
+    /// <response code="401">Invalid authentication token or SuperUser not found.</response>
+    /// <response code="500">Server error during logout.</response>
+    [Authorize(Policy = "SuperUserOnly")]
     [HttpPost("logout")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
         try
@@ -176,6 +225,11 @@ public class SuperUserAuthController : ControllerBase
 /// </summary>
 public class SuperUserRegisterRequest
 {
+    [Required(ErrorMessage = "Email is required")]
+    [EmailAddress(ErrorMessage = "Invalid email format")]
     public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Password is required")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
     public string Password { get; set; } = string.Empty;
 }

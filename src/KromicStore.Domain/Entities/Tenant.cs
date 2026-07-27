@@ -23,6 +23,24 @@ public class Tenant : BaseEntity
     /// <summary>Gets a value indicating whether the tenant is active.</summary>
     public bool IsActive { get; private set; }
 
+    /// <summary>Gets a value indicating whether the tenant is archived.</summary>
+    public bool IsArchived { get; private set; }
+
+    /// <summary>Gets a value indicating whether the tenant has been soft deleted.</summary>
+    public bool IsDeleted { get; private set; }
+
+    /// <summary>Gets the date when the tenant was suspended.</summary>
+    public DateTime? SuspendedAt { get; private set; }
+
+    /// <summary>Gets the date when the tenant was archived.</summary>
+    public DateTime? ArchivedAt { get; private set; }
+
+    /// <summary>Gets the date when the tenant was soft deleted.</summary>
+    public DateTime? DeletedAt { get; private set; }
+
+    /// <summary>Gets the latest lifecycle reason.</summary>
+    public string? LifecycleReason { get; private set; }
+
     /// <summary>Gets the subscription plan identifier.</summary>
     public string SubscriptionPlan { get; private set; } = "basic";
 
@@ -90,7 +108,7 @@ public class Tenant : BaseEntity
     /// </summary>
     public void Deactivate()
     {
-        IsActive = false;
+        Suspend("Deactivated");
     }
 
     /// <summary>
@@ -98,6 +116,56 @@ public class Tenant : BaseEntity
     /// </summary>
     public void Activate()
     {
+        Restore("Activated");
+    }
+
+    /// <summary>
+    /// Suspends the tenant without deleting data.
+    /// </summary>
+    public void Suspend(string? reason = null)
+    {
+        IsActive = false;
+        SuspendedAt = DateTime.UtcNow;
+        LifecycleReason = reason;
+        UpdateTimestamp();
+    }
+
+    /// <summary>
+    /// Archives the tenant for long-term retention.
+    /// </summary>
+    public void Archive(string? reason = null)
+    {
+        IsActive = false;
+        IsArchived = true;
+        ArchivedAt = DateTime.UtcNow;
+        LifecycleReason = reason;
+        UpdateTimestamp();
+    }
+
+    /// <summary>
+    /// Soft deletes the tenant while preserving records for restore/retention.
+    /// </summary>
+    public void SoftDelete(string? reason = null)
+    {
+        IsActive = false;
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+        LifecycleReason = reason;
+        UpdateTimestamp();
+    }
+
+    /// <summary>
+    /// Restores a suspended, archived, or soft-deleted tenant.
+    /// </summary>
+    public void Restore(string? reason = null)
+    {
         IsActive = true;
+        IsArchived = false;
+        IsDeleted = false;
+        SuspendedAt = null;
+        ArchivedAt = null;
+        DeletedAt = null;
+        LifecycleReason = reason;
+        UpdateTimestamp();
     }
 }

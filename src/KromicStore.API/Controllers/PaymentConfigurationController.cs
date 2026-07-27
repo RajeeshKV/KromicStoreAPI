@@ -1,6 +1,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Configuration;
@@ -12,7 +13,7 @@ using KromicStore.Contracts.V1.Configuration;
 [ApiController]
 [Route("api/v1/payments/configuration")]
 [Produces("application/json")]
-[Authorize(Roles = "TenantAdmin")]
+[Authorize(Policy = Permissions.BillingWrite)]
 public class PaymentConfigurationController : BaseController
 {
     private readonly ITenantPaymentConfigurationService _paymentConfigService;

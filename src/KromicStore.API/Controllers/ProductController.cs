@@ -1,6 +1,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Products;
@@ -147,7 +148,7 @@ public class ProductController : BaseController
     /// <response code="401">User is not authenticated.</response>
     /// <response code="403">User is not authorized to create products.</response>
     [HttpPost]
-    [Authorize(Roles = "TenantAdmin,SuperUser")]
+    [Authorize(Policy = Permissions.ProductsWrite)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -207,7 +208,7 @@ public class ProductController : BaseController
     /// <response code="403">User is not authorized to update products.</response>
     /// <response code="404">Product not found.</response>
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "TenantAdmin,SuperUser")]
+    [Authorize(Policy = Permissions.ProductsWrite)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -267,7 +268,7 @@ public class ProductController : BaseController
     /// <response code="403">User is not authorized to delete products.</response>
     /// <response code="404">Product not found.</response>
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "TenantAdmin,SuperUser")]
+    [Authorize(Policy = Permissions.ProductsWrite)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -320,7 +321,7 @@ public class ProductController : BaseController
     /// <response code="403">User is not authorized to publish products.</response>
     /// <response code="404">Product not found.</response>
     [HttpPost("{id:guid}/publish")]
-    [Authorize(Roles = "TenantAdmin,SuperUser")]
+    [Authorize(Policy = Permissions.ProductsWrite)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -376,7 +377,7 @@ public class ProductController : BaseController
     /// <response code="403">User is not authorized to unpublish products.</response>
     /// <response code="404">Product not found.</response>
     [HttpPost("{id:guid}/unpublish")]
-    [Authorize(Roles = "TenantAdmin,SuperUser")]
+    [Authorize(Policy = Permissions.ProductsWrite)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

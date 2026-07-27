@@ -1,6 +1,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Auth;
 using KromicStore.Contracts.Abstractions;
@@ -360,6 +361,7 @@ public class AuthController : ControllerBase
     /// <response code="200">Logout successful.</response>
     /// <response code="401">User not authenticated.</response>
     /// <response code="500">Server error during logout.</response>
+    [Authorize]
     [HttpPost("logout")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]

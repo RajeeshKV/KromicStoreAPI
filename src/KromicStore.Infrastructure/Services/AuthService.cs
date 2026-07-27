@@ -12,6 +12,9 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Auth;
+using KromicStore.Domain.Entities;
+using KromicStore.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Implementation of authentication service providing login, registration, token refresh, and OAuth integration.
@@ -21,12 +24,14 @@ public class AuthService : IAuthService
     private readonly ILogger<AuthService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly AppDbContext _context;
 
-    public AuthService(ILogger<AuthService> logger, IConfiguration configuration, IUnitOfWork unitOfWork)
+    public AuthService(ILogger<AuthService> logger, IConfiguration configuration, IUnitOfWork unitOfWork, AppDbContext context)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
     /// <summary>
@@ -74,6 +79,8 @@ public class AuthService : IAuthService
         // Generate JWT token with token version
         var accessToken = GenerateAccessToken(user.Id, tenantId, email, new[] { user.Role.ToString() }, user.TokenVersion);
         var refreshToken = GenerateRefreshToken();
+
+        await PersistRefreshTokenAsync(user.Id, "User", refreshToken, cancellationToken);
 
         var response = new AuthResponse(
             UserId: user.Id,
@@ -146,31 +153,42 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("Token refresh requested");
 
-        // In real implementation, would:
-        // 1. Validate refresh token
-        // 2. Check if token has been revoked
-        // 3. Generate new access token
-        // 4. Optionally rotate refresh token
-        // For now, return stub response
+        var tokenHash = AuthRefreshToken.Hash(refreshToken);
+        var storedToken = await _context.AuthRefreshTokens
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash && t.PrincipalType == "User", cancellationToken);
 
-        var userId = Guid.NewGuid();
-        var tenantId = Guid.NewGuid();
-        var accessToken = GenerateAccessToken(userId, tenantId, "user@example.com", new[] { "User" });
+        if (storedToken == null || !storedToken.IsActive)
+        {
+            _logger.LogWarning("Refresh token rejected because it is missing, expired, or revoked");
+            throw new UnauthorizedAccessException("Refresh token is invalid or expired");
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == storedToken.PrincipalId && u.IsActive, cancellationToken);
+        if (user == null || user.TenantId == null)
+        {
+            throw new UnauthorizedAccessException("Refresh token principal is invalid");
+        }
+
         var newRefreshToken = GenerateRefreshToken();
+        storedToken.Revoke(newRefreshToken);
+        await PersistRefreshTokenAsync(user.Id, "User", newRefreshToken, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var accessToken = GenerateAccessToken(user.Id, user.TenantId.Value, user.Email, new[] { user.Role.ToString() }, user.TokenVersion);
 
         var response = new AuthResponse(
-            UserId: userId,
-            Email: "user@example.com",
-            FirstName: "User",
-            LastName: "Account",
+            UserId: user.Id,
+            Email: user.Email,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
             AccessToken: accessToken,
             RefreshToken: newRefreshToken,
             ExpiresAt: DateTime.UtcNow.AddHours(1)
         );
 
-        _logger.LogInformation("Token refreshed successfully");
+        _logger.LogInformation("Token refreshed successfully for user {UserId}", user.Id);
 
-        return await Task.FromResult(response);
+        return response;
     }
 
     /// <summary>
@@ -226,15 +244,17 @@ public class AuthService : IAuthService
         try
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                _configuration["Auth:JwtSecret"] ?? "your-secret-key-change-this-in-production"));
+                GetJwtSecret()));
 
             var tokenHandler = new JwtSecurityTokenHandler();
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = key,
-                ValidateIssuer = false,
-                ValidateAudience = false,
+                ValidateIssuer = true,
+                ValidIssuer = GetJwtIssuer(),
+                ValidateAudience = true,
+                ValidAudience = GetJwtAudience(),
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out SecurityToken validatedToken);
@@ -263,6 +283,13 @@ public class AuthService : IAuthService
 
         // Increment token version to invalidate all existing tokens
         user.IncrementTokenVersion();
+        var activeTokens = await _context.AuthRefreshTokens
+            .Where(t => t.PrincipalId == userId && t.PrincipalType == "User" && t.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+        foreach (var token in activeTokens)
+        {
+            token.Revoke();
+        }
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("User logged out successfully: {UserId}, New Token Version: {TokenVersion}", userId, user.TokenVersion);
@@ -274,12 +301,13 @@ public class AuthService : IAuthService
     public string GenerateAccessToken(Guid userId, Guid tenantId, string email, string[] roles, int tokenVersion = 1)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _configuration["Auth:JwtSecret"] ?? "your-secret-key-change-this-in-production"));
+            GetJwtSecret()));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new List<Claim>
         {
             new Claim("sub", userId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim("tenant_id", tenantId.ToString()),
             new Claim("email", email),
             new Claim("token_version", tokenVersion.ToString())
@@ -291,8 +319,8 @@ public class AuthService : IAuthService
         }
 
         var token = new JwtSecurityToken(
-            issuer: _configuration["Auth:Issuer"] ?? "KromicStore",
-            audience: _configuration["Auth:Audience"] ?? "KromicStore",
+            issuer: GetJwtIssuer(),
+            audience: GetJwtAudience(),
             claims: claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials
@@ -301,6 +329,41 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+
+    private async Task PersistRefreshTokenAsync(Guid principalId, string principalType, string refreshToken, CancellationToken cancellationToken)
+    {
+        var expiresAt = DateTime.UtcNow.AddDays(GetRefreshTokenExpirationDays());
+        var token = AuthRefreshToken.Create(principalId, principalType, refreshToken, expiresAt);
+        await _context.AuthRefreshTokens.AddAsync(token, cancellationToken);
+    }
+
+    private int GetRefreshTokenExpirationDays()
+    {
+        var configured = _configuration["Auth:RefreshTokenExpirationDays"]
+            ?? Environment.GetEnvironmentVariable("REFRESH_TOKEN_EXPIRATION_DAYS");
+        return int.TryParse(configured, out var days) && days > 0 ? days : 7;
+    }
+    private string GetJwtSecret()
+    {
+        return _configuration["Auth:JwtSecret"]
+            ?? _configuration["JWT_SECRET"]
+            ?? Environment.GetEnvironmentVariable("JWT_SECRET")
+            ?? throw new InvalidOperationException("JWT_SECRET is not configured");
+    }
+
+    private string GetJwtIssuer()
+    {
+        return _configuration["Auth:Issuer"]
+            ?? Environment.GetEnvironmentVariable("JWT_ISSUER")
+            ?? "KromicStore";
+    }
+
+    private string GetJwtAudience()
+    {
+        return _configuration["Auth:Audience"]
+            ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+            ?? "KromicStore";
+    }
     /// <summary>
     /// Generates a refresh token (32 random bytes, base64 encoded).
     /// </summary>

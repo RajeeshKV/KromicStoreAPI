@@ -29,7 +29,12 @@ public class PublicController : ControllerBase
     /// <summary>
     /// Get available subscription plans.
     /// </summary>
+    /// <returns>List of available subscription plans with pricing and features.</returns>
+    /// <response code="200">Subscription plans retrieved successfully.</response>
+    /// <response code="500">Server error retrieving plans.</response>
     [HttpGet("plans")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public IActionResult GetSubscriptionPlans()
     {
         try
@@ -90,7 +95,13 @@ public class PublicController : ControllerBase
     /// <summary>
     /// Get SuperUser configuration (contact details, etc).
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Platform configuration including contact details and social media links.</returns>
+    /// <response code="200">Configuration retrieved successfully.</response>
+    /// <response code="500">Server error retrieving configuration.</response>
     [HttpGet("config")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetSuperUserConfig(CancellationToken cancellationToken)
     {
         try
@@ -125,7 +136,16 @@ public class PublicController : ControllerBase
     /// <summary>
     /// Check if a subdomain is available for registration.
     /// </summary>
+    /// <param name="subdomain">The subdomain to check availability for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Availability status with reason if unavailable.</returns>
+    /// <response code="200">Subdomain availability check completed.</response>
+    /// <response code="400">Subdomain parameter missing.</response>
+    /// <response code="500">Server error checking availability.</response>
     [HttpGet("subdomain/check")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CheckSubdomainAvailability([FromQuery] string subdomain, CancellationToken cancellationToken)
     {
         try
@@ -176,7 +196,16 @@ public class PublicController : ControllerBase
     /// <summary>
     /// Submit contact us form - sends email to superuser.
     /// </summary>
+    /// <param name="request">Contact form data including name, email, and message.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success message confirming form submission.</returns>
+    /// <response code="200">Contact form submitted successfully.</response>
+    /// <response code="400">Required fields missing (name, email, message).</response>
+    /// <response code="500">Server error processing form or sending email.</response>
     [HttpPost("contactus")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ContactUs([FromBody] ContactUsRequest request, CancellationToken cancellationToken)
     {
         try

@@ -93,16 +93,17 @@ public class DomainTenantResolutionMiddleware
         }
 
         // Validate tenant status
-        if (!tenant.IsActive)
+        if (tenant.IsDeleted || tenant.IsArchived || !tenant.IsActive)
         {
             _logger.LogWarning(
-                "Tenant is inactive - TenantId: {TenantId}, TenantName: {TenantName}, CorrelationId: {CorrelationId}",
+                "Tenant is not available - TenantId: {TenantId}, TenantName: {TenantName}, Status: {Status}, CorrelationId: {CorrelationId}",
                 tenant.Id,
                 tenant.Name,
+                tenant.IsDeleted ? "Deleted" : tenant.IsArchived ? "Archived" : "Suspended",
                 correlationId);
 
             context.Response.StatusCode = 403;
-            await context.Response.WriteAsJsonAsync(new { error = "Tenant is inactive" });
+            await context.Response.WriteAsJsonAsync(new { error = "Tenant is not available" });
             return;
         }
 
@@ -144,7 +145,7 @@ public class DomainTenantResolutionMiddleware
     /// </summary>
     private bool ShouldSkipTenantResolution(string path)
     {
-        // Skip API endpoints
+        // Skip ALL API endpoints (including SuperUser auth)
         if (path.StartsWith("/api"))
             return true;
 
@@ -154,6 +155,10 @@ public class DomainTenantResolutionMiddleware
 
         // Skip Swagger/OpenAPI
         if (path.StartsWith("/swagger"))
+            return true;
+
+        // Skip Hangfire dashboard
+        if (path.StartsWith("/hangfire"))
             return true;
 
         return false;

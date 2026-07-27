@@ -2,6 +2,7 @@ namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Storefront;
 using KromicStore.Infrastructure.Services.StorefrontServices;
@@ -46,6 +47,7 @@ public class StorefrontController : BaseController
     /// <response code="401">User is not authenticated.</response>
     /// <response code="422">Invalid theme ID or operation failed.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpPost("from-theme")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -101,6 +103,7 @@ public class StorefrontController : BaseController
     /// <response code="400">Validation failed or invalid request.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpPost("from-scratch")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -258,6 +261,7 @@ public class StorefrontController : BaseController
     /// <response code="403">User does not have access to this storefront.</response>
     /// <response code="404">Storefront not found.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -382,6 +386,7 @@ public class StorefrontController : BaseController
     /// <response code="404">Storefront not found.</response>
     /// <response code="422">Cannot publish: missing mandatory fields or invalid state.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpPost("{id}/publish")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -443,6 +448,7 @@ public class StorefrontController : BaseController
     /// <response code="403">User does not have access to this storefront.</response>
     /// <response code="404">Storefront not found.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -53,6 +53,8 @@ public class SuperUserAuthService : ISuperUserAuthService
         var accessToken = GenerateAccessToken(superUser.Id, superUser.Email, new[] { "SuperUser" }, superUser.TokenVersion);
         var refreshToken = GenerateRefreshToken();
 
+        await PersistRefreshTokenAsync(superUser.Id, refreshToken, cancellationToken);
+
         var response = new AuthResponse(
             UserId: superUser.Id,
             Email: superUser.Email,
@@ -69,9 +71,42 @@ public class SuperUserAuthService : ISuperUserAuthService
     /// <inheritdoc />
     public async Task<AuthResponse> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
-        // For simplicity, validate refresh token and issue new access token
-        // In production, store refresh tokens in database with expiration
-        throw new NotImplementedException("Refresh token flow not yet implemented");
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            throw new ArgumentException("Refresh token cannot be empty", nameof(refreshToken));
+
+        var tokenHash = AuthRefreshToken.Hash(refreshToken);
+        var storedToken = await _context.AuthRefreshTokens
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash && t.PrincipalType == "SuperUser", cancellationToken);
+
+        if (storedToken == null || !storedToken.IsActive)
+        {
+            throw new UnauthorizedAccessException("Refresh token is invalid or expired");
+        }
+
+        var superUser = await _context.SuperUsers
+            .FirstOrDefaultAsync(su => su.Id == storedToken.PrincipalId && su.IsActive, cancellationToken);
+
+        if (superUser == null)
+        {
+            throw new UnauthorizedAccessException("Refresh token principal is invalid");
+        }
+
+        var newRefreshToken = GenerateRefreshToken();
+        storedToken.Revoke(newRefreshToken);
+        await PersistRefreshTokenAsync(superUser.Id, newRefreshToken, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var accessToken = GenerateAccessToken(superUser.Id, superUser.Email, new[] { "SuperUser" }, superUser.TokenVersion);
+
+        return new AuthResponse(
+            UserId: superUser.Id,
+            Email: superUser.Email,
+            FirstName: superUser.FirstName,
+            LastName: superUser.LastName,
+            AccessToken: accessToken,
+            RefreshToken: newRefreshToken,
+            ExpiresAt: DateTime.UtcNow.AddHours(1)
+        );
     }
 
     /// <inheritdoc />
@@ -86,8 +121,10 @@ public class SuperUserAuthService : ISuperUserAuthService
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false,
-                ValidateAudience = false,
+                ValidateIssuer = true,
+                ValidIssuer = GetJwtIssuer(),
+                ValidateAudience = true,
+                ValidAudience = GetJwtAudience(),
                 ClockSkew = TimeSpan.Zero
             };
 
@@ -108,12 +145,15 @@ public class SuperUserAuthService : ISuperUserAuthService
         {
             Subject = new ClaimsIdentity(new[]
             {
+                new Claim("sub", superUserId.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, superUserId.ToString()),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, "SuperUser"),
                 new Claim("type", "superuser"),
                 new Claim("token_version", tokenVersion.ToString())
             }),
+            Issuer = GetJwtIssuer(),
+            Audience = GetJwtAudience(),
             Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
@@ -137,11 +177,47 @@ public class SuperUserAuthService : ISuperUserAuthService
 
         // Increment token version to invalidate all existing tokens
         superUser.IncrementTokenVersion();
+        var activeTokens = await _context.AuthRefreshTokens
+            .Where(t => t.PrincipalId == superUserId && t.PrincipalType == "SuperUser" && t.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+        foreach (var token in activeTokens)
+        {
+            token.Revoke();
+        }
         await _context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("SuperUser logged out successfully: {SuperUserId}, New Token Version: {TokenVersion}", superUserId, superUser.TokenVersion);
     }
 
+
+    private async Task PersistRefreshTokenAsync(Guid superUserId, string refreshToken, CancellationToken cancellationToken)
+    {
+        var expiresAt = DateTime.UtcNow.AddDays(GetRefreshTokenExpirationDays());
+        var token = AuthRefreshToken.Create(superUserId, "SuperUser", refreshToken, expiresAt);
+        await _context.AuthRefreshTokens.AddAsync(token, cancellationToken);
+    }
+
+    private int GetRefreshTokenExpirationDays()
+    {
+        var configured = _configuration["Auth:RefreshTokenExpirationDays"]
+            ?? Environment.GetEnvironmentVariable("REFRESH_TOKEN_EXPIRATION_DAYS");
+        return int.TryParse(configured, out var days) && days > 0 ? days : 7;
+    }
+    private string GetJwtIssuer()
+    {
+        return Environment.GetEnvironmentVariable("SUPERUSER_JWT_ISSUER")
+            ?? _configuration["Auth:Issuer"]
+            ?? Environment.GetEnvironmentVariable("JWT_ISSUER")
+            ?? "KromicStore";
+    }
+
+    private string GetJwtAudience()
+    {
+        return Environment.GetEnvironmentVariable("SUPERUSER_JWT_AUDIENCE")
+            ?? _configuration["Auth:Audience"]
+            ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+            ?? "KromicStore";
+    }
     private string GenerateRefreshToken()
     {
         // Generate a random refresh token

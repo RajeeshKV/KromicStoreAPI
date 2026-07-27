@@ -3,6 +3,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using KromicStore.Application.Interfaces;
@@ -18,7 +19,7 @@ using System.Threading.Tasks;
 /// </summary>
 [ApiController]
 [Route("api/v1/webhooks")]
-[Authorize]
+[Authorize(Policy = Permissions.SettingsRead)]
 public class WebhookController : BaseController
 {
     private readonly IWebhookService _webhookService;
@@ -40,13 +41,20 @@ public class WebhookController : BaseController
     /// <summary>
     /// Registers a new webhook configuration.
     /// </summary>
-    /// <param name="request">The webhook configuration request.</param>
+    /// <param name="request">The webhook configuration request with endpoint URL and event types.</param>
     /// <returns>The registered webhook configuration with generated secret.</returns>
+    /// <response code="201">Webhook successfully registered.</response>
+    /// <response code="400">Invalid request or endpoint URL.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User is not authorized.</response>
+    /// <response code="500">Server error during registration.</response>
+    [Authorize(Policy = Permissions.SettingsWrite)]
     [HttpPost]
     [ProducesResponseType(typeof(WebhookConfigurationResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterWebhook([FromBody] WebhookConfigurationRequest request)
     {
         if (request == null)
@@ -108,9 +116,15 @@ public class WebhookController : BaseController
     /// </summary>
     /// <param name="id">The webhook configuration ID.</param>
     /// <returns>The webhook configuration details.</returns>
+    /// <response code="200">Webhook configuration successfully retrieved.</response>
+    /// <response code="400">Invalid webhook ID.</response>
+    /// <response code="404">Webhook not found.</response>
+    /// <response code="500">Server error retrieving webhook.</response>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(WebhookConfigurationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public IActionResult GetWebhook(Guid id)
     {
         if (id == Guid.Empty)
@@ -150,8 +164,13 @@ public class WebhookController : BaseController
     /// <param name="pageNumber">The page number (default 1).</param>
     /// <param name="pageSize">The page size (default 10, max 100).</param>
     /// <returns>Paginated list of webhooks.</returns>
+    /// <response code="200">Webhooks successfully retrieved.</response>
+    /// <response code="400">Invalid pagination parameters.</response>
+    /// <response code="500">Server error listing webhooks.</response>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponse<WebhookConfigurationResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ListWebhooks(int pageNumber = 1, int pageSize = 10)
     {
         try
@@ -191,9 +210,16 @@ public class WebhookController : BaseController
     /// <param name="id">The webhook configuration ID.</param>
     /// <param name="request">The updated webhook configuration.</param>
     /// <returns>The updated webhook configuration.</returns>
+    /// <response code="200">Webhook successfully updated.</response>
+    /// <response code="400">Invalid webhook ID or request data.</response>
+    /// <response code="404">Webhook not found.</response>
+    /// <response code="500">Server error updating webhook.</response>
+    [Authorize(Policy = Permissions.SettingsWrite)]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(WebhookConfigurationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public IActionResult UpdateWebhook(Guid id, [FromBody] WebhookConfigurationRequest request)
     {
         if (id == Guid.Empty)
@@ -232,9 +258,16 @@ public class WebhookController : BaseController
     /// </summary>
     /// <param name="id">The webhook configuration ID.</param>
     /// <returns>No content response on success.</returns>
+    /// <response code="204">Webhook successfully deleted.</response>
+    /// <response code="400">Invalid webhook ID.</response>
+    /// <response code="404">Webhook not found.</response>
+    /// <response code="500">Server error deleting webhook.</response>
+    [Authorize(Policy = Permissions.SettingsWrite)]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteWebhook(Guid id)
     {
         if (id == Guid.Empty)
@@ -270,9 +303,16 @@ public class WebhookController : BaseController
     /// </summary>
     /// <param name="id">The webhook configuration ID.</param>
     /// <returns>The test delivery result.</returns>
+    /// <response code="200">Test event sent successfully.</response>
+    /// <response code="400">Invalid webhook ID.</response>
+    /// <response code="404">Webhook not found.</response>
+    /// <response code="500">Server error sending test event.</response>
+    [Authorize(Policy = Permissions.SettingsWrite)]
     [HttpPost("{id}/test")]
     [ProducesResponseType(typeof(TestEventResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public IActionResult SendTestEvent(Guid id)
     {
         if (id == Guid.Empty)
@@ -310,9 +350,16 @@ public class WebhookController : BaseController
     /// </summary>
     /// <param name="eventId">The event ID to replay.</param>
     /// <returns>No content response on success.</returns>
+    /// <response code="202">Event replay accepted for processing.</response>
+    /// <response code="400">Invalid event ID.</response>
+    /// <response code="404">Event not found.</response>
+    /// <response code="500">Server error replaying event.</response>
+    [Authorize(Policy = Permissions.SettingsWrite)]
     [HttpPost("events/{eventId}/replay")]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ReplayEvent(Guid eventId)
     {
         if (eventId == Guid.Empty)
@@ -350,9 +397,15 @@ public class WebhookController : BaseController
     /// <param name="pageNumber">The page number.</param>
     /// <param name="pageSize">The page size.</param>
     /// <returns>Paginated list of delivery logs.</returns>
+    /// <response code="200">Delivery logs successfully retrieved.</response>
+    /// <response code="400">Invalid webhook ID or pagination parameters.</response>
+    /// <response code="404">Webhook not found.</response>
+    /// <response code="500">Server error retrieving delivery logs.</response>
     [HttpGet("{id}/deliveries")]
     [ProducesResponseType(typeof(PagedResponse<WebhookDeliveryLogResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetDeliveryLogs(Guid id, int pageNumber = 1, int pageSize = 10)
     {
         if (id == Guid.Empty)

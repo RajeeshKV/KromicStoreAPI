@@ -24,6 +24,7 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<Subscription>? _subscriptionRepository;
     private IThemeRepository? _themeRepository;
     private IStorefrontRepository? _storefrontRepository;
+    private IRepository<TenantDomain>? _tenantDomainRepository;
 
     /// <summary>
     /// Initializes a new instance of the UnitOfWork class.
@@ -69,6 +70,9 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public IStorefrontRepository Storefronts => _storefrontRepository ??= new StorefrontRepository(_context, _loggerFactory.CreateLogger<StorefrontRepository>());
+
+    /// <inheritdoc />
+    public IRepository<TenantDomain> TenantDomains => _tenantDomainRepository ??= new Repository<TenantDomain>(_context, _loggerFactory.CreateLogger<Repository<TenantDomain>>());
 
     /// <inheritdoc />
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -16,12 +16,17 @@ using FluentValidation;
 using KromicStore.Application.Validators;
 using MediatR;
 using KromicStore.API.Middleware;
+using KromicStore.API.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using StackExchange.Redis;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.IO.Compression;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -119,6 +124,8 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     }
 });
 
+builder.Services.AddMemoryCache();
+
 // Cache
 var redisConn = Environment.GetEnvironmentVariable("REDIS_URL");
 IConnectionMultiplexer? redis = null;
@@ -189,7 +196,35 @@ builder.Services.AddScoped<DefaultDataPopulator>();
 builder.Services.AddScoped<IStorefrontCreationService, StorefrontCreationService>();
 builder.Services.AddScoped<IStoreBootstrapService, StoreBootstrapService>();
 
+// Audit Logging
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
+// Domain Verification
+builder.Services.AddScoped<IDomainVerificationService, DomainVerificationService>();
+
+// Team Invitations
+builder.Services.AddScoped<ITeamInvitationService, TeamInvitationService>();
+
+// Feature Flags
+builder.Services.AddScoped<IFeatureFlagService, FeatureFlagService>();
+
+// Notification Service
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// API Key Management
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+
+// Store Export/Backup
+builder.Services.AddScoped<IStoreExportService, StoreExportService>();
+
+// Usage Reporting
+builder.Services.AddScoped<IUsageReportingService, UsageReportingService>();
+
+// SuperUser Analytics
+builder.Services.AddScoped<ISuperUserAnalyticsService, SuperUserAnalyticsService>();
+
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // HTTP clients
 builder.Services.AddExternalServiceHttpClients(builder.Configuration);
@@ -232,15 +267,95 @@ builder.Services.Configure<ErrorHandlingOptions>(builder.Configuration.GetSectio
 builder.Services.Configure<RateLimitingOptions>(builder.Configuration.GetSection("Middleware:RateLimiting"));
 
 // Auth
+var jwtSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret!));
+var jwtIssuer = builder.Configuration["Auth:Issuer"]
+    ?? Environment.GetEnvironmentVariable("JWT_ISSUER")
+    ?? "KromicStore";
+var jwtAudience = builder.Configuration["Auth:Audience"]
+    ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+    ?? "KromicStore";
+var superUserJwtIssuer = Environment.GetEnvironmentVariable("SUPERUSER_JWT_ISSUER") ?? jwtIssuer;
+var superUserJwtAudience = Environment.GetEnvironmentVariable("SUPERUSER_JWT_AUDIENCE") ?? jwtAudience;
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
-        opt.Authority = Environment.GetEnvironmentVariable("JWT_AUTHORITY");
-        opt.Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
         opt.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        opt.MapInboundClaims = false;
+        opt.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = jwtSigningKey,
+            ValidateIssuer = true,
+            ValidIssuers = new[] { jwtIssuer, superUserJwtIssuer }.Distinct(),
+            ValidateAudience = true,
+            ValidAudiences = new[] { jwtAudience, superUserJwtAudience }.Distinct(),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2),
+            NameClaimType = "sub",
+            RoleClaimType = ClaimTypes.Role
+        };
+        opt.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var principal = context.Principal;
+                var userIdClaim = principal?.FindFirst("sub")?.Value
+                    ?? principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var tokenVersionClaim = principal?.FindFirst("token_version")?.Value;
+
+                if (!Guid.TryParse(userIdClaim, out var userId) ||
+                    !int.TryParse(tokenVersionClaim, out var tokenVersion))
+                {
+                    context.Fail("Token is missing required identity claims.");
+                    return;
+                }
+
+                var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                var isSuperUser = principal?.FindFirst("type")?.Value == "superuser";
+
+                var isValid = isSuperUser
+                    ? await db.SuperUsers
+                        .AsNoTracking()
+                        .AnyAsync(su => su.Id == userId && su.IsActive && su.TokenVersion == tokenVersion)
+                    : await db.Users
+                        .AsNoTracking()
+                        .AnyAsync(u => u.Id == userId && u.IsActive && u.TokenVersion == tokenVersion);
+
+                if (!isValid)
+                {
+                    context.Fail("Token has been revoked or the account is inactive.");
+                }
+            }
+        };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SuperUserOnly", policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireClaim("type", "superuser")
+            .RequireRole("SuperUser"));
+
+    foreach (var permission in new[]
+    {
+        Permissions.ProductsRead, Permissions.ProductsWrite,
+        Permissions.OrdersRead, Permissions.OrdersWrite,
+        Permissions.CustomersRead, Permissions.CustomersWrite,
+        Permissions.ThemesRead, Permissions.ThemesWrite,
+        Permissions.StoreRead, Permissions.StoreWrite,
+        Permissions.BillingRead, Permissions.BillingWrite,
+        Permissions.AnalyticsRead,
+        Permissions.StaffRead, Permissions.StaffWrite,
+        Permissions.SettingsRead, Permissions.SettingsWrite,
+        Permissions.DomainsRead, Permissions.DomainsWrite
+    })
+    {
+        options.AddPolicy(permission, policy =>
+            policy.RequireAuthenticatedUser()
+                .AddRequirements(new PermissionRequirement(permission)));
+    }
+});
 
 // Compression
 builder.Services.AddResponseCompression(opt =>
@@ -436,11 +551,12 @@ app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.Health
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<DomainTenantResolutionMiddleware>();
+app.UseAuthentication();
 app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseMiddleware<AuditLoggingMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<RateLimitingMiddleware>();
-
-app.UseAuthentication();
+app.UseMiddleware<IdempotencyMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

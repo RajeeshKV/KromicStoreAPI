@@ -1,6 +1,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Payments;
@@ -12,7 +13,7 @@ using KromicStore.Contracts.V1.Payments;
 [ApiController]
 [Route("api/v1/payments")]
 [Produces("application/json")]
-[Authorize]
+[Authorize(Policy = Permissions.BillingRead)]
 public class PaymentController : BaseController
 {
     private readonly IPaymentService _paymentService;
@@ -47,6 +48,7 @@ public class PaymentController : BaseController
     /// <response code="404">Order not found.</response>
     /// <response code="409">Duplicate payment attempt detected (idempotency).</response>
     /// <response code="503">Payment gateway temporarily unavailable.</response>
+    [Authorize(Policy = Permissions.BillingWrite)]
     [HttpPost("create")]
     [ProducesResponseType(typeof(PaymentStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -202,6 +204,7 @@ public class PaymentController : BaseController
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Payment not found.</response>
     /// <response code="503">Payment gateway temporarily unavailable.</response>
+    [Authorize(Policy = Permissions.BillingWrite)]
     [HttpPost("{id}/refund")]
     [ProducesResponseType(typeof(PaymentStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

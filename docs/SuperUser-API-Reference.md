@@ -16,6 +16,63 @@ https://api.kromicstore.com/api/v1
 
 ## Authentication Endpoints
 
+### SuperUser Register
+
+Register a new SuperUser (platform admin) account.
+
+**Endpoint:** `POST /superuser/auth/register`
+
+**Request Body:**
+```json
+{
+  "email": "admin@kromicstore.com",
+  "firstName": "Admin",
+  "lastName": "User",
+  "password": "SecurePassword123!"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "data": {
+    "id": "super-user-uuid",
+    "email": "admin@kromicstore.com",
+    "firstName": "Admin",
+    "lastName": "User",
+    "isActive": true,
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+**Error Responses:**
+
+- **400 Bad Request:**
+```json
+{
+  "error": "Email address is already registered"
+}
+```
+
+- **400 Bad Request (Validation):**
+```json
+{
+  "error": "Email is required"
+}
+```
+
+- **500 Internal Server Error:**
+```json
+{
+  "error": "An error occurred during registration"
+}
+```
+
+**Note:** This endpoint should be protected or restricted in production. Currently, it's publicly accessible for initial setup.
+
+---
+
 ### SuperUser Login
 
 Authenticates a SuperUser with email and password.

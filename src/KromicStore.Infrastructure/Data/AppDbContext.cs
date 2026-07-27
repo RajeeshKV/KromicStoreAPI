@@ -19,6 +19,11 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the refresh token sessions table.
+    /// </summary>
+    public DbSet<AuthRefreshToken> AuthRefreshTokens { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets the Products table.
     /// </summary>
     public DbSet<Product> Products { get; set; } = null!;
@@ -62,6 +67,51 @@ public class AppDbContext : DbContext
     /// Gets or sets the ConfigurationAuditLogs table.
     /// </summary>
     public DbSet<ConfigurationAuditLog> ConfigurationAuditLogs { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the comprehensive AuditLogs table.
+    /// </summary>
+    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the TeamInvitations table.
+    /// </summary>
+    public DbSet<TeamInvitation> TeamInvitations { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the FeatureFlags table.
+    /// </summary>
+    public DbSet<FeatureFlag> FeatureFlags { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the Notifications table.
+    /// </summary>
+    public DbSet<Notification> Notifications { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the ApiKeys table.
+    /// </summary>
+    public DbSet<ApiKey> ApiKeys { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the CustomerAddresses table.
+    /// </summary>
+    public DbSet<CustomerAddress> CustomerAddresses { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the Wishlists table.
+    /// </summary>
+    public DbSet<Wishlist> Wishlists { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the CustomerGroups table.
+    /// </summary>
+    public DbSet<CustomerGroup> CustomerGroups { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the TenantUsage table.
+    /// </summary>
+    public DbSet<TenantUsage> TenantUsage { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets the Categories table.
@@ -161,6 +211,9 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.ContactEmail).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.IsArchived).IsRequired();
+            entity.Property(e => e.IsDeleted).IsRequired();
+            entity.Property(e => e.LifecycleReason).HasMaxLength(1000);
             entity.HasIndex(e => e.TenantId).IsUnique();
             entity.HasIndex(e => e.ContactEmail);
         });
@@ -177,6 +230,21 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => new { e.TenantId, e.Email }).IsUnique();
         });
 
+
+        // Configure AuthRefreshToken entity
+        modelBuilder.Entity<AuthRefreshToken>(entity =>
+        {
+            entity.ToTable("AuthRefreshTokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PrincipalId).IsRequired();
+            entity.Property(e => e.PrincipalType).IsRequired().HasMaxLength(32);
+            entity.Property(e => e.TokenHash).IsRequired().HasMaxLength(128);
+            entity.Property(e => e.ReplacedByTokenHash).HasMaxLength(128);
+            entity.Property(e => e.IpAddress).HasMaxLength(64);
+            entity.Property(e => e.UserAgent).HasMaxLength(512);
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => new { e.PrincipalId, e.PrincipalType, e.RevokedAt, e.ExpiresAt });
+        });
         // Configure SuperUser entity
         modelBuilder.Entity<SuperUser>(entity =>
         {
@@ -209,8 +277,204 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Domain).IsRequired().HasMaxLength(255);
             entity.Property(e => e.IsPrimary).IsRequired();
             entity.Property(e => e.IsVerified).IsRequired();
+            entity.Property(e => e.VerificationToken).IsRequired().HasMaxLength(128);
+            entity.Property(e => e.SslStatus).IsRequired().HasMaxLength(50);
             entity.HasIndex(e => new { e.TenantId, e.Domain }).IsUnique();
             entity.HasIndex(e => e.Domain);
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure AuditLog entity
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLogs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId);
+            entity.Property(e => e.UserId);
+            entity.Property(e => e.UserType).HasMaxLength(32);
+            entity.Property(e => e.EntityType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.EntityId);
+            entity.Property(e => e.Action).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.IpAddress).HasMaxLength(64);
+            entity.Property(e => e.UserAgent).HasMaxLength(512);
+            entity.Property(e => e.CorrelationId).HasMaxLength(64);
+            entity.Property(e => e.OldState);
+            entity.Property(e => e.NewState);
+            entity.Property(e => e.Metadata);
+            entity.Property(e => e.Success).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.Property(e => e.OccurredAt).IsRequired();
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.EntityType, e.EntityId });
+            entity.HasIndex(e => e.OccurredAt);
+            entity.HasIndex(e => e.CorrelationId);
+        });
+
+        // Configure TeamInvitation entity
+        modelBuilder.Entity<TeamInvitation>(entity =>
+        {
+            entity.ToTable("TeamInvitations");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(128);
+            entity.Property(e => e.ExpiresAt).IsRequired();
+            entity.Property(e => e.AcceptedAt);
+            entity.Property(e => e.InvitedBy).IsRequired();
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
+            entity.HasIndex(e => new { e.TenantId, e.Email });
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure FeatureFlag entity
+        modelBuilder.Entity<FeatureFlag>(entity =>
+        {
+            entity.ToTable("FeatureFlags");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId);
+            entity.Property(e => e.Key).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.IsEnabled).IsRequired();
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.Plan).HasMaxLength(50);
+            entity.HasIndex(e => new { e.TenantId, e.Key }).IsUnique();
+            entity.HasIndex(e => e.Key);
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.Plan);
+        });
+
+        // Configure Notification entity
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notifications");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId);
+            entity.Property(e => e.RecipientId);
+            entity.Property(e => e.RecipientEmail).HasMaxLength(255);
+            entity.Property(e => e.RecipientPhone).HasMaxLength(50);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.TemplateKey).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Subject).HasMaxLength(500);
+            entity.Property(e => e.Body).IsRequired();
+            entity.Property(e => e.Data);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.RetryCount).IsRequired();
+            entity.Property(e => e.SentAt);
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.Property(e => e.ScheduledAt);
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.RecipientId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.ScheduledAt);
+        });
+
+        // Configure ApiKey entity
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.ToTable("ApiKeys");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.KeyHash).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.KeyPrefix).IsRequired().HasMaxLength(4);
+            entity.Property(e => e.Scopes).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.ExpiresAt);
+            entity.Property(e => e.LastUsedAt);
+            entity.Property(e => e.CreatedBy).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.HasIndex(e => new { e.TenantId, e.KeyHash });
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure CustomerAddress entity
+        modelBuilder.Entity<CustomerAddress>(entity =>
+        {
+            entity.ToTable("CustomerAddresses");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CustomerId).IsRequired();
+            entity.Property(e => e.AddressType).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.IsDefault).IsRequired();
+            entity.Property(e => e.Label).HasMaxLength(100);
+            entity.OwnsOne(e => e.Address, a =>
+            {
+                a.Property(p => p.Street).IsRequired().HasMaxLength(255);
+                a.Property(p => p.City).IsRequired().HasMaxLength(100);
+                a.Property(p => p.State).IsRequired().HasMaxLength(100);
+                a.Property(p => p.PostalCode).IsRequired().HasMaxLength(20);
+                a.Property(p => p.Country).IsRequired().HasMaxLength(100);
+            });
+            entity.HasIndex(e => new { e.CustomerId, e.AddressType, e.IsDefault });
+            entity.HasOne<Customer>()
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure Wishlist entity
+        modelBuilder.Entity<Wishlist>(entity =>
+        {
+            entity.ToTable("Wishlists");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CustomerId).IsRequired();
+            entity.Property(e => e.ProductId).IsRequired();
+            entity.Property(e => e.AddedAt).IsRequired();
+            entity.HasIndex(e => new { e.CustomerId, e.ProductId }).IsUnique();
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.ProductId);
+            entity.HasOne<Customer>()
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure CustomerGroup entity
+        modelBuilder.Entity<CustomerGroup>(entity =>
+        {
+            entity.ToTable("CustomerGroups");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.DiscountPercentage).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.HasIndex(e => new { e.TenantId, e.Name }).IsUnique();
+            entity.HasIndex(e => e.TenantId);
+            entity.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure TenantUsage entity
+        modelBuilder.Entity<TenantUsage>(entity =>
+        {
+            entity.ToTable("TenantUsage");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.UsageType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Amount).IsRequired();
+            entity.Property(e => e.Unit).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.PeriodStart).IsRequired();
+            entity.Property(e => e.PeriodEnd).IsRequired();
+            entity.HasIndex(e => new { e.TenantId, e.UsageType, e.PeriodStart, e.PeriodEnd });
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.PeriodStart);
             entity.HasOne<Tenant>()
                 .WithMany()
                 .HasForeignKey(e => e.TenantId)

@@ -2,6 +2,7 @@ namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Storefront;
 using System.Text.Json;
@@ -44,6 +45,7 @@ public class StorefrontComponentController : BaseController
     /// <response code="403">User does not have access to this storefront.</response>
     /// <response code="404">Storefront or component not found.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpPut("{componentId}/toggle-visibility")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -101,6 +103,7 @@ public class StorefrontComponentController : BaseController
     /// <response code="403">User does not have access to this storefront.</response>
     /// <response code="404">Storefront or component not found.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpPut("{componentId}/hide")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -149,6 +152,7 @@ public class StorefrontComponentController : BaseController
     /// <response code="403">User does not have access to this storefront.</response>
     /// <response code="404">Storefront or component not found.</response>
     /// <response code="500">Internal server error.</response>
+    [Authorize(Policy = Permissions.StoreWrite)]
     [HttpPut("{componentId}/show")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

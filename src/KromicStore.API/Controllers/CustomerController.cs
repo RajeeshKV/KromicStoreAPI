@@ -1,6 +1,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Customers;
@@ -13,7 +14,7 @@ using KromicStore.Domain.ValueObjects;
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces("application/json")]
-[Authorize]
+[Authorize(Policy = Permissions.CustomersRead)]
 public class CustomerController : BaseController
 {
     private readonly ICustomerService _customerService;
@@ -157,6 +158,7 @@ public class CustomerController : BaseController
     /// <response code="400">Invalid customer data or email already exists.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="409">Email already exists within tenant.</response>
+    [Authorize(Policy = Permissions.CustomersWrite)]
     [HttpPost]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -220,6 +222,7 @@ public class CustomerController : BaseController
     /// <response code="400">Invalid customer data.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Customer not found.</response>
+    [Authorize(Policy = Permissions.CustomersWrite)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -272,6 +275,7 @@ public class CustomerController : BaseController
     /// <response code="204">Customer successfully deleted (anonymized).</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Customer not found.</response>
+    [Authorize(Policy = Permissions.CustomersWrite)]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -394,6 +398,7 @@ public class CustomerController : BaseController
     /// <response code="400">Invalid address data.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Customer not found.</response>
+    [Authorize(Policy = Permissions.CustomersWrite)]
     [HttpPost("{id:guid}/addresses")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -68,6 +68,11 @@ public interface IUnitOfWork : IDisposable
     IStorefrontRepository Storefronts { get; }
 
     /// <summary>
+    /// Gets the tenant domain repository.
+    /// </summary>
+    IRepository<TenantDomain> TenantDomains { get; }
+
+    /// <summary>
     /// Commits all changes to the database.
     /// </summary>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

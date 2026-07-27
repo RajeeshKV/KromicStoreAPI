@@ -1,6 +1,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Subscriptions;
@@ -11,7 +12,7 @@ using KromicStore.Contracts.V1.Subscriptions;
 [ApiController]
 [Route("api/v1/subscriptions")]
 [Produces("application/json")]
-[Authorize(Roles = "TenantAdmin,SuperUser")]
+[Authorize(Policy = Permissions.BillingWrite)]
 public class SubscriptionController : BaseController
 {
     private readonly ISubscriptionService _subscriptionService;

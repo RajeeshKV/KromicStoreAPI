@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using KromicStore.Application.Interfaces;
@@ -135,6 +136,7 @@ public class ConfigController : BaseController
     /// <param name="request">The configuration update request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The updated configuration.</returns>
+    [Authorize(Policy = Permissions.SettingsWrite)]
     [HttpPut("{key}")]
     [ProducesResponseType(typeof(TenantConfigurationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
@@ -282,6 +284,7 @@ public class ConfigController : BaseController
     /// <param name="key">The configuration key.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>Success response.</returns>
+    [Authorize(Policy = Permissions.SettingsWrite)]
     [HttpPost("reset-to-defaults/{key}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]

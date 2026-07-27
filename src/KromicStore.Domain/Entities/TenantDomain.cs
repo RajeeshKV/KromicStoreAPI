@@ -17,6 +17,15 @@ public class TenantDomain : BaseEntity
     /// <summary>Gets a value indicating whether the domain ownership has been verified.</summary>
     public bool IsVerified { get; private set; }
 
+    /// <summary>Gets the DNS verification token expected for this domain.</summary>
+    public string VerificationToken { get; private set; } = string.Empty;
+
+    /// <summary>Gets the date when ownership was verified.</summary>
+    public DateTime? VerifiedAt { get; private set; }
+
+    /// <summary>Gets the SSL provisioning status.</summary>
+    public string SslStatus { get; private set; } = "Pending";
+
     /// <summary>Navigation property to the tenant.</summary>
     public Tenant? Tenant { get; private set; }
 
@@ -38,7 +47,9 @@ public class TenantDomain : BaseEntity
             TenantId = tenantId,
             Domain = normalizedDomain,
             IsPrimary = isPrimary,
-            IsVerified = false // New domains require verification
+            IsVerified = false, // New domains require verification
+            VerificationToken = GenerateVerificationToken(),
+            SslStatus = "Pending"
         };
     }
 
@@ -48,6 +59,8 @@ public class TenantDomain : BaseEntity
     public void MarkAsVerified()
     {
         IsVerified = true;
+        VerifiedAt = DateTime.UtcNow;
+        UpdateTimestamp();
     }
 
     /// <summary>
@@ -56,6 +69,10 @@ public class TenantDomain : BaseEntity
     public void MarkAsUnverified()
     {
         IsVerified = false;
+        VerifiedAt = null;
+        VerificationToken = GenerateVerificationToken();
+        SslStatus = "Pending";
+        UpdateTimestamp();
     }
 
     /// <summary>
@@ -83,5 +100,23 @@ public class TenantDomain : BaseEntity
             throw new ArgumentException("Domain is required.", nameof(domain));
 
         Domain = domain.ToLowerInvariant().Trim().TrimEnd('.');
+        MarkAsUnverified();
+    }
+
+    /// <summary>
+    /// Updates SSL provisioning status.
+    /// </summary>
+    public void UpdateSslStatus(string sslStatus)
+    {
+        if (string.IsNullOrWhiteSpace(sslStatus))
+            throw new ArgumentException("SSL status is required.", nameof(sslStatus));
+
+        SslStatus = sslStatus.Trim();
+        UpdateTimestamp();
+    }
+
+    private static string GenerateVerificationToken()
+    {
+        return $"kromic-verify-{Guid.NewGuid():N}";
     }
 }

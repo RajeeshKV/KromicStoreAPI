@@ -1,6 +1,7 @@
 namespace KromicStore.API.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
+using KromicStore.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using KromicStore.Application.Interfaces;
 using KromicStore.Contracts.V1.Orders;
@@ -11,7 +12,7 @@ using KromicStore.Contracts.V1.Orders;
 [ApiController]
 [Route("api/v1/orders")]
 [Produces("application/json")]
-[Authorize]
+[Authorize(Policy = Permissions.OrdersRead)]
 public class OrderController : BaseController
 {
     private readonly IOrderService _orderService;
@@ -142,6 +143,7 @@ public class OrderController : BaseController
     /// <response code="201">Order successfully created.</response>
     /// <response code="400">Invalid order data or insufficient stock.</response>
     /// <response code="401">User is not authenticated.</response>
+    [Authorize(Policy = Permissions.OrdersWrite)]
     [HttpPost]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -193,6 +195,7 @@ public class OrderController : BaseController
     /// <response code="400">Invalid order data or order not in pending status.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Order not found.</response>
+    [Authorize(Policy = Permissions.OrdersWrite)]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -251,6 +254,7 @@ public class OrderController : BaseController
     /// <response code="400">Invalid order status for confirmation.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Order not found.</response>
+    [Authorize(Policy = Permissions.OrdersWrite)]
     [HttpPost("{id:guid}/confirm")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -305,6 +309,7 @@ public class OrderController : BaseController
     /// <response code="400">Invalid order status for shipping.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Order not found.</response>
+    [Authorize(Policy = Permissions.OrdersWrite)]
     [HttpPost("{id:guid}/ship")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -363,6 +368,7 @@ public class OrderController : BaseController
     /// <response code="400">Invalid order status for delivery.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Order not found.</response>
+    [Authorize(Policy = Permissions.OrdersWrite)]
     [HttpPost("{id:guid}/deliver")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -416,6 +422,7 @@ public class OrderController : BaseController
     /// <response code="400">Invalid order status for cancellation.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="404">Order not found.</response>
+    [Authorize(Policy = Permissions.OrdersWrite)]
     [HttpPost("{id:guid}/cancel")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
