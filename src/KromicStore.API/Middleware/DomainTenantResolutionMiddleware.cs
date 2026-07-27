@@ -145,7 +145,7 @@ public class DomainTenantResolutionMiddleware
     /// </summary>
     private bool ShouldSkipTenantResolution(string path)
     {
-        // Skip ALL API endpoints (including SuperUser auth)
+        // Skip ALL API endpoints (including SuperUser auth and public endpoints)
         if (path.StartsWith("/api"))
             return true;
 

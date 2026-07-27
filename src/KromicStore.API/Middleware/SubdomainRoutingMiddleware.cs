@@ -33,6 +33,14 @@ public class SubdomainRoutingMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var host = context.Request.Host.Host.ToLowerInvariant();
+        var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
+        
+        // Skip for API paths and health checks
+        if (path.StartsWith("/api") || path.StartsWith("/health") || path.StartsWith("/swagger") || path.StartsWith("/hangfire"))
+        {
+            await _next(context);
+            return;
+        }
         
         // Extract subdomain (everything before the main domain)
         // Assuming main domain is kromic.in
@@ -55,7 +63,8 @@ public class SubdomainRoutingMiddleware
         }
 
         // Check if this is an API subdomain (should not redirect)
-        if (subdomain == "api")
+        // Skip any subdomain containing "api" (api, storeapi, etc.)
+        if (subdomain.Contains("api"))
         {
             await _next(context);
             return;
@@ -82,7 +91,6 @@ public class SubdomainRoutingMiddleware
         var tenantUrl = $"https://{subdomain}.{mainDomain}";
         
         // If the request is for login, add appropriate query parameters
-        var path = context.Request.Path.Value ?? "";
         var queryString = context.Request.QueryString.Value ?? "";
         
         _logger.LogInformation("Redirecting subdomain {Subdomain} to tenant URL: {TenantUrl}", subdomain, tenantUrl);
