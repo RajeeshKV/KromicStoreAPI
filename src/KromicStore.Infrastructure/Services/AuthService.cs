@@ -102,9 +102,6 @@ public class AuthService : IAuthService
     /// </summary>
     public async Task<AuthResponse> RegisterAsync(Guid tenantId, RegisterRequest request, CancellationToken cancellationToken = default)
     {
-        if (tenantId == Guid.Empty)
-            throw new ArgumentException("Tenant ID cannot be empty", nameof(tenantId));
-
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
@@ -113,6 +110,29 @@ public class AuthService : IAuthService
 
         if (string.IsNullOrWhiteSpace(request.Password))
             throw new ArgumentException("Password cannot be empty", nameof(request.Password));
+
+        // If tenantId is empty, this is a new tenant registration - create a new tenant
+        if (tenantId == Guid.Empty)
+        {
+            _logger.LogInformation("New tenant registration for email {Email}", request.Email);
+            
+            // Create new tenant using the factory method
+            var newTenantId = Guid.NewGuid().ToString();
+            var subdomain = GenerateSubdomainFromEmail(request.Email);
+            var newTenant = KromicStore.Domain.Entities.Tenant.Create(
+                tenantId: newTenantId,
+                name: request.FirstName, // Use FirstName as company name for now
+                subdomain: subdomain,
+                description: "Auto-created tenant for registration",
+                contactEmail: request.Email
+            );
+            
+            _context.Tenants.Add(newTenant);
+            await _context.SaveChangesAsync(cancellationToken);
+            
+            tenantId = Guid.Parse(newTenant.TenantId);
+            _logger.LogInformation("Created new tenant {TenantId} for email {Email}", tenantId, request.Email);
+        }
 
         _logger.LogInformation("User registration attempt for email {Email} in tenant {TenantId}", request.Email, tenantId);
 
@@ -356,6 +376,24 @@ public class AuthService : IAuthService
         return _configuration["Auth:Issuer"]
             ?? Environment.GetEnvironmentVariable("JWT_ISSUER")
             ?? "KromicStore";
+    }
+
+    private string GenerateSubdomainFromEmail(string email)
+    {
+        // Extract the part before @ and use it as subdomain
+        var atIndex = email.IndexOf('@');
+        if (atIndex > 0)
+        {
+            var localPart = email.Substring(0, atIndex).ToLower();
+            // Remove special characters and replace with hyphens
+            var subdomain = System.Text.RegularExpressions.Regex.Replace(localPart, "[^a-z0-9]", "-");
+            // Remove consecutive hyphens
+            subdomain = System.Text.RegularExpressions.Regex.Replace(subdomain, "-+", "-");
+            // Remove leading/trailing hyphens
+            subdomain = subdomain.Trim('-');
+            return string.IsNullOrEmpty(subdomain) ? "tenant" : subdomain;
+        }
+        return "tenant";
     }
 
     private string GetJwtAudience()
