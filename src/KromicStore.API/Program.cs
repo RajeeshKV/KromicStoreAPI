@@ -143,6 +143,25 @@ if (!string.IsNullOrWhiteSpace(redisConn))
         
         var redisOpts = ConfigurationOptions.Parse(redisConn);
         
+        // Fix: Remove database number from endpoint if it's being added as port
+        // ConfigurationOptions.Parse("redis://host:port") sometimes adds :0 as port
+        foreach (var endpoint in redisOpts.EndPoints)
+        {
+            var endpointStr = endpoint.ToString();
+            Log.Information("Parsed endpoint before fix: {Endpoint}", endpointStr);
+            
+            // If endpoint contains :6379:6379 or :6379:0, fix it
+            if (endpointStr.Contains(":6379:"))
+            {
+                redisOpts.EndPoints.Clear();
+                // Extract just host:port
+                var uri = new Uri(redisConn);
+                redisOpts.EndPoints.Add(uri.Host, uri.Port);
+                Log.Information("Fixed endpoint to: {Host}:{Port}", uri.Host, uri.Port);
+                break;
+            }
+        }
+        
         // Log parsed endpoints
         Log.Information("Parsed Redis endpoints: {Endpoints}", string.Join(", ", redisOpts.EndPoints.Select(e => e.ToString())));
         
