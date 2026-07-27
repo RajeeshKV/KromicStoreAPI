@@ -23,13 +23,18 @@ using StackExchange.Redis;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.IO.Compression;
+using Microsoft.AspNetCore.HttpOverrides;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using KromicStore.API;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add HttpContextAccessor for Swagger document filter
+builder.Services.AddHttpContextAccessor();
 
 // Load environment variables
 builder.Configuration.AddEnvironmentVariables();
@@ -477,6 +482,9 @@ builder.Services.AddSwaggerGen(options =>
     // Include XML comments if file present
     var xmlPath = Path.Combine(AppContext.BaseDirectory, "KromicStore.API.xml");
     if (File.Exists(xmlPath)) options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+
+    // Add document filter to set server URL dynamically
+    options.DocumentFilter<SwaggerDocumentFilter>();
 });
 
 // CORS
@@ -504,7 +512,13 @@ builder.Services.AddCors(opt =>
             .AllowCredentials()
             .SetIsOriginAllowed(origin =>
             {
-                if (string.IsNullOrWhiteSpace(origin)) return false;
+                if (string.IsNullOrWhiteSpace(origin)) 
+                {
+                    Log.Information("CORS: Rejected - origin is null or whitespace");
+                    return false;
+                }
+                
+                Log.Information("CORS: Checking origin: {Origin}", origin);
                 
                 // Check against wildcard patterns
                 foreach (var allowed in origins)
@@ -515,14 +529,18 @@ builder.Services.AddCors(opt =>
                         var pattern = allowed
                             .Replace(".", "\\.")
                             .Replace("*", ".*");
-                        if (System.Text.RegularExpressions.Regex.IsMatch(origin, $"^{pattern}$"))
+                        var isMatch = System.Text.RegularExpressions.Regex.IsMatch(origin, $"^{pattern}$");
+                        Log.Information("CORS: Pattern {Pattern} matched {Origin}: {Match}", pattern, origin, isMatch);
+                        if (isMatch)
                             return true;
                     }
                     else if (origin.Equals(allowed, StringComparison.OrdinalIgnoreCase))
                     {
+                        Log.Information("CORS: Exact match found for {Origin}", origin);
                         return true;
                     }
                 }
+                Log.Information("CORS: Rejected origin {Origin} - no match found", origin);
                 return false;
             }));
     }
@@ -622,7 +640,18 @@ builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database", failureStatus: HealthStatus.Unhealthy, tags: new[] { "database", "ready" })
     .AddCheck<RedisHealthCheck>("redis", failureStatus: HealthStatus.Degraded, tags: new[] { "cache", "ready" });
 
+// Configure forwarded headers for reverse proxy (Render)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.RequireHeaderSymmetry = false;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Pipeline
 app.UseMiddleware<SubdomainRoutingMiddleware>();
