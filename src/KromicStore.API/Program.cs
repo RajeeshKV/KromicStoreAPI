@@ -17,6 +17,7 @@ using KromicStore.Application.Validators;
 using MediatR;
 using KromicStore.API.Middleware;
 using KromicStore.API.Authorization;
+using KromicStore.API.Filters;
 using Microsoft.AspNetCore.Authorization;
 using StackExchange.Redis;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -372,7 +373,10 @@ builder.Services.Configure<GzipCompressionProviderOptions>(opt => opt.Level = Sy
 builder.Services.Configure<BrotliCompressionProviderOptions>(opt => opt.Level = System.IO.Compression.CompressionLevel.Optimal);
 
 // Swagger
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalModelStateValidationFilter>();
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
