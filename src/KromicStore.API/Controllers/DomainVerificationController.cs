@@ -49,7 +49,7 @@ public class DomainVerificationController : BaseController
     /// <response code="403">User is not authorized.</response>
     /// <response code="404">Domain not found.</response>
     /// <response code="500">Server error.</response>
-    [HttpPost("{domainId}/verify")]
+    [HttpPost("{domainId}/verify-dns")]
     [ProducesResponseType(typeof(DomainVerificationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

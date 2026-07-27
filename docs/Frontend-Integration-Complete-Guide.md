@@ -1020,9 +1020,7 @@ const { bootstrap, loading, error } = useBootstrap();
 ### API Base URLs
 
 ```
-Development:  http://localhost:8080/api/v1
-Staging:      https://staging.kromic.in/api/v1
-Production:   https://api.kromic.in/api/v1
+Production:   https://storeapi.kromic.in/api/v1
 ```
 
 ### Required Headers
