@@ -482,10 +482,16 @@ builder.Services.AddSwaggerGen(options =>
 // CORS
 var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
 
+Log.Information("CORS_ALLOWED_ORIGINS from environment: {Origins}", allowedOrigins ?? "NULL");
+
 var origins = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+Log.Information("Parsed CORS origins: {Origins}", string.Join(", ", origins));
 
 // Check if any origin contains a wildcard pattern
 var hasWildcard = origins.Any(o => o.Contains("*"));
+
+Log.Information("Has wildcard pattern: {HasWildcard}", hasWildcard);
 
 builder.Services.AddCors(opt => 
 {
