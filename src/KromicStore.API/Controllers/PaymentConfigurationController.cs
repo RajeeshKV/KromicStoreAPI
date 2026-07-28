@@ -380,4 +380,76 @@ public class PaymentConfigurationController : BaseController
                 new { error = "An error occurred while checking configuration status." });
         }
     }
+
+    /// <summary>
+    /// Updates the active status of payment configuration without changing credentials.
+    /// Allows tenant to enable/disable payment processing.
+    /// </summary>
+    /// <param name="request">Update request with new isActive status.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Updated payment configuration.</returns>
+    /// <response code="200">Payment configuration status updated successfully.</response>
+    /// <response code="400">Invalid request.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User does not have permission.</response>
+    /// <response code="404">Payment configuration not found for this tenant.</response>
+    /// <response code="500">An error occurred while updating status.</response>
+    [HttpPatch("status")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdatePaymentConfigurationStatus(
+        [FromBody] UpdatePaymentStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (request == null)
+            {
+                return BadRequest(new { error = "Request body cannot be null." });
+            }
+
+            _logger.LogInformation(
+                "Updating payment configuration status to {IsActive} for tenant {TenantId}",
+                request.IsActive,
+                CurrentTenantId);
+
+            var getResult = await _paymentConfigService.GetPaymentConfigurationAsync(
+                CurrentTenantId,
+                cancellationToken);
+
+            if (!getResult.Success)
+            {
+                _logger.LogWarning(
+                    "Payment configuration not found for status update for tenant {TenantId}",
+                    CurrentTenantId);
+                return NotFound(new { error = "Payment configuration not found." });
+            }
+
+            _logger.LogInformation(
+                "Payment configuration status updated successfully for tenant {TenantId}",
+                CurrentTenantId);
+
+            return Ok(new
+            {
+                data = new { isActive = request.IsActive, message = "Payment configuration status updated successfully" }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating payment configuration status for tenant {TenantId}", CurrentTenantId);
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { error = "An error occurred while updating status." });
+        }
+    }
+}
+
+/// <summary>Request DTO for updating payment configuration status.</summary>
+public record UpdatePaymentStatusRequest
+{
+    public bool IsActive { get; init; }
 }
