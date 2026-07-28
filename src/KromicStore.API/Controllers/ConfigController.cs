@@ -54,7 +54,7 @@ public class ConfigController : BaseController
             _logger.LogInformation("TenantAdmin retrieving configurations for tenant {TenantId}", CurrentTenantId);
 
             // Get all tenant configurations
-            var configs = await _configurationService.GetSectionAsync(CurrentTenantId, string.Empty, cancellationToken);
+            var configs = await _configurationService.GetAllAsync(CurrentTenantId, cancellationToken);
 
             _logger.LogInformation("Retrieved {Count} configurations for tenant {TenantId}", configs.Count, CurrentTenantId);
 

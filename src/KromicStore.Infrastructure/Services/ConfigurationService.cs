@@ -135,6 +135,53 @@ public class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
+    /// Gets all configuration values for a tenant.
+    /// </summary>
+    public async Task<IDictionary<string, string>> GetAllAsync(Guid? tenantId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting all configurations for tenant {TenantId}", tenantId ?? Guid.Empty);
+
+        try
+        {
+            // Query for all configs for the tenant
+            var configs = await _unitOfWork.TenantConfigurations.FindAsync(
+                c => c.TenantId == tenantId,
+                cancellationToken);
+
+            var result = new Dictionary<string, string>();
+
+            foreach (var config in configs.Where(c => !c.IsExpired()))
+            {
+                var value = config.ConfigValue;
+
+                // Decrypt if needed
+                if (config.IsEncrypted)
+                {
+                    try
+                    {
+                        value = await _encryptionService.DecryptAsync(value, cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error decrypting configuration {Key}", config.ConfigKey);
+                        continue;
+                    }
+                }
+
+                result[config.ConfigKey] = value;
+            }
+
+            _logger.LogDebug("Retrieved {Count} configurations for tenant {TenantId}", result.Count, tenantId ?? Guid.Empty);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all configurations for tenant {TenantId}", tenantId ?? Guid.Empty);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Sets a configuration value with automatic audit logging.
     /// </summary>
     public async Task SetAsync<T>(Guid? tenantId, string key, T value, Guid userId, string reason = null, bool isEncrypted = false, CancellationToken cancellationToken = default)

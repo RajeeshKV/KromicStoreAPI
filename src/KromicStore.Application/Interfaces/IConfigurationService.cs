@@ -20,6 +20,14 @@ public interface IConfigurationService
     Task<T> GetAsync<T>(Guid? tenantId, string key, T defaultValue = default, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets all configuration values for a tenant.
+    /// </summary>
+    /// <param name="tenantId">The tenant ID (or null for platform-wide configuration)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Dictionary of all configuration key-value pairs for the tenant</returns>
+    Task<IDictionary<string, string>> GetAllAsync(Guid? tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Sets a configuration value with automatic audit logging.
     /// </summary>
     /// <typeparam name="T">The type of the configuration value</typeparam>
