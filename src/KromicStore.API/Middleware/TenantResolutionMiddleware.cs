@@ -72,6 +72,20 @@ public class TenantResolutionMiddleware
         // Extract tenant ID from JWT token
         var tenantId = ExtractTenantIdFromToken(context);
 
+        // Debug: Log all claims
+        if (context.User != null && context.User.Claims.Any())
+        {
+            _logger.LogDebug("Available claims for user {User}: {Claims}",
+                context.User.Identity?.Name ?? "ANONYMOUS",
+                string.Join(", ", context.User.Claims.Select(c => $"{c.Type}={c.Value}")));
+        }
+        else
+        {
+            _logger.LogWarning("No user claims found - User: {User}, IsAuthenticated: {IsAuthenticated}",
+                context.User?.Identity?.Name ?? "ANONYMOUS",
+                context.User?.Identity?.IsAuthenticated);
+        }
+
         // Try header as fallback if allowed
         if (tenantId == Guid.Empty && _options.AllowTenantIdFromHeaders)
         {
