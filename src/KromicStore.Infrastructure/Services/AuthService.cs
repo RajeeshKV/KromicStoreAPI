@@ -365,17 +365,13 @@ public class AuthService : IAuthService
     }
     private string GetJwtSecret()
     {
-        var fromConfig = _configuration["Auth:JwtSecret"];
-        var fromConfigUpper = _configuration["JWT_SECRET"];
-        var fromEnv = Environment.GetEnvironmentVariable("JWT_SECRET");
+        // Prioritize environment variable directly for Render deployment
+        var secret = Environment.GetEnvironmentVariable("JWT_SECRET")
+            ?? _configuration["Auth:JwtSecret"]
+            ?? _configuration["JWT_SECRET"];
         
-        _logger.LogInformation("JWT Secret sources - Config[Auth:JwtSecret]: {Config1}, Config[JWT_SECRET]: {Config2}, Env[JWT_SECRET]: {Env}", 
-            fromConfig?.Length ?? 0, fromConfigUpper?.Length ?? 0, fromEnv?.Length ?? 0);
-        
-        var secret = fromConfig ?? fromConfigUpper ?? fromEnv;
-        
-        _logger.LogInformation("JWT Secret selected. Length: {Length}, First 10 chars: {FirstChars}, IsNullOrWhiteSpace: {IsNullOrWhiteSpace}", 
-            secret?.Length ?? 0, secret?.Substring(0, Math.Min(10, secret?.Length ?? 0)), string.IsNullOrWhiteSpace(secret));
+        _logger.LogInformation("JWT Secret retrieved. Length: {Length}, IsNullOrWhiteSpace: {IsNullOrWhiteSpace}", 
+            secret?.Length ?? 0, string.IsNullOrWhiteSpace(secret));
         
         if (string.IsNullOrWhiteSpace(secret))
         {
