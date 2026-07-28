@@ -14,12 +14,12 @@ public class EncryptionService : IEncryptionService
     /// <summary>
     /// Initializes a new instance of the EncryptionService class.
     /// </summary>
-    /// <param name="encryptionKey">The Base64 encoded encryption key (must be 32 bytes for AES-256).</param>
+    /// <param name="encryptionKey">The Base64 encoded encryption key (must be 32 bytes for AES-256). Required from SECURITY_ENCRYPTION_KEY environment variable.</param>
     /// <exception cref="ArgumentException">Thrown when the encryption key is invalid.</exception>
     public EncryptionService(string encryptionKey)
     {
         if (string.IsNullOrWhiteSpace(encryptionKey))
-            throw new ArgumentException("Encryption key cannot be null or empty.", nameof(encryptionKey));
+            throw new ArgumentException("Encryption key cannot be null or empty. Please set SECURITY_ENCRYPTION_KEY environment variable.", nameof(encryptionKey));
 
         try
         {

@@ -5,6 +5,7 @@ using KromicStore.Contracts.V1.Orders;
 using KromicStore.Domain.Entities;
 using KromicStore.Domain.Enums;
 using KromicStore.Domain.ValueObjects;
+using KromicStore.Infrastructure.Proxies;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
@@ -16,6 +17,7 @@ public class OrderService : IOrderService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<OrderService> _logger;
     private readonly ICacheService _cacheService;
+    private readonly NotificationProxy _notificationProxy;
 
     /// <summary>
     /// Initializes a new instance of the OrderService class.
@@ -23,11 +25,13 @@ public class OrderService : IOrderService
     public OrderService(
         IUnitOfWork unitOfWork,
         ILogger<OrderService> logger,
-        ICacheService cacheService)
+        ICacheService cacheService,
+        NotificationProxy notificationProxy)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+        _notificationProxy = notificationProxy ?? throw new ArgumentNullException(nameof(notificationProxy));
     }
 
     /// <summary>
@@ -230,6 +234,9 @@ public class OrderService : IOrderService
                 "Order {OrderId} ({OrderNumber}) created successfully for tenant {TenantId}",
                 order.Id, order.OrderNumber, tenantId);
 
+            // Send Order Placed email
+            await SendOrderPlacedEmailAsync(order, customer, tenantId, cancellationToken);
+
             var dto = MapToOrderDto(order);
             return ServiceResult<OrderDto>.SuccessResult(dto);
         }
@@ -324,6 +331,9 @@ public class OrderService : IOrderService
                 "Order {OrderId} confirmed successfully for tenant {TenantId}",
                 id, tenantId);
 
+            // Send Order Confirmed email
+            await SendOrderConfirmedEmailAsync(order, tenantId, cancellationToken);
+
             // Invalidate cache
             await _cacheService.RemoveAsync($"{tenantId}:order:{id}");
 
@@ -372,6 +382,9 @@ public class OrderService : IOrderService
             _logger.LogInformation(
                 "Order {OrderId} shipped successfully for tenant {TenantId}",
                 id, tenantId);
+
+            // Send Order Dispatched email
+            await SendOrderDispatchedEmailAsync(order, tenantId, cancellationToken);
 
             // Invalidate cache
             await _cacheService.RemoveAsync($"{tenantId}:order:{id}");
@@ -564,10 +577,248 @@ public class OrderService : IOrderService
             "PENDING" => OrderStatus.Pending,
             "CONFIRMED" => OrderStatus.Confirmed,
             "PAID" => OrderStatus.Paid,
+            "PROCESSING" => OrderStatus.Processing,
             "SHIPPED" => OrderStatus.Shipped,
             "DELIVERED" => OrderStatus.Delivered,
             "CANCELLED" => OrderStatus.Cancelled,
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Sends Order Placed email notification
+    /// </summary>
+    private async Task SendOrderPlacedEmailAsync(Order order, Customer customer, Guid tenantId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId, cancellationToken);
+            if (tenant == null)
+            {
+                _logger.LogWarning("Tenant not found for order {OrderId}, skipping email", order.Id);
+                return;
+            }
+
+            var storefront = await _unitOfWork.Storefronts.GetByIdAsync(tenantId, cancellationToken);
+            var customerName = $"{customer.FirstName} {customer.LastName}".Trim();
+            var parameters = new Dictionary<string, string>
+            {
+                { "tenant_name", tenant.Name },
+                { "logo_url", storefront?.LogoUrl ?? "" },
+                { "order_number", order.OrderNumber },
+                { "customer_name", customerName },
+                { "customer_email", customer.Email },
+                { "customer_phone", customer.PhoneNumber ?? "" },
+                { "shipping_address", FormatAddress(order.ShippingAddress) },
+                { "subtotal", order.Subtotal.Amount.ToString("F2") },
+                { "tax_amount", order.TaxAmount.Amount.ToString("F2") },
+                { "shipping_cost", order.ShippingCost.Amount.ToString("F2") },
+                { "total_amount", order.Total.Amount.ToString("F2") },
+                { "payment_method", order.PaymentMethod ?? "Online" },
+                { "payment_status", order.PaymentStatus.ToString() },
+                { "order_date", order.CreatedAt.ToString("yyyy-MM-dd HH:mm") },
+                { "contact_email", storefront?.ContactEmail ?? "" },
+                { "current_year", DateTime.UtcNow.Year.ToString() }
+            };
+
+            var emailRequest = new SendEmailRequest
+            {
+                To = customer.Email,
+                ToName = customerName,
+                Subject = $"Order Placed - {order.OrderNumber}",
+                EmailType = "order_placed",
+                TemplateParameters = parameters,
+                Tag = "order_placed"
+            };
+
+            var result = await _notificationProxy.SendEmailAsync(emailRequest, cancellationToken);
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Order Placed email sent to {Email} for order {OrderId}", customer.Email, order.Id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Order Placed email to {Email}: {Error}", customer.Email, result.Exception?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending Order Placed email for order {OrderId}", order.Id);
+        }
+    }
+
+    /// <summary>
+    /// Sends Order Confirmed email notification
+    /// </summary>
+    private async Task SendOrderConfirmedEmailAsync(Order order, Guid tenantId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId, cancellationToken);
+            if (tenant == null)
+            {
+                _logger.LogWarning("Tenant not found for order {OrderId}, skipping email", order.Id);
+                return;
+            }
+
+            var customer = await _unitOfWork.Customers.GetByIdAsync(order.CustomerId, cancellationToken);
+            if (customer == null)
+            {
+                _logger.LogWarning("Customer not found for order {OrderId}, skipping email", order.Id);
+                return;
+            }
+
+            var storefront = await _unitOfWork.Storefronts.GetByIdAsync(tenantId, cancellationToken);
+            var customerName = $"{customer.FirstName} {customer.LastName}".Trim();
+            var parameters = new Dictionary<string, string>
+            {
+                { "tenant_name", tenant.Name },
+                { "logo_url", storefront?.LogoUrl ?? "" },
+                { "order_number", order.OrderNumber },
+                { "customer_name", customerName },
+                { "shipping_address", FormatAddress(order.ShippingAddress) },
+                { "total_amount", order.Total.Amount.ToString("F2") },
+                { "payment_method", order.PaymentMethod ?? "Online" },
+                { "order_date", order.CreatedAt.ToString("yyyy-MM-dd HH:mm") },
+                { "order_placed_date", order.CreatedAt.ToString("yyyy-MM-dd HH:mm") },
+                { "order_confirmed_date", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm") },
+                { "estimated_delivery_days", "5-7" },
+                { "contact_email", storefront?.ContactEmail ?? "" },
+                { "current_year", DateTime.UtcNow.Year.ToString() }
+            };
+
+            var emailRequest = new SendEmailRequest
+            {
+                To = customer.Email,
+                ToName = customerName,
+                Subject = $"Order Confirmed - {order.OrderNumber}",
+                EmailType = "order_confirmed",
+                TemplateParameters = parameters,
+                Tag = "order_confirmed"
+            };
+
+            var result = await _notificationProxy.SendEmailAsync(emailRequest, cancellationToken);
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Order Confirmed email sent to {Email} for order {OrderId}", customer.Email, order.Id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Order Confirmed email to {Email}: {Error}", customer.Email, result.Exception?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending Order Confirmed email for order {OrderId}", order.Id);
+        }
+    }
+
+    /// <summary>
+    /// Sends Order Dispatched email notification
+    /// </summary>
+    private async Task SendOrderDispatchedEmailAsync(Order order, Guid tenantId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId, cancellationToken);
+            if (tenant == null)
+            {
+                _logger.LogWarning("Tenant not found for order {OrderId}, skipping email", order.Id);
+                return;
+            }
+
+            var customer = await _unitOfWork.Customers.GetByIdAsync(order.CustomerId, cancellationToken);
+            if (customer == null)
+            {
+                _logger.LogWarning("Customer not found for order {OrderId}, skipping email", order.Id);
+                return;
+            }
+
+            var storefront = await _unitOfWork.Storefronts.GetByIdAsync(tenantId, cancellationToken);
+            var customerName = $"{customer.FirstName} {customer.LastName}".Trim();
+
+            // Get courier info if available
+            string courierName = "Courier Partner";
+            string trackingUrl = "";
+
+            // Try to find courier by tracking number pattern (simplified)
+            if (!string.IsNullOrWhiteSpace(order.TrackingNumber))
+            {
+                var couriers = await _unitOfWork.Couriers.FindAsync(c => c.TenantId == tenantId && c.IsActive, cancellationToken);
+                var courier = couriers.FirstOrDefault();
+                if (courier != null)
+                {
+                    courierName = courier.Name;
+                    trackingUrl = courier.GenerateTrackingUrl(order.TrackingNumber) ?? "";
+                }
+            }
+
+            var parameters = new Dictionary<string, string>
+            {
+                { "tenant_name", tenant.Name },
+                { "logo_url", storefront?.LogoUrl ?? "" },
+                { "order_number", order.OrderNumber },
+                { "customer_name", customerName },
+                { "customer_phone", customer.PhoneNumber ?? "" },
+                { "shipping_address", FormatAddress(order.ShippingAddress) },
+                { "tracking_number", order.TrackingNumber ?? "" },
+                { "courier_name", courierName },
+                { "tracking_url", trackingUrl },
+                { "estimated_delivery_date", DateTime.UtcNow.AddDays(5).ToString("yyyy-MM-dd") },
+                { "order_placed_date", order.CreatedAt.ToString("yyyy-MM-dd HH:mm") },
+                { "order_confirmed_date", order.UpdatedAt.ToString("yyyy-MM-dd HH:mm") },
+                { "order_processed_date", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm") },
+                { "order_shipped_date", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm") },
+                { "contact_email", storefront?.ContactEmail ?? "" },
+                { "current_year", DateTime.UtcNow.Year.ToString() }
+            };
+
+            var emailRequest = new SendEmailRequest
+            {
+                To = customer.Email,
+                ToName = customerName,
+                Subject = $"Order Dispatched - {order.OrderNumber}",
+                EmailType = "order_dispatched",
+                TemplateParameters = parameters,
+                Tag = "order_dispatched"
+            };
+
+            var result = await _notificationProxy.SendEmailAsync(emailRequest, cancellationToken);
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Order Dispatched email sent to {Email} for order {OrderId}", customer.Email, order.Id);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to send Order Dispatched email to {Email}: {Error}", customer.Email, result.Exception?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending Order Dispatched email for order {OrderId}", order.Id);
+        }
+    }
+
+    /// <summary>
+    /// Formats address for email template
+    /// </summary>
+    private string FormatAddress(Address? address)
+    {
+        if (address == null)
+            return "";
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(address.Street))
+            parts.Add(address.Street);
+        if (!string.IsNullOrWhiteSpace(address.City))
+            parts.Add(address.City);
+        if (!string.IsNullOrWhiteSpace(address.State))
+            parts.Add(address.State);
+        if (!string.IsNullOrWhiteSpace(address.PostalCode))
+            parts.Add(address.PostalCode);
+        if (!string.IsNullOrWhiteSpace(address.Country))
+            parts.Add(address.Country);
+
+        return string.Join(", ", parts);
     }
 }

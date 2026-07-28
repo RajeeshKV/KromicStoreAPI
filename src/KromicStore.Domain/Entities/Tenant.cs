@@ -11,7 +11,7 @@ public class Tenant : BaseEntity
     /// <summary>Gets the tenant name.</summary>
     public string Name { get; private set; } = string.Empty;
 
-    /// <summary>Gets the subdomain for the tenant (e.g., "mystore" for mystore.kromic.in).</summary>
+    /// <summary>Gets the subdomain for the tenant (e.g., "mystore" for mystore.kromic.in). This is the simple subdomain setup without DNS verification.</summary>
     public string Subdomain { get; private set; } = string.Empty;
 
     /// <summary>Gets the tenant description.</summary>

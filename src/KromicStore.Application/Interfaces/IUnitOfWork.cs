@@ -48,6 +48,16 @@ public interface IUnitOfWork : IDisposable
     IRepository<TenantConfiguration> TenantConfigurations { get; }
 
     /// <summary>
+    /// Gets the courier repository.
+    /// </summary>
+    IRepository<Courier> Couriers { get; }
+
+    /// <summary>
+    /// Gets the Razorpay configuration repository.
+    /// </summary>
+    IRepository<RazorpayConfiguration> RazorpayConfigurations { get; }
+
+    /// <summary>
     /// Gets the configuration audit log repository.
     /// </summary>
     IRepository<ConfigurationAuditLog> ConfigurationAuditLogs { get; }

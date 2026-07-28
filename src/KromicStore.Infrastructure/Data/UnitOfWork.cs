@@ -18,6 +18,8 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<Product>? _productRepository;
     private IRepository<Category>? _categoryRepository;
     private IRepository<Customer>? _customerRepository;
+    private IRepository<Courier>? _courierRepository;
+    private IRepository<RazorpayConfiguration>? _razorpayConfigurationRepository;
     private IRepository<Order>? _orderRepository;
     private IRepository<TenantConfiguration>? _tenantConfigurationRepository;
     private IRepository<ConfigurationAuditLog>? _configurationAuditLogRepository;
@@ -59,6 +61,12 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public IRepository<TenantConfiguration> TenantConfigurations => _tenantConfigurationRepository ??= new Repository<TenantConfiguration>(_context, _loggerFactory.CreateLogger<Repository<TenantConfiguration>>());
+
+    /// <inheritdoc />
+    public IRepository<Courier> Couriers => _courierRepository ??= new Repository<Courier>(_context, _loggerFactory.CreateLogger<Repository<Courier>>());
+
+    /// <inheritdoc />
+    public IRepository<RazorpayConfiguration> RazorpayConfigurations => _razorpayConfigurationRepository ??= new Repository<RazorpayConfiguration>(_context, _loggerFactory.CreateLogger<Repository<RazorpayConfiguration>>());
 
     /// <inheritdoc />
     public IRepository<ConfigurationAuditLog> ConfigurationAuditLogs => _configurationAuditLogRepository ??= new Repository<ConfigurationAuditLog>(_context, _loggerFactory.CreateLogger<Repository<ConfigurationAuditLog>>());

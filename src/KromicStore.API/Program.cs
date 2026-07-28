@@ -49,15 +49,24 @@ builder.Host.ConfigureAppConfiguration((context, config) =>
 });
 
 // Validate required environment variables
-var requiredEnvVars = new[] 
-{ 
-    "DATABASE_URL", 
-    "JWT_SECRET", 
+var requiredEnvVars = new[]
+{
+    "DATABASE_URL",
+    "JWT_SECRET",
     "SECURITY_ENCRYPTION_KEY",
     "RAZORPAY_KEY_ID",
     "GOOGLE_CLIENT_ID",
+    "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
-    "BREVO_API_KEY"
+    "CLOUDINARY_API_SECRET",
+    "BREVO_API_KEY",
+    "BREVO_SENDER_EMAIL",
+    "BREVO_SENDER_NAME",
+    "BREVO_BASE_URL",
+    "BREVO_API_VERSION",
+    "BREVO_TEMPLATE_ORDER_PLACED",
+    "BREVO_TEMPLATE_ORDER_CONFIRMED",
+    "BREVO_TEMPLATE_ORDER_DISPATCHED"
 };
 
 var missingVars = new List<string>();
@@ -301,13 +310,11 @@ builder.Services.AddScoped<OAuthProxy>(sp => new OAuthProxy(
 builder.Services.AddScoped<MediaProxy>(sp => new MediaProxy(
     sp.GetRequiredService<ILogger<MediaProxy>>(),
     new CircuitBreaker(),
-    sp.GetRequiredService<IConfiguration>(),
     sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(MediaProxy))));
 
 builder.Services.AddScoped<NotificationProxy>(sp => new NotificationProxy(
     sp.GetRequiredService<ILogger<NotificationProxy>>(),
     new CircuitBreaker(),
-    sp.GetRequiredService<IConfiguration>(),
     sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(NotificationProxy))));
 
 // Validation

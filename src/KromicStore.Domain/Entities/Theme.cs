@@ -44,13 +44,19 @@ public class TenantTheme : BaseEntity
     /// <summary>Gets a value indicating whether this is the active theme for the tenant.</summary>
     public bool IsActive { get; private set; }
 
+    /// <summary>Gets a value indicating whether this theme is public (available to all tenants) or private (tenant-specific).</summary>
+    public bool IsPublic { get; private set; }
+
+    /// <summary>Gets the ID of the tenant who created this theme (null for admin-created public themes).</summary>
+    public Guid? CreatedByTenantId { get; private set; }
+
     /// <summary>Navigation property to the tenant.</summary>
     public Tenant? Tenant { get; private set; }
 
     /// <summary>
     /// Creates a new instance of TenantTheme with default values.
     /// </summary>
-    public static TenantTheme Create(Guid tenantId, string name)
+    public static TenantTheme Create(Guid tenantId, string name, bool isPublic = false, Guid? createdByTenantId = null)
     {
         if (tenantId == Guid.Empty)
             throw new ArgumentException("Tenant ID is required.", nameof(tenantId));
@@ -71,7 +77,9 @@ public class TenantTheme : BaseEntity
             SpacingUnit = 16,
             ComponentOverrides = "{}",
             LayoutOptions = "{}",
-            IsActive = true
+            IsActive = true,
+            IsPublic = isPublic,
+            CreatedByTenantId = createdByTenantId
         };
     }
 
@@ -144,5 +152,23 @@ public class TenantTheme : BaseEntity
     public void Deactivate()
     {
         IsActive = false;
+    }
+
+    /// <summary>
+    /// Makes this theme public (available to all tenants).
+    /// </summary>
+    public void MakePublic()
+    {
+        IsPublic = true;
+        UpdateTimestamp();
+    }
+
+    /// <summary>
+    /// Makes this theme private (tenant-specific only).
+    /// </summary>
+    public void MakePrivate()
+    {
+        IsPublic = false;
+        UpdateTimestamp();
     }
 }

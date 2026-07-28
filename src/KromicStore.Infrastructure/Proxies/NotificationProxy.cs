@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KromicStore.Infrastructure.Proxies;
@@ -8,31 +7,51 @@ namespace KromicStore.Infrastructure.Proxies;
 /// <summary>
 /// Proxy for Brevo email and SMS notification service
 /// Provides transactional email/SMS capabilities with templates, delivery tracking, and bounce handling
+/// All configuration is loaded from environment variables via ConfigurationSettings.Brevo
 /// </summary>
 public class NotificationProxy : ServiceProxy<BrevoSendResponse>
 {
     private readonly string _apiKey;
     private readonly string _senderEmail;
+    private readonly string _senderName;
+    private readonly string _baseUrl;
+    private readonly string _apiVersion;
+    private readonly int _templateOrderPlaced;
+    private readonly int _templateOrderConfirmed;
+    private readonly int _templateOrderDispatched;
     private readonly HttpClient _httpClient;
-    private const string BrevoApiBaseUrl = "https://api.brevo.com/v3";
 
     /// <summary>
-    /// Initializes NotificationProxy with Brevo API configuration
+    /// Initializes NotificationProxy with Brevo API configuration from environment variables
     /// </summary>
     public NotificationProxy(
         ILogger<NotificationProxy> logger,
         ICircuitBreaker circuitBreaker,
-        IConfiguration config,
         HttpClient httpClient)
         : base(logger, circuitBreaker, timeoutSeconds: 15, maxRetries: 4)
     {
-        ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        _apiKey = config["ExternalServices:Brevo:ApiKey"] 
-            ?? throw new ArgumentException("Brevo API key not configured");
-        _senderEmail = config["ExternalServices:Brevo:SenderEmail"] 
-            ?? throw new ArgumentException("Brevo sender email not configured");
+        _apiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY")
+            ?? throw new ArgumentException("BREVO_API_KEY environment variable not configured");
+        _senderEmail = Environment.GetEnvironmentVariable("BREVO_SENDER_EMAIL")
+            ?? throw new ArgumentException("BREVO_SENDER_EMAIL environment variable not configured");
+        _senderName = Environment.GetEnvironmentVariable("BREVO_SENDER_NAME")
+            ?? throw new ArgumentException("BREVO_SENDER_NAME environment variable not configured");
+        _baseUrl = Environment.GetEnvironmentVariable("BREVO_BASE_URL") ?? "https://api.brevo.com";
+        _apiVersion = Environment.GetEnvironmentVariable("BREVO_API_VERSION") ?? "v3";
+
+        var templateOrderPlacedStr = Environment.GetEnvironmentVariable("BREVO_TEMPLATE_ORDER_PLACED");
+        var templateOrderConfirmedStr = Environment.GetEnvironmentVariable("BREVO_TEMPLATE_ORDER_CONFIRMED");
+        var templateOrderDispatchedStr = Environment.GetEnvironmentVariable("BREVO_TEMPLATE_ORDER_DISPATCHED");
+
+        if (!int.TryParse(templateOrderPlacedStr, out _templateOrderPlaced) || _templateOrderPlaced <= 0)
+            throw new ArgumentException("BREVO_TEMPLATE_ORDER_PLACED environment variable not configured or invalid");
+        if (!int.TryParse(templateOrderConfirmedStr, out _templateOrderConfirmed) || _templateOrderConfirmed <= 0)
+            throw new ArgumentException("BREVO_TEMPLATE_ORDER_CONFIRMED environment variable not configured or invalid");
+        if (!int.TryParse(templateOrderDispatchedStr, out _templateOrderDispatched) || _templateOrderDispatched <= 0)
+            throw new ArgumentException("BREVO_TEMPLATE_ORDER_DISPATCHED environment variable not configured or invalid");
+
         _httpClient = httpClient;
     }
 
@@ -69,12 +88,24 @@ public class NotificationProxy : ServiceProxy<BrevoSendResponse>
     {
         ValidateEmailRequest(request);
 
+        // If template ID is 0, use default template based on email type
+        if (request.TemplateId == 0 && !string.IsNullOrWhiteSpace(request.EmailType))
+        {
+            request.TemplateId = request.EmailType.ToLower() switch
+            {
+                "order_placed" => _templateOrderPlaced,
+                "order_confirmed" => _templateOrderConfirmed,
+                "order_dispatched" => _templateOrderDispatched,
+                _ => throw new ArgumentException($"Unknown email type: {request.EmailType}")
+            };
+        }
+
         return await ExecuteAsync(async () =>
         {
             var payload = new
             {
                 to = new[] { new { email = request.To, name = request.ToName ?? "" } },
-                sender = new { email = _senderEmail, name = "KromicStore" },
+                sender = new { email = _senderEmail, name = _senderName },
                 subject = request.Subject,
                 templateId = request.TemplateId,
                 @params = request.TemplateParameters ?? new Dictionary<string, string>(),
@@ -87,7 +118,7 @@ public class NotificationProxy : ServiceProxy<BrevoSendResponse>
                 Encoding.UTF8,
                 "application/json");
 
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{BrevoApiBaseUrl}/smtp/email")
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/{_apiVersion}/smtp/email")
             {
                 Content = content
             };
@@ -137,7 +168,7 @@ public class NotificationProxy : ServiceProxy<BrevoSendResponse>
         {
             var payload = new
             {
-                sender = "KromicStore",
+                sender = _senderName,
                 recipient = request.PhoneNumber,
                 content = request.Message
             };
@@ -147,7 +178,7 @@ public class NotificationProxy : ServiceProxy<BrevoSendResponse>
                 Encoding.UTF8,
                 "application/json");
 
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{BrevoApiBaseUrl}/sms/send")
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/{_apiVersion}/sms/send")
             {
                 Content = content
             };
@@ -201,8 +232,8 @@ public class NotificationProxy : ServiceProxy<BrevoSendResponse>
         return await ExecuteAsyncGeneric(async () =>
         {
             // Brevo provides event endpoint for transactional email tracking
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, 
-                $"{BrevoApiBaseUrl}/smtp/statistics");
+            var httpRequest = new HttpRequestMessage(HttpMethod.Get,
+                $"{_baseUrl}/{_apiVersion}/smtp/statistics");
             httpRequest.Headers.Add("api-key", _apiKey);
             httpRequest.Headers.Add("Accept", "application/json");
 
@@ -352,6 +383,12 @@ public class SendEmailRequest
     /// Brevo template ID to use for rendering
     /// </summary>
     public int TemplateId { get; set; }
+
+    /// <summary>
+    /// Email type for automatic template selection (order_placed, order_confirmed, order_dispatched)
+    /// If TemplateId is 0, this will be used to select the template from environment variables
+    /// </summary>
+    public string? EmailType { get; set; }
 
     /// <summary>
     /// Template variables to substitute in template

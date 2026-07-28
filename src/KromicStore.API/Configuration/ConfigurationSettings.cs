@@ -129,14 +129,13 @@ public static class ConfigurationSettings
     public static class Brevo
     {
         public static string ApiKey => GetConfigValue("BREVO_API_KEY", "");
-        public static string SenderEmail => GetConfigValue("BREVO_SENDER_EMAIL", "noreply@example.com");
-        public static string SenderName => GetConfigValue("BREVO_SENDER_NAME", "KromicStore");
+        public static string SenderEmail => GetConfigValue("BREVO_SENDER_EMAIL", "");
+        public static string SenderName => GetConfigValue("BREVO_SENDER_NAME", "");
         public static string BaseUrl => GetConfigValue("BREVO_BASE_URL", "https://api.brevo.com");
         public static string ApiVersion => GetConfigValue("BREVO_API_VERSION", "v3");
-        public static int WelcomeEmailTemplateId => GetIntConfigValue("BREVO_WELCOME_EMAIL_TEMPLATE_ID", 1);
-        public static int OrderConfirmationTemplateId => GetIntConfigValue("BREVO_ORDER_CONFIRMATION_TEMPLATE_ID", 2);
-        public static int ShipmentNotificationTemplateId => GetIntConfigValue("BREVO_SHIPMENT_NOTIFICATION_TEMPLATE_ID", 3);
-        public static int PaymentFailureTemplateId => GetIntConfigValue("BREVO_PAYMENT_FAILURE_TEMPLATE_ID", 4);
+        public static int TemplateOrderPlaced => GetIntConfigValue("BREVO_TEMPLATE_ORDER_PLACED", 0);
+        public static int TemplateOrderConfirmed => GetIntConfigValue("BREVO_TEMPLATE_ORDER_CONFIRMED", 0);
+        public static int TemplateOrderDispatched => GetIntConfigValue("BREVO_TEMPLATE_ORDER_DISPATCHED", 0);
     }
 
     /// <summary>

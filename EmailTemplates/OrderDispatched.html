@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Dispatched - {{tenant_name}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .logo {
+            max-width: 200px;
+            max-height: 80px;
+            margin-bottom: 15px;
+        }
+        .store-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+        .dispatch-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .dispatch-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .order-number {
+            background-color: #17a2b8;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .info-row {
+            display: flex;
+            margin: 10px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            min-width: 150px;
+            color: #666;
+        }
+        .info-value {
+            flex: 1;
+        }
+        .tracking-box {
+            background-color: #fff;
+            border: 2px solid #17a2b8;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .tracking-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #17a2b8;
+            margin: 15px 0;
+            letter-spacing: 2px;
+        }
+        .courier-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .tracking-button {
+            display: inline-block;
+            background-color: #17a2b8;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .tracking-button:hover {
+            background-color: #138496;
+        }
+        .timeline {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .timeline-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #17a2b8;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        .timeline-icon.completed {
+            background-color: #28a745;
+        }
+        .timeline-text {
+            flex: 1;
+        }
+        .timeline-date {
+            color: #666;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {% if logo_url %}
+            <img src="{{logo_url}}" alt="{{tenant_name}}" class="logo">
+            {% endif %}
+            <h1 class="store-name">{{tenant_name}}</h1>
+        </div>
+
+        <div class="dispatch-box">
+            <div class="dispatch-icon">🚚</div>
+            <h2 style="margin: 10px 0;">Order Dispatched!</h2>
+            <p style="margin: 0;">Your order has been shipped and is on its way to you.</p>
+        </div>
+
+        <div style="text-align: center;">
+            <div class="order-number">Order #{{order_number}}</div>
+        </div>
+
+        <div class="tracking-box">
+            <div class="section-title" style="border: none; margin-bottom: 5px;">Tracking Information</div>
+            <div class="courier-name">{{courier_name}}</div>
+            <div class="tracking-number">{{tracking_number}}</div>
+            {% if tracking_url %}
+            <a href="{{tracking_url}}" class="tracking-button" target="_blank">Track Your Order</a>
+            {% endif %}
+            <p style="margin-top: 15px; color: #666;">Estimated delivery: {{estimated_delivery_date}}</p>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Order Status</div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-icon completed">✓</div>
+                    <div class="timeline-text">
+                        <strong>Order Placed</strong>
+                        <div class="timeline-date">{{order_placed_date}}</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon completed">✓</div>
+                    <div class="timeline-text">
+                        <strong>Order Confirmed</strong>
+                        <div class="timeline-date">{{order_confirmed_date}}</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon completed">✓</div>
+                    <div class="timeline-text">
+                        <strong>Processing</strong>
+                        <div class="timeline-date">{{order_processed_date}}</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">✓</div>
+                    <div class="timeline-text">
+                        <strong>Shipped</strong>
+                        <div class="timeline-date">{{order_shipped_date}}</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon" style="background-color: #e0e0e0; color: #666;">5</div>
+                    <div class="timeline-text">
+                        <strong>Delivered</strong>
+                        <div class="timeline-date">Pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Shipping Details</div>
+            <div class="info-row">
+                <div class="info-label">Courier:</div>
+                <div class="info-value">{{courier_name}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Tracking Number:</div>
+                <div class="info-value">{{tracking_number}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Shipping Address:</div>
+                <div class="info-value">{{shipping_address}}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Contact Phone:</div>
+                <div class="info-value">{{customer_phone}}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Delivery Tips</div>
+            <ul style="line-height: 2;">
+                <li>Keep your phone handy for delivery calls</li>
+                <li>Ensure someone is available at the shipping address</li>
+                <li>Check your tracking status regularly</li>
+                <li>Contact courier directly if there are delivery issues</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center;">
+            <p style="color: #666;">If you have any questions about your delivery, please contact us or the courier directly.</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; {{current_year}} {{tenant_name}}. All rights reserved.</p>
+            <p>If you have any questions, please contact us at {{contact_email}}</p>
+        </div>
+    </div>
+</body>
+</html>

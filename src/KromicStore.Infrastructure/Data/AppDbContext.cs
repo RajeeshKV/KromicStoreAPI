@@ -99,6 +99,16 @@ public class AppDbContext : DbContext
     public DbSet<ApiKey> ApiKeys { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the Couriers table.
+    /// </summary>
+    public DbSet<Courier> Couriers { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the RazorpayConfigurations table.
+    /// </summary>
+    public DbSet<RazorpayConfiguration> RazorpayConfigurations { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets the CustomerAddresses table.
     /// </summary>
     public DbSet<CustomerAddress> CustomerAddresses { get; set; } = null!;

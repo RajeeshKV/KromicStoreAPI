@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using KromicStore.Infrastructure.Proxies.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KromicStore.Infrastructure.Proxies;
@@ -10,6 +9,7 @@ namespace KromicStore.Infrastructure.Proxies;
 /// Proxy for Cloudinary media management service
 /// Provides file upload, deletion, URL generation with transformations, and bulk operations
 /// with caching and atomic database transaction rollback on failure
+/// All configuration is loaded from environment variables
 /// </summary>
 public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
 {
@@ -22,24 +22,22 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
     private const int UrlCacheTtlMinutes = 60;
 
     /// <summary>
-    /// Initializes MediaProxy with Cloudinary API configuration
+    /// Initializes MediaProxy with Cloudinary API configuration from environment variables
     /// </summary>
     public MediaProxy(
         ILogger<MediaProxy> logger,
         ICircuitBreaker circuitBreaker,
-        IConfiguration config,
         HttpClient httpClient)
         : base(logger, circuitBreaker, timeoutSeconds: 60, maxRetries: 4)
     {
-        ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        _cloudName = config["ExternalServices:Cloudinary:CloudName"]
-            ?? throw new ArgumentException("Cloudinary cloud name not configured");
-        _apiKey = config["ExternalServices:Cloudinary:ApiKey"]
-            ?? throw new ArgumentException("Cloudinary API key not configured");
-        _apiSecret = config["ExternalServices:Cloudinary:ApiSecret"]
-            ?? throw new ArgumentException("Cloudinary API secret not configured");
+        _cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME")
+            ?? throw new ArgumentException("CLOUDINARY_CLOUD_NAME environment variable not configured");
+        _apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY")
+            ?? throw new ArgumentException("CLOUDINARY_API_KEY environment variable not configured");
+        _apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")
+            ?? throw new ArgumentException("CLOUDINARY_API_SECRET environment variable not configured");
         _httpClient = httpClient;
     }
 
