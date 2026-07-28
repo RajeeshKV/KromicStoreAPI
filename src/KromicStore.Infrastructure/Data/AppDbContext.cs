@@ -74,6 +74,11 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the TenantAdmins table.
+    /// </summary>
+    public DbSet<TenantAdmin> TenantAdmins { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets the TeamInvitations table.
     /// </summary>
     public DbSet<TeamInvitation> TeamInvitations { get; set; } = null!;

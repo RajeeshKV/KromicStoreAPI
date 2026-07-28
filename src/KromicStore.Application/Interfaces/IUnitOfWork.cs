@@ -18,6 +18,11 @@ public interface IUnitOfWork : IDisposable
     IRepository<User> Users { get; }
 
     /// <summary>
+    /// Gets the tenant admin repository.
+    /// </summary>
+    IRepository<TenantAdmin> TenantAdmins { get; }
+
+    /// <summary>
     /// Gets the product repository.
     /// </summary>
     IRepository<Product> Products { get; }

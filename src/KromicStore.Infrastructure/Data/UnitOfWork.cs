@@ -14,6 +14,7 @@ public class UnitOfWork : IUnitOfWork
     private readonly ILoggerFactory _loggerFactory;
     private IRepository<Tenant>? _tenantRepository;
     private IRepository<User>? _userRepository;
+    private IRepository<TenantAdmin>? _tenantAdminRepository;
     private IRepository<Product>? _productRepository;
     private IRepository<Category>? _categoryRepository;
     private IRepository<Customer>? _customerRepository;
@@ -40,6 +41,9 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public IRepository<User> Users => _userRepository ??= new Repository<User>(_context, _loggerFactory.CreateLogger<Repository<User>>());
+
+    /// <inheritdoc />
+    public IRepository<TenantAdmin> TenantAdmins => _tenantAdminRepository ??= new Repository<TenantAdmin>(_context, _loggerFactory.CreateLogger<Repository<TenantAdmin>>());
 
     /// <inheritdoc />
     public IRepository<Product> Products => _productRepository ??= new Repository<Product>(_context, _loggerFactory.CreateLogger<Repository<Product>>());

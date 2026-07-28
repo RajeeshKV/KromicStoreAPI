@@ -36,76 +36,149 @@ public class AuthService : IAuthService
 
     /// <summary>
     /// Authenticates a user with email and password.
+    /// Checks both TenantAdmin and User tables.
     /// </summary>
     public async Task<AuthResponse> LoginAsync(Guid tenantId, string email, string password, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email cannot be empty", nameof(email));
-
-        if (string.IsNullOrWhiteSpace(password))
-            throw new ArgumentException("Password cannot be empty", nameof(password));
-
-        _logger.LogInformation("User login attempt for email {Email} in tenant {TenantId}", email, tenantId);
-
-        // Find user by email and tenantId (if provided), otherwise by email alone
-        User? user;
-        if (tenantId != Guid.Empty)
+        try
         {
-            user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower() && u.TenantId == tenantId, cancellationToken)).FirstOrDefault();
-        }
-        else
-        {
-            // Look up user by email alone and get their tenantId
-            user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken)).FirstOrDefault();
-            if (user != null)
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("Email cannot be empty", nameof(email));
+
+            if (string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException("Password cannot be empty", nameof(password));
+
+            _logger.LogInformation("User login attempt for email {Email} in tenant {TenantId}", email, tenantId);
+
+            // Try TenantAdmin first (global email uniqueness)
+            TenantAdmin? tenantAdmin = null;
+            if (tenantId != Guid.Empty)
             {
-                tenantId = user.TenantId.Value;
-                _logger.LogInformation("Resolved tenant {TenantId} for user {Email}", tenantId, email);
+                tenantAdmin = (await _unitOfWork.TenantAdmins.FindAsync(a => a.Email.ToLower() == email.ToLower() && a.TenantId == tenantId, cancellationToken)).FirstOrDefault();
             }
+            else
+            {
+                // Look up by email alone and get their tenantId
+                tenantAdmin = (await _unitOfWork.TenantAdmins.FindAsync(a => a.Email.ToLower() == email.ToLower(), cancellationToken)).FirstOrDefault();
+                if (tenantAdmin != null)
+                {
+                    tenantId = tenantAdmin.TenantId;
+                    _logger.LogInformation("Resolved tenant {TenantId} for TenantAdmin {Email}", tenantId, email);
+                }
+            }
+
+            // If TenantAdmin found, authenticate as admin
+            if (tenantAdmin != null)
+            {
+                if (!tenantAdmin.IsActive)
+                {
+                    _logger.LogWarning("TenantAdmin account is inactive: {Email}", email);
+                    throw new UnauthorizedAccessException("Account is inactive");
+                }
+
+                // Verify password (simple comparison for now - TODO: implement BCrypt)
+                if (tenantAdmin.PasswordHash != password)
+                {
+                    _logger.LogWarning("Invalid password for TenantAdmin: {Email}", email);
+                    throw new UnauthorizedAccessException("Invalid email or password");
+                }
+
+                // Record login
+                tenantAdmin.RecordLogin();
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                // Generate JWT token
+                var accessToken = GenerateAccessToken(tenantAdmin.Id, tenantId, email, new[] { "TenantAdmin" }, tenantAdmin.TokenVersion);
+                var refreshToken = GenerateRefreshToken();
+
+                await PersistRefreshTokenAsync(tenantAdmin.Id, "TenantAdmin", refreshToken, cancellationToken);
+
+                var response = new AuthResponse(
+                    UserId: tenantAdmin.Id,
+                    Email: email,
+                    FirstName: tenantAdmin.FirstName,
+                    LastName: tenantAdmin.LastName,
+                    AccessToken: accessToken,
+                    RefreshToken: refreshToken,
+                    ExpiresAt: DateTime.UtcNow.AddHours(1)
+                );
+
+                _logger.LogInformation("TenantAdmin {Email} logged in successfully in tenant {TenantId}", email, tenantId);
+                return response;
+            }
+
+            // If not TenantAdmin, try User table (per-tenant email uniqueness)
+            User? user = null;
+            if (tenantId != Guid.Empty)
+            {
+                user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower() && u.TenantId == tenantId, cancellationToken)).FirstOrDefault();
+            }
+            else
+            {
+                // Look up user by email alone and get their tenantId
+                user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken)).FirstOrDefault();
+                if (user != null && user.TenantId.HasValue)
+                {
+                    tenantId = user.TenantId.Value;
+                    _logger.LogInformation("Resolved tenant {TenantId} for User {Email}", tenantId, email);
+                }
+            }
+
+            if (user == null)
+            {
+                _logger.LogWarning("User not found: {Email} in tenant {TenantId}", email, tenantId);
+                throw new UnauthorizedAccessException("Invalid email or password");
+            }
+
+            if (!user.IsActive)
+            {
+                _logger.LogWarning("User account is inactive: {Email}", email);
+                throw new UnauthorizedAccessException("Account is inactive");
+            }
+
+            // Verify password (simple comparison for now - TODO: implement BCrypt)
+            if (user.PasswordHash != password)
+            {
+                _logger.LogWarning("Invalid password for user: {Email}", email);
+                throw new UnauthorizedAccessException("Invalid email or password");
+            }
+
+            // Record login
+            user.RecordLogin();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Generate JWT token with token version
+            var userAccessToken = GenerateAccessToken(user.Id, tenantId, email, new[] { user.Role.ToString() }, user.TokenVersion);
+            var userRefreshToken = GenerateRefreshToken();
+
+            await PersistRefreshTokenAsync(user.Id, "User", userRefreshToken, cancellationToken);
+
+            var userResponse = new AuthResponse(
+                UserId: user.Id,
+                Email: email,
+                FirstName: user.FirstName,
+                LastName: user.LastName,
+                AccessToken: userAccessToken,
+                RefreshToken: userRefreshToken,
+                ExpiresAt: DateTime.UtcNow.AddHours(1)
+            );
+
+            _logger.LogInformation("User {Email} logged in successfully in tenant {TenantId}", email, tenantId);
+            return userResponse;
         }
-        
-        if (user == null)
+        catch (UnauthorizedAccessException)
         {
-            _logger.LogWarning("User not found: {Email} in tenant {TenantId}", email, tenantId);
-            throw new UnauthorizedAccessException("Invalid email or password");
+            throw; // Re-throw auth failures
         }
-
-        if (!user.IsActive)
+        catch (ArgumentException)
         {
-            _logger.LogWarning("User account is inactive: {Email}", email);
-            throw new UnauthorizedAccessException("Account is inactive");
+            throw; // Re-throw validation errors
         }
-
-        // Verify password (simple comparison for now - TODO: implement BCrypt)
-        if (user.PasswordHash != password)
+        catch (Exception ex)
         {
-            _logger.LogWarning("Invalid password for user: {Email}", email);
-            throw new UnauthorizedAccessException("Invalid email or password");
+            _logger.LogError(ex, "Login failed for email: {Email}", email);
+            throw new InvalidOperationException("Login failed. Please try again.", ex);
         }
-
-        // Record login
-        user.RecordLogin();
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Generate JWT token with token version
-        var accessToken = GenerateAccessToken(user.Id, tenantId, email, new[] { user.Role.ToString() }, user.TokenVersion);
-        var refreshToken = GenerateRefreshToken();
-
-        await PersistRefreshTokenAsync(user.Id, "User", refreshToken, cancellationToken);
-
-        var response = new AuthResponse(
-            UserId: user.Id,
-            Email: email,
-            FirstName: user.FirstName,
-            LastName: user.LastName,
-            AccessToken: accessToken,
-            RefreshToken: refreshToken,
-            ExpiresAt: DateTime.UtcNow.AddHours(1)
-        );
-
-        _logger.LogInformation("User {Email} logged in successfully in tenant {TenantId}", email, tenantId);
-
-        return response;
     }
 
     /// <summary>
@@ -147,31 +220,58 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User registration attempt for email {Email} in tenant {TenantId}", request.Email, tenantId);
 
-        // In real implementation, would:
-        // 1. Check if email already exists
-        // 2. Validate password strength
-        // 3. Hash password
-        // 4. Create user in database
-        // 5. Generate JWT token
-        // For now, return stub response
+        try
+        {
+            // Check if email already exists globally in TenantAdmins (one email = one TenantAdmin account)
+            var existingAdmin = (await _unitOfWork.TenantAdmins.FindAsync(a => a.Email.ToLower() == request.Email.ToLower(), cancellationToken)).FirstOrDefault();
+            if (existingAdmin != null)
+            {
+                _logger.LogWarning("Registration failed - email already exists as TenantAdmin: {Email}", request.Email);
+                throw new InvalidOperationException("This email is already registered as a store administrator");
+            }
 
-        var userId = Guid.NewGuid();
-        var accessToken = GenerateAccessToken(userId, tenantId, request.Email, new[] { "User" });
-        var refreshToken = GenerateRefreshToken();
+            // Create TenantAdmin
+            var tenantAdmin = TenantAdmin.Create(
+                tenantId: tenantId,
+                firstName: request.FirstName,
+                lastName: request.LastName,
+                email: request.Email,
+                password: request.Password // TODO: Hash this password
+            );
 
-        var response = new AuthResponse(
-            UserId: userId,
-            Email: request.Email,
-            FirstName: request.FirstName ?? "User",
-            LastName: request.LastName ?? "Account",
-            AccessToken: accessToken,
-            RefreshToken: refreshToken,
-            ExpiresAt: DateTime.UtcNow.AddHours(1)
-        );
+            await _unitOfWork.TenantAdmins.AddAsync(tenantAdmin, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("User {Email} registered successfully in tenant {TenantId}", request.Email, tenantId);
+            _logger.LogInformation("TenantAdmin {Email} registered successfully in tenant {TenantId}", request.Email, tenantId);
 
-        return await Task.FromResult(response);
+            // Generate JWT token
+            var accessToken = GenerateAccessToken(tenantAdmin.Id, tenantId, request.Email, new[] { "TenantAdmin" }, tenantAdmin.TokenVersion);
+            var refreshToken = GenerateRefreshToken();
+
+            await PersistRefreshTokenAsync(tenantAdmin.Id, "TenantAdmin", refreshToken, cancellationToken);
+
+            var response = new AuthResponse(
+                UserId: tenantAdmin.Id,
+                Email: request.Email,
+                FirstName: tenantAdmin.FirstName,
+                LastName: tenantAdmin.LastName,
+                AccessToken: accessToken,
+                RefreshToken: refreshToken,
+                ExpiresAt: DateTime.UtcNow.AddHours(1)
+            );
+
+            return response;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Registration validation failed for email: {Email}", request.Email);
+            throw; // Re-throw for controller to handle
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Registration failed for email: {Email}", request.Email);
+            throw new InvalidOperationException("Registration failed. Please try again.", ex);
+        }
     }
 
     /// <summary>
