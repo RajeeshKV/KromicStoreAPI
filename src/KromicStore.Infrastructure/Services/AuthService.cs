@@ -59,7 +59,7 @@ public class AuthService : IAuthService
             user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken)).FirstOrDefault();
             if (user != null)
             {
-                tenantId = user.TenantId;
+                tenantId = user.TenantId.Value;
                 _logger.LogInformation("Resolved tenant {TenantId} for user {Email}", tenantId, email);
             }
         }

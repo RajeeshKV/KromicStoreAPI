@@ -134,6 +134,84 @@ public class PublicController : ControllerBase
     }
 
     /// <summary>
+    /// Resolve tenant by subdomain for storefront initialization.
+    /// </summary>
+    /// <param name="subdomain">The subdomain to resolve (e.g., "store" for store.kromic.in).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Tenant information including ID, name, and status.</returns>
+    /// <response code="200">Tenant resolved successfully.</response>
+    /// <response code="400">Subdomain parameter missing.</response>
+    /// <response code="404">Tenant not found for the given subdomain.</response>
+    /// <response code="500">Server error resolving tenant.</response>
+    [HttpGet("tenant/by-subdomain")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ResolveTenantBySubdomain([FromQuery] string subdomain, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(subdomain))
+            {
+                return BadRequest(new { error = "Subdomain is required" });
+            }
+
+            // Normalize to lowercase
+            subdomain = subdomain.ToLowerInvariant();
+
+            _logger.LogInformation("Resolving tenant by subdomain: {Subdomain}", subdomain);
+
+            // Look up tenant by subdomain
+            var tenant = await _context.Tenants
+                .Where(t => t.Subdomain.ToLower() == subdomain)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Name,
+                    t.Subdomain,
+                    t.IsActive,
+                    t.IsDeleted,
+                    t.IsArchived
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (tenant == null)
+            {
+                _logger.LogWarning("Tenant not found for subdomain: {Subdomain}", subdomain);
+                return NotFound(new { error = "Tenant not found for the given subdomain" });
+            }
+
+            // Validate tenant status
+            if (tenant.IsDeleted || tenant.IsArchived || !tenant.IsActive)
+            {
+                _logger.LogWarning("Tenant is not available - Subdomain: {Subdomain}, Status: {Status}", 
+                    subdomain, 
+                    tenant.IsDeleted ? "Deleted" : tenant.IsArchived ? "Archived" : "Suspended");
+                return NotFound(new { error = "Tenant is not available" });
+            }
+
+            _logger.LogInformation("Tenant resolved successfully - Subdomain: {Subdomain}, TenantId: {TenantId}", 
+                subdomain, tenant.Id);
+
+            return Ok(new
+            {
+                data = new
+                {
+                    tenantId = tenant.Id,
+                    name = tenant.Name,
+                    subdomain = tenant.Subdomain
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resolving tenant by subdomain: {Subdomain}", subdomain);
+            return StatusCode(500, new { error = "Failed to resolve tenant" });
+        }
+    }
+
+    /// <summary>
     /// Check if a subdomain is available for registration.
     /// </summary>
     /// <param name="subdomain">The subdomain to check availability for.</param>
