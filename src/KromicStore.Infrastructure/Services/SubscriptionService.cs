@@ -50,8 +50,16 @@ public class SubscriptionService : ISubscriptionService
 
             if (subscription == null)
             {
-                _logger.LogWarning("No subscription found for tenant {TenantId}", tenantId);
-                return null;
+                _logger.LogInformation("No subscription found for tenant {TenantId}, creating default Starter trial subscription", tenantId);
+                
+                // Auto-create Starter trial subscription for new tenants
+                var newSubscription = Subscription.CreateTrial(tenantId, trialDays: 14, SubscriptionPlan.Starter);
+
+                await _unitOfWork.Subscriptions.AddAsync(newSubscription, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("Created default Starter trial subscription for tenant {TenantId}", tenantId);
+                subscription = newSubscription;
             }
 
             return MapToCurrentSubscriptionResponse(subscription);

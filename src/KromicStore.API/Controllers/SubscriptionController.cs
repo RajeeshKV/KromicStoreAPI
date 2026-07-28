@@ -16,6 +16,7 @@ using KromicStore.Contracts.V1.Subscriptions;
 public class SubscriptionController : BaseController
 {
     private readonly ISubscriptionService _subscriptionService;
+    private readonly IUsageReportingService _usageReportingService;
     private readonly ILogger<SubscriptionController> _logger;
 
     /// <summary>
@@ -24,10 +25,12 @@ public class SubscriptionController : BaseController
     public SubscriptionController(
         ITenantProvider tenantProvider,
         ISubscriptionService subscriptionService,
+        IUsageReportingService usageReportingService,
         ILogger<SubscriptionController> logger)
         : base(tenantProvider)
     {
         _subscriptionService = subscriptionService ?? throw new ArgumentNullException(nameof(subscriptionService));
+        _usageReportingService = usageReportingService ?? throw new ArgumentNullException(nameof(usageReportingService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -57,14 +60,7 @@ public class SubscriptionController : BaseController
                 CurrentTenantId,
                 cancellationToken);
 
-            if (subscription == null)
-            {
-                _logger.LogWarning(
-                    "Subscription not found for tenant {TenantId}",
-                    CurrentTenantId);
-                return NotFound(new { error = "Subscription not found." });
-            }
-
+            // Subscription is auto-created if not found, so this should never be null
             return Ok(subscription);
         }
         catch (Exception ex)
@@ -72,6 +68,40 @@ public class SubscriptionController : BaseController
             _logger.LogError(ex, "Error retrieving current subscription for tenant {TenantId}", CurrentTenantId);
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new { error = "An error occurred while retrieving the subscription." });
+        }
+    }
+
+    /// <summary>
+    /// Gets the current usage summary for the tenant.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Current usage summary with quotas and exceeded status.</returns>
+    /// <response code="200">Usage summary successfully retrieved.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User is not authorized (must be TenantAdmin or SuperUser).</response>
+    [HttpGet("current/usage")]
+    [ProducesResponseType(typeof(UsageSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetCurrentUsage(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "Getting current usage for tenant {TenantId}",
+                CurrentTenantId);
+
+            var usageSummary = await _usageReportingService.GetUsageSummaryAsync(
+                CurrentTenantId,
+                cancellationToken);
+
+            return Ok(usageSummary);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving current usage for tenant {TenantId}", CurrentTenantId);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { error = "An error occurred while retrieving the usage." });
         }
     }
 
