@@ -7,8 +7,15 @@ public interface IStoreBootstrapService
 {
     /// <summary>
     /// Gets the complete bootstrap data for the current tenant.
+    /// Only returns published storefront data for public access.
     /// </summary>
     Task<StoreBootstrapResponse> GetBootstrapDataAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the complete bootstrap data for storefront preview.
+    /// Returns draft state including unpublished changes for tenant admin preview.
+    /// </summary>
+    Task<StoreBootstrapResponse> GetPreviewDataAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -18,6 +18,9 @@ public class Storefront : BaseEntity
     /// <summary>Gets the storefront status.</summary>
     public StorefrontStatus Status { get; private set; } = StorefrontStatus.Draft;
 
+    /// <summary>Gets the timestamp when the storefront was last published.</summary>
+    public DateTime? PublishedAt { get; private set; }
+
     /// <summary>Gets the optional theme ID applied to this storefront.</summary>
     public Guid? ThemeId { get; private set; }
 
@@ -159,6 +162,7 @@ public class Storefront : BaseEntity
             throw new InvalidOperationException("Cannot publish storefront with incomplete mandatory fields.");
 
         Status = StorefrontStatus.Published;
+        PublishedAt = DateTime.UtcNow;
         UpdateTimestamp();
     }
 

@@ -29,6 +29,11 @@ public class AppDbContext : DbContext
     public DbSet<Product> Products { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the ProductImages table.
+    /// </summary>
+    public DbSet<ProductImage> ProductImages { get; set; } = null!;
+
+    /// <summary>
     /// Gets or sets the Customers table.
     /// </summary>
     public DbSet<Customer> Customers { get; set; } = null!;
@@ -533,6 +538,26 @@ public class AppDbContext : DbContext
             entity.OwnsOne(e => e.Price);
             entity.OwnsOne(e => e.CostPrice);
             entity.HasIndex(e => new { e.TenantId, e.Sku }).IsUnique();
+        });
+
+        // Configure ProductImage entity
+        modelBuilder.Entity<ProductImage>(entity =>
+        {
+            entity.ToTable("ProductImages");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ProductId).IsRequired();
+            entity.Property(e => e.Url).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.CloudinaryPublicId).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.DisplayOrder).IsRequired();
+            entity.Property(e => e.IsPrimary).IsRequired();
+            entity.Property(e => e.AltText).HasMaxLength(500);
+            entity.HasIndex(e => e.ProductId);
+            entity.HasIndex(e => new { e.ProductId, e.DisplayOrder });
+            entity.HasIndex(e => new { e.ProductId, e.IsPrimary });
+            entity.HasOne<Product>()
+                .WithMany(p => p.Images)
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure Customer entity

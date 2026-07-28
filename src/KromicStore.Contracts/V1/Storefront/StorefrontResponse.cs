@@ -52,4 +52,28 @@ public class StorefrontResponse
 
     /// <summary>Gets the last update timestamp.</summary>
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>Gets the timestamp when the storefront was last published.</summary>
+    public DateTime? PublishedAt { get; set; }
+}
+
+/// <summary>
+/// Response object for pending changes check.
+/// </summary>
+public class PendingChangesResponse
+{
+    /// <summary>Gets whether there are pending changes to publish.</summary>
+    public bool HasPendingChanges { get; set; }
+
+    /// <summary>Gets the current status of the storefront.</summary>
+    public string Status { get; set; } = string.Empty;
+
+    /// <summary>Gets the last update timestamp.</summary>
+    public DateTime LastUpdated { get; set; }
+
+    /// <summary>Gets the last published timestamp.</summary>
+    public DateTime? LastPublished { get; set; }
+
+    /// <summary>Gets the list of pending changes descriptions.</summary>
+    public List<string> Changes { get; set; } = new();
 }

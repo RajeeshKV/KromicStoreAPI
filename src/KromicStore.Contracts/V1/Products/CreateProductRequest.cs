@@ -58,4 +58,45 @@ public class CreateProductRequest
     [Range(0, double.MaxValue, 
         ErrorMessage = "Cost price cannot be negative")]
     public decimal? CostPrice { get; set; }
+
+    /// <summary>
+    /// The product images (optional).
+    /// Each image should be uploaded first via the media endpoint, then provide the URL and public ID.
+    /// </summary>
+    public List<ProductImageRequest>? Images { get; set; }
+}
+
+/// <summary>
+/// Request DTO for a product image.
+/// </summary>
+public class ProductImageRequest
+{
+    /// <summary>
+    /// The Cloudinary URL of the image.
+    /// </summary>
+    [Required(ErrorMessage = "Image URL is required")]
+    [Url(ErrorMessage = "Image URL must be a valid URL")]
+    public string Url { get; set; }
+
+    /// <summary>
+    /// The Cloudinary public ID for deletion/management.
+    /// </summary>
+    [Required(ErrorMessage = "Cloudinary public ID is required")]
+    public string CloudinaryPublicId { get; set; }
+
+    /// <summary>
+    /// The display order for sorting images.
+    /// </summary>
+    public int DisplayOrder { get; set; }
+
+    /// <summary>
+    /// Whether this is the primary/featured image.
+    /// </summary>
+    public bool IsPrimary { get; set; }
+
+    /// <summary>
+    /// The alt text for accessibility.
+    /// </summary>
+    [StringLength(500, ErrorMessage = "Alt text cannot exceed 500 characters")]
+    public string? AltText { get; set; }
 }

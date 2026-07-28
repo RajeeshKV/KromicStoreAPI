@@ -35,8 +35,11 @@ public class Product : BaseEntity
     /// <summary>Gets the category ID.</summary>
     public Guid? CategoryId { get; private set; }
 
-    /// <summary>Gets the primary image URL.</summary>
+    /// <summary>Gets the primary image URL (legacy field for backward compatibility).</summary>
     public string? ImageUrl { get; private set; }
+
+    /// <summary>Gets the collection of product images.</summary>
+    public ICollection<ProductImage> Images { get; private set; } = new List<ProductImage>();
 
     /// <summary>Gets the weight in kilograms.</summary>
     public decimal? Weight { get; private set; }

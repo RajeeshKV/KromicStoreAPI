@@ -199,6 +199,34 @@ public class ProductService : IProductService
                 request.StockQuantity,
                 request.CategoryId);
 
+            // Add product images if provided
+            if (request.Images != null && request.Images.Any())
+            {
+                foreach (var imageRequest in request.Images)
+                {
+                    var productImage = ProductImage.Create(
+                        product.Id,
+                        imageRequest.Url,
+                        imageRequest.CloudinaryPublicId,
+                        imageRequest.DisplayOrder,
+                        imageRequest.IsPrimary,
+                        imageRequest.AltText);
+                    product.Images.Add(productImage);
+                }
+
+                // Set legacy ImageUrl to primary image for backward compatibility
+                var primaryImage = request.Images.FirstOrDefault(i => i.IsPrimary) ?? request.Images.FirstOrDefault();
+                if (primaryImage != null)
+                {
+                    // Use reflection to set the private ImageUrl field
+                    var imageUrlProperty = typeof(Product).GetProperty("ImageUrl");
+                    if (imageUrlProperty != null)
+                    {
+                        imageUrlProperty.SetValue(product, primaryImage.Url);
+                    }
+                }
+            }
+
             await _unitOfWork.Products.AddAsync(product, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -251,6 +279,42 @@ public class ProductService : IProductService
                 request.Description,
                 price,
                 request.CategoryId);
+
+            // Handle product images if provided
+            if (request.Images != null)
+            {
+                // Remove all existing images
+                var existingImages = await _unitOfWork.ProductImages.FindAsync(
+                    pi => pi.ProductId == id, cancellationToken);
+                foreach (var existingImage in existingImages)
+                {
+                    _unitOfWork.ProductImages.Delete(existingImage);
+                }
+
+                // Add new images
+                foreach (var imageRequest in request.Images)
+                {
+                    var productImage = ProductImage.Create(
+                        id,
+                        imageRequest.Url,
+                        imageRequest.CloudinaryPublicId,
+                        imageRequest.DisplayOrder,
+                        imageRequest.IsPrimary,
+                        imageRequest.AltText);
+                    product.Images.Add(productImage);
+                }
+
+                // Update legacy ImageUrl to primary image for backward compatibility
+                var primaryImage = request.Images.FirstOrDefault(i => i.IsPrimary) ?? request.Images.FirstOrDefault();
+                if (primaryImage != null)
+                {
+                    var imageUrlProperty = typeof(Product).GetProperty("ImageUrl");
+                    if (imageUrlProperty != null)
+                    {
+                        imageUrlProperty.SetValue(product, primaryImage.Url);
+                    }
+                }
+            }
 
             _unitOfWork.Products.Update(product);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -441,6 +505,15 @@ public class ProductService : IProductService
     /// </summary>
     private static ProductDto MapToProductDto(Product product)
     {
+        var images = product.Images?.Select(img => new ProductImageDto(
+            Id: img.Id,
+            Url: img.Url,
+            CloudinaryPublicId: img.CloudinaryPublicId,
+            DisplayOrder: img.DisplayOrder,
+            IsPrimary: img.IsPrimary,
+            AltText: img.AltText
+        )).ToList() ?? new List<ProductImageDto>();
+
         return new ProductDto(
             Id: product.Id,
             Sku: product.Sku,
@@ -452,6 +525,7 @@ public class ProductService : IProductService
             Status: product.Status.ToString(),
             CategoryId: product.CategoryId,
             ImageUrl: product.ImageUrl,
+            Images: images,
             Weight: product.Weight,
             TaxPercentage: product.TaxPercentage,
             CreatedAt: product.CreatedAt,

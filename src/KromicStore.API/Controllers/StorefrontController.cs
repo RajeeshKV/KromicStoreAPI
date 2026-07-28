@@ -374,6 +374,67 @@ public class StorefrontController : BaseController
     }
 
     /// <summary>
+    /// Checks for pending changes between draft and published storefront.
+    /// </summary>
+    /// <param name="id">The storefront ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Pending changes status and details.</returns>
+    /// <response code="200">Pending changes check completed.</response>
+    /// <response code="401">User is not authenticated.</response>
+    /// <response code="403">User does not have access to this storefront.</response>
+    /// <response code="404">Storefront not found.</response>
+    /// <response code="500">Internal server error.</response>
+    [HttpGet("{id}/pending-changes")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetPendingChanges(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Checking pending changes for storefront {StorefrontId} for tenant {TenantId}", id, CurrentTenantId);
+
+            var storefront = await _unitOfWork.Storefronts.GetByIdAsync(id, CurrentTenantId, cancellationToken);
+
+            if (storefront == null)
+            {
+                return NotFound();
+            }
+
+            if (storefront.TenantId != CurrentTenantId)
+            {
+                return Forbid();
+            }
+
+            var hasPendingChanges = storefront.Status == Domain.Enums.StorefrontStatus.Draft ||
+                                  storefront.UpdatedAt > storefront.PublishedAt;
+
+            var result = new PendingChangesResponse
+            {
+                HasPendingChanges = hasPendingChanges,
+                Status = storefront.Status.ToString(),
+                LastUpdated = storefront.UpdatedAt,
+                LastPublished = storefront.PublishedAt,
+                Changes = hasPendingChanges ? new List<string>
+                {
+                    storefront.Status == Domain.Enums.StorefrontStatus.Draft ? "Storefront is in draft state" : "Storefront has unpublished changes since last publish"
+                } : new List<string>()
+            };
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking pending changes for storefront {StorefrontId}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while checking pending changes" });
+        }
+    }
+
+    /// <summary>
     /// Publishes a storefront (makes it publicly accessible).
     /// Validates that all mandatory fields are provided before publishing.
     /// </summary>

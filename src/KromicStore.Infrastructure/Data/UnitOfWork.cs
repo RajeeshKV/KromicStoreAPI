@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork
     private IRepository<User>? _userRepository;
     private IRepository<TenantAdmin>? _tenantAdminRepository;
     private IRepository<Product>? _productRepository;
+    private IRepository<ProductImage>? _productImageRepository;
     private IRepository<Category>? _categoryRepository;
     private IRepository<Customer>? _customerRepository;
     private IRepository<Courier>? _courierRepository;
@@ -49,6 +50,9 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public IRepository<Product> Products => _productRepository ??= new Repository<Product>(_context, _loggerFactory.CreateLogger<Repository<Product>>());
+
+    /// <inheritdoc />
+    public IRepository<ProductImage> ProductImages => _productImageRepository ??= new Repository<ProductImage>(_context, _loggerFactory.CreateLogger<Repository<ProductImage>>());
 
     /// <inheritdoc />
     public IRepository<Category> Categories => _categoryRepository ??= new Repository<Category>(_context, _loggerFactory.CreateLogger<Repository<Category>>());

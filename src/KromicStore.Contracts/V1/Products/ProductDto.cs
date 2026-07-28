@@ -50,10 +50,15 @@ public record ProductDto(
     Guid? CategoryId,
     
     /// <summary>
-    /// The URL to the product's primary image (optional).
+    /// The URL to the product's primary image (optional) - legacy field for backward compatibility.
     /// </summary>
     string? ImageUrl,
-    
+
+    /// <summary>
+    /// The collection of product images.
+    /// </summary>
+    List<ProductImageDto> Images,
+
     /// <summary>
     /// The weight of the product for shipping calculations (optional).
     /// </summary>
@@ -73,3 +78,37 @@ public record ProductDto(
     /// The UTC timestamp when the product was last updated.
     /// </summary>
     DateTime UpdatedAt);
+
+/// <summary>
+/// Represents a product image in the response.
+/// </summary>
+public record ProductImageDto(
+    /// <summary>
+    /// The unique identifier of the product image.
+    /// </summary>
+    Guid Id,
+
+    /// <summary>
+    /// The Cloudinary URL of the image.
+    /// </summary>
+    string Url,
+
+    /// <summary>
+    /// The Cloudinary public ID for deletion/management.
+    /// </summary>
+    string CloudinaryPublicId,
+
+    /// <summary>
+    /// The display order for sorting images.
+    /// </summary>
+    int DisplayOrder,
+
+    /// <summary>
+    /// Whether this is the primary/featured image.
+    /// </summary>
+    bool IsPrimary,
+
+    /// <summary>
+    /// The alt text for accessibility.
+    /// </summary>
+    string? AltText);

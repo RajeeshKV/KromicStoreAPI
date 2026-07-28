@@ -28,6 +28,11 @@ public interface IUnitOfWork : IDisposable
     IRepository<Product> Products { get; }
 
     /// <summary>
+    /// Gets the product image repository.
+    /// </summary>
+    IRepository<ProductImage> ProductImages { get; }
+
+    /// <summary>
     /// Gets the category repository.
     /// </summary>
     IRepository<Category> Categories { get; }

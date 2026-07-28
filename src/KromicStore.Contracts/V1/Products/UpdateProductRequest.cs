@@ -35,4 +35,11 @@ public class UpdateProductRequest
     /// The updated category ID (optional).
     /// </summary>
     public Guid? CategoryId { get; set; }
+
+    /// <summary>
+    /// The updated product images (optional).
+    /// If provided, replaces all existing images.
+    /// Each image should be uploaded first via the media endpoint, then provide the URL and public ID.
+    /// </summary>
+    public List<ProductImageRequest>? Images { get; set; }
 }
