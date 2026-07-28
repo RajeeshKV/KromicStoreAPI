@@ -39,9 +39,6 @@ public class AuthService : IAuthService
     /// </summary>
     public async Task<AuthResponse> LoginAsync(Guid tenantId, string email, string password, CancellationToken cancellationToken = default)
     {
-        if (tenantId == Guid.Empty)
-            throw new ArgumentException("Tenant ID cannot be empty", nameof(tenantId));
-
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email cannot be empty", nameof(email));
 
@@ -50,8 +47,22 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User login attempt for email {Email} in tenant {TenantId}", email, tenantId);
 
-        // Find user by email and tenantId
-        var user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower() && u.TenantId == tenantId, cancellationToken)).FirstOrDefault();
+        // Find user by email and tenantId (if provided), otherwise by email alone
+        User? user;
+        if (tenantId != Guid.Empty)
+        {
+            user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower() && u.TenantId == tenantId, cancellationToken)).FirstOrDefault();
+        }
+        else
+        {
+            // Look up user by email alone and get their tenantId
+            user = (await _unitOfWork.Users.FindAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken)).FirstOrDefault();
+            if (user != null)
+            {
+                tenantId = user.TenantId;
+                _logger.LogInformation("Resolved tenant {TenantId} for user {Email}", tenantId, email);
+            }
+        }
         
         if (user == null)
         {
