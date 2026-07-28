@@ -370,13 +370,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
                 var isSuperUser = principal?.FindFirst("type")?.Value == "superuser";
 
-                var isValid = isSuperUser
-                    ? await db.SuperUsers
+                bool isValid;
+                if (isSuperUser)
+                {
+                    isValid = await db.SuperUsers
                         .AsNoTracking()
-                        .AnyAsync(su => su.Id == userId && su.IsActive && su.TokenVersion == tokenVersion)
-                    : await db.Users
+                        .AnyAsync(su => su.Id == userId && su.IsActive && su.TokenVersion == tokenVersion);
+                }
+                else
+                {
+                    // Check both TenantAdmins and Users tables
+                    var isAdmin = await db.TenantAdmins
+                        .AsNoTracking()
+                        .AnyAsync(ta => ta.Id == userId && ta.IsActive && ta.TokenVersion == tokenVersion);
+
+                    var isUser = await db.Users
                         .AsNoTracking()
                         .AnyAsync(u => u.Id == userId && u.IsActive && u.TokenVersion == tokenVersion);
+
+                    isValid = isAdmin || isUser;
+                }
 
                 if (!isValid)
                 {
