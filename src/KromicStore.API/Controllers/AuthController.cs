@@ -77,7 +77,7 @@ public class AuthController : ControllerBase
             _logger.LogInformation("Registration successful for email: {Email}, UserId: {UserId}", 
                 request.Email, response.UserId);
 
-            return CreatedAtAction(nameof(RegisterAsync), response);
+            return Ok(response);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
         {
