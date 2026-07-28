@@ -55,7 +55,13 @@ var requiredEnvVars = new[]
     "JWT_SECRET",
     "SECURITY_ENCRYPTION_KEY",
     "RAZORPAY_KEY_ID",
+    "RAZORPAY_KEY_SECRET",
+    "RAZORPAY_API_ENDPOINT",
     "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GOOGLE_REDIRECT_URI",
+    "GOOGLE_TOKEN_ENDPOINT",
+    "GOOGLE_USER_INFO_ENDPOINT",
     "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
     "CLOUDINARY_API_SECRET",
@@ -298,14 +304,12 @@ builder.Services.AddExternalServiceHttpClients(builder.Configuration);
 builder.Services.AddScoped<PaymentProxy>(sp => new PaymentProxy(
     sp.GetRequiredService<ILogger<PaymentProxy>>(),
     new CircuitBreaker(),
-    sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(PaymentProxy)),
-    sp.GetRequiredService<IConfiguration>()));
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(PaymentProxy))));
 
 builder.Services.AddScoped<OAuthProxy>(sp => new OAuthProxy(
     sp.GetRequiredService<ILogger<OAuthProxy>>(),
     new CircuitBreaker(),
-    sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(OAuthProxy)),
-    sp.GetRequiredService<IConfiguration>()));
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(OAuthProxy))));
 
 builder.Services.AddScoped<MediaProxy>(sp => new MediaProxy(
     sp.GetRequiredService<ILogger<MediaProxy>>(),

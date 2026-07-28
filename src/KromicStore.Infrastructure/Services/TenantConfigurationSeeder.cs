@@ -179,8 +179,8 @@ public class TenantConfigurationSeeder
         configs.Add(("payment:provider", "razorpay", false));
         configs.Add(("payment:razorpay_enabled", "true", false));
 
-        var razorpayApiKey = _configuration["ExternalServices:Razorpay:ApiKey"] ?? "";
-        var razorpayEndpoint = _configuration["ExternalServices:Razorpay:Endpoint"] ?? "https://api.razorpay.com/v1/";
+        var razorpayEndpoint = Environment.GetEnvironmentVariable("RAZORPAY_API_ENDPOINT") 
+            ?? throw new ArgumentException("RAZORPAY_API_ENDPOINT environment variable not configured");
 
         configs.Add(("payment:razorpay_endpoint", razorpayEndpoint, false));
         // Note: API keys should not be stored at tenant level - managed at platform level

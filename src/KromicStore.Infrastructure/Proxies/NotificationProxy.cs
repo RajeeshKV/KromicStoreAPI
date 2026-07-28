@@ -38,8 +38,10 @@ public class NotificationProxy : ServiceProxy<BrevoSendResponse>
             ?? throw new ArgumentException("BREVO_SENDER_EMAIL environment variable not configured");
         _senderName = Environment.GetEnvironmentVariable("BREVO_SENDER_NAME")
             ?? throw new ArgumentException("BREVO_SENDER_NAME environment variable not configured");
-        _baseUrl = Environment.GetEnvironmentVariable("BREVO_BASE_URL") ?? "https://api.brevo.com";
-        _apiVersion = Environment.GetEnvironmentVariable("BREVO_API_VERSION") ?? "v3";
+        _baseUrl = Environment.GetEnvironmentVariable("BREVO_BASE_URL")
+            ?? throw new ArgumentException("BREVO_BASE_URL environment variable not configured");
+        _apiVersion = Environment.GetEnvironmentVariable("BREVO_API_VERSION")
+            ?? throw new ArgumentException("BREVO_API_VERSION environment variable not configured");
 
         var templateOrderPlacedStr = Environment.GetEnvironmentVariable("BREVO_TEMPLATE_ORDER_PLACED");
         var templateOrderConfirmedStr = Environment.GetEnvironmentVariable("BREVO_TEMPLATE_ORDER_CONFIRMED");

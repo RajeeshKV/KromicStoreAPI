@@ -3,7 +3,6 @@
 using System.Text;
 using System.Text.Json;
 using KromicStore.Infrastructure.Proxies.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace KromicStore.Infrastructure.Proxies;
@@ -11,33 +10,31 @@ namespace KromicStore.Infrastructure.Proxies;
 /// <summary>
 /// Proxy for Razorpay payment gateway integration
 /// Handles payment creation, verification, refunds, and status queries with fault tolerance
+/// All configuration is loaded from environment variables
 /// </summary>
 public class PaymentProxy : ServiceProxy<PaymentResponse>
 {
     private readonly HttpClient _httpClient;
     private readonly string _keyId;
     private readonly string _keySecret;
-    private const string RazorpayBaseUrl = "https://api.razorpay.com/v1";
+    private readonly string _baseUrl;
 
     /// <summary>
-    /// Initializes a new instance of the PaymentProxy class
+    /// Initializes a new instance of the PaymentProxy class with environment variables
     /// </summary>
-    /// <param name="logger">Logger instance</param>
-    /// <param name="circuitBreaker">Circuit breaker for this proxy</param>
-    /// <param name="httpClient">HTTP client for API calls</param>
-    /// <param name="configuration">Application configuration</param>
     public PaymentProxy(
         ILogger<PaymentProxy> logger,
         ICircuitBreaker circuitBreaker,
-        HttpClient httpClient,
-        IConfiguration configuration)
+        HttpClient httpClient)
         : base(logger, circuitBreaker)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _keyId = configuration["ExternalServices:Razorpay:KeyId"]
-            ?? throw new InvalidOperationException("Razorpay KeyId not configured");
-        _keySecret = configuration["ExternalServices:Razorpay:KeySecret"]
-            ?? throw new InvalidOperationException("Razorpay KeySecret not configured");
+        _keyId = Environment.GetEnvironmentVariable("RAZORPAY_KEY_ID")
+            ?? throw new ArgumentException("RAZORPAY_KEY_ID environment variable not configured");
+        _keySecret = Environment.GetEnvironmentVariable("RAZORPAY_KEY_SECRET")
+            ?? throw new ArgumentException("RAZORPAY_KEY_SECRET environment variable not configured");
+        _baseUrl = Environment.GetEnvironmentVariable("RAZORPAY_API_ENDPOINT")
+            ?? throw new ArgumentException("RAZORPAY_API_ENDPOINT environment variable not configured");
     }
 
     /// <summary>
@@ -110,7 +107,7 @@ public class PaymentProxy : ServiceProxy<PaymentResponse>
             var content = new FormUrlEncodedContent(formData);
 
             // Create HTTP request
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{RazorpayBaseUrl}/orders")
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/orders")
             {
                 Content = content
             };
@@ -179,7 +176,7 @@ public class PaymentProxy : ServiceProxy<PaymentResponse>
         return await ExecuteAsync(async () =>
         {
             var httpRequest = new HttpRequestMessage(HttpMethod.Get,
-                $"{RazorpayBaseUrl}/payments/{request.PaymentId}");
+                $"{_baseUrl}/payments/{request.PaymentId}");
 
             // Add authentication
             var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_keyId}:{_keySecret}"));
@@ -255,7 +252,7 @@ public class PaymentProxy : ServiceProxy<PaymentResponse>
             var content = new FormUrlEncodedContent(refundData);
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post,
-                $"{RazorpayBaseUrl}/payments/{paymentId}/refund")
+                $"{_baseUrl}/payments/{paymentId}/refund")
             {
                 Content = content
             };
@@ -316,7 +313,7 @@ public class PaymentProxy : ServiceProxy<PaymentResponse>
         return await ExecuteAsyncGeneric(async () =>
         {
             var httpRequest = new HttpRequestMessage(HttpMethod.Get,
-                $"{RazorpayBaseUrl}/payments/{paymentId}/refunds");
+                $"{_baseUrl}/payments/{paymentId}/refunds");
 
             // Add authentication
             var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_keyId}:{_keySecret}"));
