@@ -199,7 +199,13 @@ public class AuthController : ControllerBase
     /// <response code="400">Refresh token missing.</response>
     /// <response code="401">Refresh token invalid or expired.</response>
     /// <response code="500">Server error during token refresh.</response>
+    /// <summary>
+    /// Refreshes the user's access token using a valid refresh token.
+    /// This endpoint does NOT require an active JWT (user can have expired token).
+    /// Only the refresh token needs to be valid and not expired/revoked.
+    /// </summary>
     [HttpPost("refresh")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
