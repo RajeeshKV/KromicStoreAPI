@@ -10,7 +10,26 @@ namespace KromicStore.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Safe PostgreSQL migration - drops TenantId column and related objects if they exist
+            // Safe PostgreSQL migration - consolidates TenantId to OwnerTenantId
+            migrationBuilder.Sql(
+                @"DO $$ BEGIN
+                    -- Add OwnerTenantId column if it doesn't exist (copy from TenantId if it exists)
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='Themes' AND column_name='OwnerTenantId'
+                    ) THEN
+                        ALTER TABLE ""Themes"" ADD COLUMN ""OwnerTenantId"" uuid;
+                    END IF;
+                    
+                    -- Migrate data from TenantId to OwnerTenantId if TenantId exists
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name='Themes' AND column_name='TenantId'
+                    ) THEN
+                        UPDATE ""Themes"" SET ""OwnerTenantId"" = ""TenantId"" WHERE ""OwnerTenantId"" IS NULL AND ""TenantId"" IS NOT NULL;
+                    END IF;
+                END $$;");
+
             migrationBuilder.Sql(
                 @"DO $$ BEGIN
                     -- Drop old foreign key if it exists
