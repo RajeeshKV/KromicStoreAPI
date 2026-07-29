@@ -104,6 +104,20 @@ public class Tenant : BaseEntity
     }
 
     /// <summary>
+    /// Updates the tenant subdomain.
+    /// </summary>
+    public void UpdateSubdomain(string subdomain)
+    {
+        if (string.IsNullOrWhiteSpace(subdomain))
+            throw new ArgumentException("Subdomain is required.", nameof(subdomain));
+        
+        if (!IsValidSubdomain(subdomain))
+            throw new ArgumentException("Subdomain must contain only alphanumeric characters and hyphens.", nameof(subdomain));
+        
+        Subdomain = subdomain.ToLowerInvariant();
+    }
+
+    /// <summary>
     /// Deactivates the tenant.
     /// </summary>
     public void Deactivate()

@@ -9,6 +9,14 @@ namespace KromicStore.Application.DTOs.Tenant
     public class UpdateTenantRequest
     {
         /// <summary>
+        /// New subdomain (e.g., "mystore" for mystore.kromic.in).
+        /// Optional. If provided, must be between 3 and 63 characters and contain only alphanumeric characters and hyphens.
+        /// </summary>
+        [StringLength(63, MinimumLength = 3, ErrorMessage = "Subdomain must be between 3 and 63 characters")]
+        [RegularExpression(@"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$", ErrorMessage = "Subdomain must contain only lowercase letters, numbers, and hyphens, and must start and end with alphanumeric characters")]
+        public string? Subdomain { get; set; }
+
+        /// <summary>
         /// New company name.
         /// Optional. If provided, must be between 2 and 100 characters.
         /// </summary>
@@ -24,3 +32,4 @@ namespace KromicStore.Application.DTOs.Tenant
         public string? Country { get; set; }
     }
 }
+

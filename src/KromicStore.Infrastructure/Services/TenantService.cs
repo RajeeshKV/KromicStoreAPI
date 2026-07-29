@@ -214,7 +214,7 @@ namespace KromicStore.Infrastructure.Services
         }
 
         /// <summary>
-        /// Updates tenant information such as company name and country.
+        /// Updates tenant information such as company name, country, and subdomain.
         /// Only TenantOwner can perform this operation.
         /// </summary>
         /// <param name="tenantId">Unique identifier of the tenant to update</param>
@@ -234,10 +234,28 @@ namespace KromicStore.Infrastructure.Services
             if (tenant == null)
                 throw new InvalidOperationException($"Tenant with ID {tenantId} not found.");
 
-            // Update fields using the Update method
+            // Update subdomain if provided
+            if (!string.IsNullOrEmpty(request.Subdomain))
+            {
+                // Check subdomain uniqueness (case-insensitive)
+                var existingTenant = (await _unitOfWork.Tenants.FindAsync(
+                    t => t.Subdomain.ToLower() == request.Subdomain.ToLower() && t.Id != tenantId, 
+                    cancellationToken)).FirstOrDefault();
+                
+                if (existingTenant != null)
+                {
+                    throw new InvalidOperationException($"Subdomain '{request.Subdomain}' is already taken.");
+                }
+
+                tenant.UpdateSubdomain(request.Subdomain);
+                _logger.LogInformation("Tenant subdomain updated: TenantId={TenantId}, Subdomain={Subdomain}", tenantId, request.Subdomain);
+            }
+
+            // Update company name if provided
             if (!string.IsNullOrEmpty(request.CompanyName))
             {
                 tenant.Update(request.CompanyName, tenant.Description, tenant.ContactEmail, tenant.ContactPhone);
+                _logger.LogInformation("Tenant name updated: TenantId={TenantId}, Name={Name}", tenantId, request.CompanyName);
             }
 
             tenant.UpdateTimestamp();
