@@ -18,7 +18,7 @@ public class CreateStorefrontRequest
     /// <summary>
     /// Gets or sets the storefront name/title.
     /// </summary>
-    [Required(ErrorMessage = "Store name is required")]
-    [StringLength(200, MinimumLength = 1, ErrorMessage = "Store name must be between 1 and 200 characters")]
-    public string StoreName { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Name is required")]
+    [StringLength(200, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 200 characters")]
+    public string Name { get; set; } = string.Empty;
 }

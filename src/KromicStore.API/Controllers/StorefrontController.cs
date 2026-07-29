@@ -93,7 +93,7 @@ public class StorefrontController : BaseController
                 storefrontId = await _storefrontCreationService.CreateFromThemeAsync(
                     CurrentTenantId,
                     themeId,
-                    request.StoreName,
+                    request.Name,
                     cancellationToken);
             }
             else
@@ -101,7 +101,7 @@ public class StorefrontController : BaseController
                 // Create from scratch
                 storefrontId = await _storefrontCreationService.CreateFromScratchAsync(
                     CurrentTenantId,
-                    request.StoreName,
+                    request.Name,
                     cancellationToken);
             }
 
