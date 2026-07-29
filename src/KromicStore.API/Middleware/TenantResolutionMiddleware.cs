@@ -33,7 +33,7 @@ public class TenantResolutionMiddleware
     /// <summary>
     /// Processes the HTTP request and resolves tenant information
     /// </summary>
-    public async Task InvokeAsync(HttpContext context, ITenantProvider tenantProvider)
+    public async Task InvokeAsync(HttpContext context, ITenantProvider tenantProvider, ITenantContext tenantContext)
     {
         var correlationId = context.Items["CorrelationId"]?.ToString() ?? "UNKNOWN";
 
@@ -118,6 +118,18 @@ public class TenantResolutionMiddleware
         if (tenantId != Guid.Empty)
         {
             tenantProvider.SetTenant(tenantId, tenantId.ToString());
+            
+            // IMPORTANT: Also set the ITenantContext for services
+            tenantContext.SetContext(
+                tenantId: tenantId,
+                tenantName: tenantId.ToString(), // We don't have the name here, using ID as fallback
+                slug: tenantId.ToString(),
+                domain: context.Request.Host.Host,
+                locale: "en-IN",
+                currency: "INR",
+                timezone: "Asia/Kolkata"
+            );
+            
             _logger.LogInformation(
                 "Tenant resolved successfully - TenantId: {TenantId}, Path: {Path}, CorrelationId: {CorrelationId}, User: {User}",
                 tenantId,
