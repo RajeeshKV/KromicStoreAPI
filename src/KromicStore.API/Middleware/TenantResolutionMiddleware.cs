@@ -31,9 +31,9 @@ public class TenantResolutionMiddleware
     }
 
     /// <summary>
-    /// Processes the HTTP request and resolves tenant information
+    /// Processes the HTTP request and resolves tenant information from JWT or subdomain
     /// </summary>
-    public async Task InvokeAsync(HttpContext context, ITenantProvider tenantProvider, ITenantContext tenantContext)
+    public async Task InvokeAsync(HttpContext context, ITenantProvider tenantProvider, ITenantContext tenantContext, IUnitOfWork unitOfWork)
     {
         var correlationId = context.Items["CorrelationId"]?.ToString() ?? "UNKNOWN";
 
@@ -93,6 +93,19 @@ public class TenantResolutionMiddleware
             if (Guid.TryParse(headerValue, out var headerTenantId))
             {
                 tenantId = headerTenantId;
+            }
+        }
+
+        // If still no tenant ID, try subdomain-based resolution for public requests
+        if (tenantId == Guid.Empty && !context.User.Identity?.IsAuthenticated == true)
+        {
+            var hostName = context.Request.Host.Host;
+            var subdomain = ExtractSubdomainFromHost(hostName);
+            
+            if (!string.IsNullOrEmpty(subdomain))
+            {
+                _logger.LogInformation("Attempting subdomain-based tenant resolution - Subdomain: {Subdomain}, Host: {Host}", subdomain, hostName);
+                tenantId = await ResolveTenantBySubdomainAsync(subdomain, unitOfWork);
             }
         }
 
@@ -220,5 +233,56 @@ public class TenantResolutionMiddleware
             // Exact match
             return pathValue == bypassPath;
         });
+    }
+
+    /// <summary>
+    /// Extracts subdomain from hostname (e.g., "test.kromic.in" => "test")
+    /// </summary>
+    private string? ExtractSubdomainFromHost(string? host)
+    {
+        if (string.IsNullOrEmpty(host))
+            return null;
+
+        // Remove port if present
+        var hostWithoutPort = host.Split(':')[0];
+        var parts = hostWithoutPort.Split('.');
+
+        // For subdomain-based routing, we need at least 3 parts (subdomain.domain.extension)
+        // e.g., "test.kromic.in" should return "test"
+        // "kromic.in" should return null
+        // "localhost" should return null
+        if (parts.Length >= 3)
+        {
+            return parts[0]; // Return the first part (subdomain)
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves tenant ID by subdomain from database
+    /// </summary>
+    private async Task<Guid> ResolveTenantBySubdomainAsync(string subdomain, IUnitOfWork unitOfWork)
+    {
+        try
+        {
+            var tenant = (await unitOfWork.Tenants.FindAsync(
+                t => t.Subdomain.ToLower() == subdomain.ToLower(),
+                CancellationToken.None)).FirstOrDefault();
+
+            if (tenant != null)
+            {
+                _logger.LogInformation("Tenant resolved by subdomain - Subdomain: {Subdomain}, TenantId: {TenantId}", subdomain, tenant.Id);
+                return tenant.Id;
+            }
+
+            _logger.LogWarning("No tenant found for subdomain - Subdomain: {Subdomain}", subdomain);
+            return Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resolving tenant by subdomain - Subdomain: {Subdomain}", subdomain);
+            return Guid.Empty;
+        }
     }
 }
