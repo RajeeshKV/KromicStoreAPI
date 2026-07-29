@@ -48,6 +48,18 @@ public class Storefront : BaseEntity
     /// <summary>Gets the copyright text.</summary>
     public string? Copyright { get; private set; }
 
+    /// <summary>Gets the Facebook URL for footer social links.</summary>
+    public string? FacebookUrl { get; private set; }
+
+    /// <summary>Gets the Twitter/X URL for footer social links.</summary>
+    public string? TwitterUrl { get; private set; }
+
+    /// <summary>Gets the Instagram URL for footer social links.</summary>
+    public string? InstagramUrl { get; private set; }
+
+    /// <summary>Gets the LinkedIn URL for footer social links.</summary>
+    public string? LinkedInUrl { get; private set; }
+
     /// <summary>Gets tracking of mandatory fields and whether they are placeholders.</summary>
     public MandatoryFields MandatoryFields { get; private set; } = MandatoryFields.CreateAllPlaceholders();
 
@@ -91,7 +103,9 @@ public class Storefront : BaseEntity
     /// </summary>
     public void UpdateInfo(string name, string? logoUrl = null, string? contactEmail = null, 
         string? contactPhone = null, string? address = null, string? currency = null, 
-        string? country = null, string? brandColor = null, string? copyright = null)
+        string? country = null, string? brandColor = null, string? copyright = null,
+        string? facebookUrl = null, string? twitterUrl = null, string? instagramUrl = null, 
+        string? linkedInUrl = null)
     {
         if (!string.IsNullOrWhiteSpace(name))
             Name = name;
@@ -107,6 +121,10 @@ public class Storefront : BaseEntity
         Country = country;
         BrandColor = brandColor;
         Copyright = copyright;
+        FacebookUrl = facebookUrl;
+        TwitterUrl = twitterUrl;
+        InstagramUrl = instagramUrl;
+        LinkedInUrl = linkedInUrl;
 
         UpdateTimestamp();
     }

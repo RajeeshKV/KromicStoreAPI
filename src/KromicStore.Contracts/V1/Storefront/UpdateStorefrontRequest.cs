@@ -60,4 +60,28 @@ public class UpdateStorefrontRequest
     /// </summary>
     [StringLength(500, ErrorMessage = "Copyright text must not exceed 500 characters")]
     public string? Copyright { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Facebook URL for footer social links.
+    /// </summary>
+    [Url(ErrorMessage = "Facebook URL must be a valid URL")]
+    public string? FacebookUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Twitter/X URL for footer social links.
+    /// </summary>
+    [Url(ErrorMessage = "Twitter URL must be a valid URL")]
+    public string? TwitterUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Instagram URL for footer social links.
+    /// </summary>
+    [Url(ErrorMessage = "Instagram URL must be a valid URL")]
+    public string? InstagramUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets the LinkedIn URL for footer social links.
+    /// </summary>
+    [Url(ErrorMessage = "LinkedIn URL must be a valid URL")]
+    public string? LinkedInUrl { get; set; }
 }

@@ -41,6 +41,18 @@ public class StorefrontResponse
     /// <summary>Gets the copyright text.</summary>
     public string? Copyright { get; set; }
 
+    /// <summary>Gets the Facebook URL for footer social links.</summary>
+    public string? FacebookUrl { get; set; }
+
+    /// <summary>Gets the Twitter/X URL for footer social links.</summary>
+    public string? TwitterUrl { get; set; }
+
+    /// <summary>Gets the Instagram URL for footer social links.</summary>
+    public string? InstagramUrl { get; set; }
+
+    /// <summary>Gets the LinkedIn URL for footer social links.</summary>
+    public string? LinkedInUrl { get; set; }
+
     /// <summary>Gets the mandatory fields status (which required fields are still placeholders).</summary>
     public MandatoryFieldsStatusResponse MandatoryFieldsStatus { get; set; } = new();
 

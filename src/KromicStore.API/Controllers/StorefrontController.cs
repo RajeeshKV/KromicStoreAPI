@@ -220,7 +220,11 @@ public class StorefrontController : BaseController
                 request.Currency,
                 request.Country,
                 request.BrandColor,
-                request.Copyright);
+                request.Copyright,
+                request.FacebookUrl,
+                request.TwitterUrl,
+                request.InstagramUrl,
+                request.LinkedInUrl);
 
             _unitOfWork.Storefronts.Update(storefront);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -489,6 +493,10 @@ public class StorefrontController : BaseController
             Country = storefront.Country,
             BrandColor = storefront.BrandColor,
             Copyright = storefront.Copyright,
+            FacebookUrl = storefront.FacebookUrl,
+            TwitterUrl = storefront.TwitterUrl,
+            InstagramUrl = storefront.InstagramUrl,
+            LinkedInUrl = storefront.LinkedInUrl,
             MandatoryFieldsStatus = MapMandatoryFieldsStatus(storefront.MandatoryFields),
             Pages = storefront.Pages?.Select(MapPageToResponse).ToList() ?? new(),
             CreatedAt = storefront.CreatedAt,

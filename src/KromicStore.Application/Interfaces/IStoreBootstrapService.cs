@@ -31,25 +31,25 @@ public class StoreBootstrapResponse
 }
 
 /// <summary>
-/// Storefront bootstrap data (consolidated view).
+/// Storefront bootstrap data - direct mapping from Storefront entity.
 /// </summary>
 public class StorefrontBootstrapData
 {
-    public string SiteTitle { get; set; } = string.Empty;
-    public string MetaDescription { get; set; } = string.Empty;
-    public string FaviconUrl { get; set; } = string.Empty;
-    public string OpenGraphImageUrl { get; set; } = string.Empty;
-    public List<NavigationItem> HeaderMenu { get; set; } = new();
-    public List<NavigationItem> FooterMenu { get; set; } = new();
-    public List<CategoryItem> Categories { get; set; } = new();
-    public string HomepageLayoutType { get; set; } = string.Empty;
-    public List<SectionData> HomepageSections { get; set; } = new();
-    public bool WishlistEnabled { get; set; }
-    public bool ReviewsEnabled { get; set; }
-    public bool BlogEnabled { get; set; }
-    public bool CouponsEnabled { get; set; }
-    public bool MultiCurrencyEnabled { get; set; }
-    public bool MultiLanguageEnabled { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public Guid? ThemeId { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? ContactEmail { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? Address { get; set; }
+    public string Currency { get; set; } = "INR";
+    public string? Country { get; set; }
+    public string? BrandColor { get; set; }
+    public string? Copyright { get; set; }
+    public string? FacebookUrl { get; set; }
+    public string? TwitterUrl { get; set; }
+    public string? InstagramUrl { get; set; }
+    public string? LinkedInUrl { get; set; }
 }
 
 /// <summary>
