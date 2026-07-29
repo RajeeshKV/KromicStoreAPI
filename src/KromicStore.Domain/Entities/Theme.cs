@@ -114,10 +114,15 @@ public class Theme : BaseEntity
 
         ValidateThemeInput(Guid.NewGuid().ToString("N").Substring(0, 8), name, definitionJson);
 
+        // Generate unique slug: {tenantId}-{name}-{random suffix}
+        var namePart = name.ToLowerInvariant().Replace(" ", "-");
+        var randomSuffix = Guid.NewGuid().ToString("N").Substring(0, 6);
+        var slug = $"{tenantId:N}-{namePart}-{randomSuffix}";
+
         return new Theme
         {
             Id = Guid.NewGuid(),
-            Slug = $"{tenantId:N}-{name.ToLowerInvariant().Replace(" ", "-")}",
+            Slug = slug,
             Name = name,
             Description = string.Empty,
             Version = "1.0.0",
@@ -141,10 +146,15 @@ public class Theme : BaseEntity
         if (tenantId == Guid.Empty)
             throw new ArgumentException("Tenant ID is required.", nameof(tenantId));
 
+        // Generate unique slug: {tenantId}-{name}-{random suffix}
+        var namePart = (newName ?? Name).ToLowerInvariant().Replace(" ", "-");
+        var randomSuffix = Guid.NewGuid().ToString("N").Substring(0, 6);
+        var slug = $"{tenantId:N}-{namePart}-{randomSuffix}";
+
         return new Theme
         {
             Id = Guid.NewGuid(),
-            Slug = $"{tenantId:N}-{(newName ?? Name).ToLowerInvariant().Replace(" ", "-")}",
+            Slug = slug,
             Name = newName ?? $"{Name} (Clone)",
             Description = Description,
             Version = Version,
