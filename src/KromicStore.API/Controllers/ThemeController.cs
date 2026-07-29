@@ -129,10 +129,13 @@ public class ThemeController : BaseController
             // SU creates themes via SuperUserPlatformController
             _logger.LogInformation("Creating theme for tenant {TenantId}", CurrentTenantId);
 
+            // Provide default DefinitionJson if not supplied
+            var definitionJson = request.DefinitionJson ?? "{}";
+
             var theme = Domain.Entities.Theme.CreateTenantTheme(
                 CurrentTenantId,
                 request.Name,
-                request.DefinitionJson,
+                definitionJson,
                 request.IsPublic,
                 createdByUserId);
 
