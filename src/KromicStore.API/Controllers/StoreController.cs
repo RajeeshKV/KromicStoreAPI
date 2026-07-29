@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using KromicStore.Application.Interfaces;
 using KromicStore.API.Authorization;
-using System.Threading.Tasks;
 
 namespace KromicStore.API.Controllers;
 
@@ -15,13 +14,16 @@ public class StoreController : ControllerBase
 {
     private readonly IStoreBootstrapService _bootstrapService;
     private readonly ILogger<StoreController> _logger;
+    private readonly ITenantContext _tenantContext;
 
     public StoreController(
         IStoreBootstrapService bootstrapService,
-        ILogger<StoreController> logger)
+        ILogger<StoreController> logger,
+        ITenantContext tenantContext)
     {
         _bootstrapService = bootstrapService;
         _logger = logger;
+        _tenantContext = tenantContext;
     }
 
     /// <summary>
@@ -29,24 +31,37 @@ public class StoreController : ControllerBase
     /// This endpoint is used by the public storefront to initialize with all required data.
     /// Only returns data for published storefronts.
     /// Supports ETag for conditional requests and caching.
+    /// Public endpoint - can be accessed without authentication.
     /// </summary>
+    /// <param name="tenantId">The tenant ID to load storefront data for (required for public access).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Bootstrap response containing tenant, theme, navigation, homepage, features, and SEO data.</returns>
     /// <response code="200">Bootstrap data retrieved successfully.</response>
     /// <response code="304">Not modified - client has cached version (ETag match).</response>
     /// <response code="404">Tenant not found, not resolved, or storefront not published.</response>
     /// <response code="500">Server error during bootstrap data retrieval.</response>
-    [HttpGet("bootstrap")]
+    [HttpGet("bootstrap/{tenantId}")]
     [ProducesResponseType(typeof(StoreBootstrapResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status304NotModified)]
     [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
     [ResponseCache(Duration = 300, Location = ResponseCacheLocation.Any)]
-    public async Task<IActionResult> GetBootstrap(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetBootstrap(string tenantId, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("Public bootstrap data request received");
+            _logger.LogInformation("Public bootstrap data request received for tenant: {TenantId}", tenantId);
+
+            // Manually set tenant context for public access (no JWT required)
+            _tenantContext.SetContext(
+                tenantId: Guid.Parse(tenantId),
+                tenantName: tenantId,
+                slug: tenantId,
+                domain: Request.Host.Host,
+                locale: "en-IN",
+                currency: "INR",
+                timezone: "Asia/Kolkata"
+            );
 
             var response = await _bootstrapService.GetBootstrapDataAsync(cancellationToken);
 
@@ -70,6 +85,11 @@ public class StoreController : ControllerBase
         {
             _logger.LogWarning(ex, "Bootstrap failed: {Message}", ex.Message);
             return NotFound(new { error = ex.Message });
+        }
+        catch (FormatException)
+        {
+            _logger.LogWarning("Invalid tenant ID format: {TenantId}", tenantId);
+            return BadRequest(new { error = "Invalid tenant ID format" });
         }
         catch (Exception ex)
         {

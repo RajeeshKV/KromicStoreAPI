@@ -37,9 +37,10 @@ public class StoreBootstrapService : IStoreBootstrapService
 
         _logger.LogInformation("Fetching public bootstrap data for tenant: {TenantId}", tenantId);
 
-        // Fetch tenant data
+        // Fetch tenant data - match by TenantId (string) not Id (GUID)
+        // The JWT contains the string TenantId, not the GUID primary key
         var tenant = await _context.Tenants
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+            .FirstOrDefaultAsync(t => t.TenantId == tenantId.ToString(), cancellationToken);
 
         if (tenant == null)
         {
