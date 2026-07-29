@@ -151,7 +151,7 @@ public class ThemeRepository : Repository<Theme>, IThemeRepository
         {
             return await _context.Themes
                 .AsNoTracking()
-                .Where(t => t.OwnerTenantId == tenantId)
+                .Where(t => t.OwnerTenantId == tenantId && t.IsActive)
                 .OrderBy(t => t.Name)
                 .ToListAsync(cancellationToken);
         }
