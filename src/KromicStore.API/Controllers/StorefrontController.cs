@@ -37,260 +37,178 @@ public class StorefrontController : BaseController
     }
 
     /// <summary>
-    /// Creates a new storefront from an existing theme template.
+    /// Creates or returns the storefront for the current tenant.
+    /// Since one tenant = one storefront, this endpoint creates it on first call
+    /// and returns 200 OK if already exists (idempotent).
     /// </summary>
-    /// <param name="request">The request containing theme ID and storefront name.</param>
+    /// <param name="request">The request containing initial storefront details.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The newly created storefront with ID.</returns>
+    /// <returns>The storefront (newly created or existing).</returns>
     /// <response code="201">Storefront created successfully.</response>
+    /// <response code="200">Storefront already exists (returned as-is).</response>
     /// <response code="400">Validation failed or invalid request.</response>
     /// <response code="401">User is not authenticated.</response>
-    /// <response code="422">Invalid theme ID or operation failed.</response>
+    /// <response code="422">Operation failed.</response>
     /// <response code="500">Internal server error.</response>
     [Authorize(Policy = Permissions.StoreWrite)]
-    [HttpPost("from-theme")]
+    [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateFromTheme(
-        [FromBody] CreateStorefrontFromThemeRequest request,
+    public async Task<IActionResult> CreateOrGetStorefront(
+        [FromBody] CreateStorefrontRequest request,
         CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogInformation(
-                "Creating storefront from theme for tenant {TenantId} with theme {ThemeId}",
-                CurrentTenantId,
-                request.ThemeId);
+                "Create/Get storefront for tenant {TenantId}",
+                CurrentTenantId);
 
-            var storefrontId = await _storefrontCreationService.CreateFromThemeAsync(
+            // Check if storefront already exists for this tenant
+            var existingStorefronts = await _unitOfWork.Storefronts.GetByTenantAsync(
                 CurrentTenantId,
-                request.ThemeId,
-                request.StoreName,
                 cancellationToken);
 
+            if (existingStorefronts.Any())
+            {
+                var existingStorefront = existingStorefronts.First();
+                _logger.LogInformation(
+                    "Storefront {StorefrontId} already exists for tenant {TenantId}",
+                    existingStorefront.Id,
+                    CurrentTenantId);
+                
+                var existingResponse = MapStorefrontToResponse(existingStorefront);
+                return Ok(existingResponse);
+            }
+
+            // Create new storefront
+            Guid storefrontId;
+            if (!string.IsNullOrEmpty(request.ThemeId) && Guid.TryParse(request.ThemeId, out var themeId))
+            {
+                // Create from theme
+                storefrontId = await _storefrontCreationService.CreateFromThemeAsync(
+                    CurrentTenantId,
+                    themeId,
+                    request.StoreName,
+                    cancellationToken);
+            }
+            else
+            {
+                // Create from scratch
+                storefrontId = await _storefrontCreationService.CreateFromScratchAsync(
+                    CurrentTenantId,
+                    request.StoreName,
+                    cancellationToken);
+            }
+
             _logger.LogInformation(
-                "Storefront {StorefrontId} created from theme for tenant {TenantId}",
+                "Storefront {StorefrontId} created for tenant {TenantId}",
                 storefrontId,
                 CurrentTenantId);
 
+            var storefront = await _unitOfWork.Storefronts.GetByIdAsync(storefrontId, CurrentTenantId, cancellationToken);
+            var response = MapStorefrontToResponse(storefront);
+            
             return CreatedAtAction(
-                nameof(GetStorefront),
-                new { id = storefrontId },
-                new { id = storefrontId });
+                nameof(GetTenantStorefront),
+                new { },
+                response);
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning(ex, "Invalid argument while creating storefront from theme");
+            _logger.LogWarning(ex, "Invalid argument while creating storefront");
             return UnprocessableEntity(new { error = ex.Message });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating storefront from theme");
+            _logger.LogError(ex, "Error creating storefront");
             return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while creating the storefront" });
         }
     }
 
     /// <summary>
-    /// Creates a new storefront from scratch without a theme template.
+    /// Gets the current tenant's single storefront.
     /// </summary>
-    /// <param name="request">The request containing storefront name.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The newly created storefront with ID.</returns>
-    /// <response code="201">Storefront created successfully.</response>
-    /// <response code="400">Validation failed or invalid request.</response>
-    /// <response code="401">User is not authenticated.</response>
-    /// <response code="500">Internal server error.</response>
-    [Authorize(Policy = Permissions.StoreWrite)]
-    [HttpPost("from-scratch")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateFromScratch(
-        [FromBody] CreateStorefrontFromScratchRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation(
-                "Creating storefront from scratch for tenant {TenantId} with name {StoreName}",
-                CurrentTenantId,
-                request.StoreName);
-
-            var storefrontId = await _storefrontCreationService.CreateFromScratchAsync(
-                CurrentTenantId,
-                request.StoreName,
-                cancellationToken);
-
-            _logger.LogInformation(
-                "Storefront {StorefrontId} created from scratch for tenant {TenantId}",
-                storefrontId,
-                CurrentTenantId);
-
-            return CreatedAtAction(
-                nameof(GetStorefront),
-                new { id = storefrontId },
-                new { id = storefrontId });
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, "Invalid argument while creating storefront from scratch");
-            return UnprocessableEntity(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating storefront from scratch");
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while creating the storefront" });
-        }
-    }
-
-    /// <summary>
-    /// Retrieves a storefront by ID (tenant-scoped).
-    /// </summary>
-    /// <param name="id">The storefront ID.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The storefront details.</returns>
+    /// <returns>The tenant's storefront, or 404 if none created yet.</returns>
     /// <response code="200">Storefront retrieved successfully.</response>
     /// <response code="401">User is not authenticated.</response>
-    /// <response code="403">User does not have access to this storefront (different tenant).</response>
-    /// <response code="404">Storefront not found.</response>
-    /// <response code="500">Internal server error.</response>
-    [HttpGet("{id}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetStorefront(
-        Guid id,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving storefront {StorefrontId} for tenant {TenantId}", id, CurrentTenantId);
-
-            var storefront = await _unitOfWork.Storefronts.GetByIdAsync(id, CurrentTenantId, cancellationToken);
-
-            if (storefront == null)
-            {
-                _logger.LogWarning("Storefront {StorefrontId} not found for tenant {TenantId}", id, CurrentTenantId);
-                return NotFound();
-            }
-
-            if (storefront.TenantId != CurrentTenantId)
-            {
-                _logger.LogWarning(
-                    "Access denied: user from tenant {UserTenant} attempted to access storefront from tenant {StorefrontTenant}",
-                    CurrentTenantId,
-                    storefront.TenantId);
-                return Forbid();
-            }
-
-            var response = MapStorefrontToResponse(storefront);
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving storefront {StorefrontId}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while retrieving the storefront" });
-        }
-    }
-
-    /// <summary>
-    /// Lists all storefronts for the tenant with pagination.
-    /// </summary>
-    /// <param name="page">The page number (default: 1).</param>
-    /// <param name="pageSize">The page size (default: 10, max: 100).</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A paginated list of storefronts.</returns>
-    /// <response code="200">Storefronts retrieved successfully.</response>
-    /// <response code="401">User is not authenticated.</response>
+    /// <response code="404">Storefront not found (not yet created).</response>
     /// <response code="500">Internal server error.</response>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ListStorefronts(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTenantStorefront(CancellationToken cancellationToken = default)
     {
         try
         {
-            // Enforce max page size
-            const int maxPageSize = 100;
-            pageSize = Math.Min(Math.Max(pageSize, 1), maxPageSize);
-
-            _logger.LogInformation(
-                "Listing storefronts for tenant {TenantId}",
-                CurrentTenantId);
+            _logger.LogInformation("Retrieving storefront for tenant {TenantId}", CurrentTenantId);
 
             var storefronts = await _unitOfWork.Storefronts.GetByTenantAsync(
                 CurrentTenantId,
                 cancellationToken);
 
-            // Apply pagination manually
-            var paginatedStorefronts = storefronts
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            if (!storefronts.Any())
+            {
+                _logger.LogWarning("No storefront found for tenant {TenantId}", CurrentTenantId);
+                return NotFound(new { error = "Storefront not found. Create one using POST /api/v1/storefronts" });
+            }
 
-            var responses = paginatedStorefronts.Select(MapStorefrontToResponse).ToList();
-            return Ok(responses);
+            var storefront = storefronts.First();
+            var response = MapStorefrontToResponse(storefront);
+            return Ok(response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error listing storefronts for tenant {TenantId}", CurrentTenantId);
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while retrieving storefronts" });
+            _logger.LogError(ex, "Error retrieving storefront for tenant {TenantId}", CurrentTenantId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while retrieving the storefront" });
         }
     }
 
     /// <summary>
-    /// Updates storefront metadata and configuration.
+    /// Updates the current tenant's single storefront.
+    /// Since each tenant has only one storefront, no ID is needed.
     /// </summary>
-    /// <param name="id">The storefront ID.</param>
     /// <param name="request">The update request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The updated storefront.</returns>
     /// <response code="200">Storefront updated successfully.</response>
     /// <response code="400">Validation failed.</response>
     /// <response code="401">User is not authenticated.</response>
-    /// <response code="403">User does not have access to this storefront.</response>
     /// <response code="404">Storefront not found.</response>
     /// <response code="500">Internal server error.</response>
     [Authorize(Policy = Permissions.StoreWrite)]
-    [HttpPut("{id}")]
+    [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateStorefront(
-        Guid id,
+    public async Task<IActionResult> UpdateTenantStorefront(
         [FromBody] UpdateStorefrontRequest request,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Updating storefront {StorefrontId} for tenant {TenantId}", id, CurrentTenantId);
+            _logger.LogInformation("Updating storefront for tenant {TenantId}", CurrentTenantId);
 
-            var storefront = await _unitOfWork.Storefronts.GetByIdAsync(id, CurrentTenantId, cancellationToken);
+            var storefronts = await _unitOfWork.Storefronts.GetByTenantAsync(
+                CurrentTenantId,
+                cancellationToken);
 
-            if (storefront == null)
+            if (!storefronts.Any())
             {
-                _logger.LogWarning("Storefront {StorefrontId} not found for tenant {TenantId}", id, CurrentTenantId);
-                return NotFound();
+                _logger.LogWarning("No storefront found for tenant {TenantId} to update", CurrentTenantId);
+                return NotFound(new { error = "Storefront not found. Create one using POST /api/v1/storefronts" });
             }
 
-            if (storefront.TenantId != CurrentTenantId)
-            {
-                _logger.LogWarning("Access denied for storefront {StorefrontId}", id);
-                return Forbid();
-            }
+            var storefront = storefronts.First();
 
             // Update storefront
             storefront.UpdateInfo(
@@ -307,14 +225,14 @@ public class StorefrontController : BaseController
             _unitOfWork.Storefronts.Update(storefront);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Storefront {StorefrontId} updated successfully", id);
+            _logger.LogInformation("Storefront for tenant {TenantId} updated successfully", CurrentTenantId);
 
             var response = MapStorefrontToResponse(storefront);
             return Ok(response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating storefront {StorefrontId}", id);
+            _logger.LogError(ex, "Error updating storefront for tenant {TenantId}", CurrentTenantId);
             return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while updating the storefront" });
         }
     }
