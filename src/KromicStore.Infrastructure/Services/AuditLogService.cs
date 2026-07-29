@@ -45,6 +45,13 @@ public class AuditLogService : IAuditLogService
     {
         try
         {
+            // Sanitize strings to remove null bytes that cause PostgreSQL UTF-8 encoding errors
+            ipAddress = SanitizeString(ipAddress);
+            userAgent = SanitizeString(userAgent);
+            metadata = SanitizeString(metadata);
+            oldState = SanitizeString(oldState);
+            newState = SanitizeString(newState);
+            
             var auditLog = AuditLog.Create(
                 tenantId,
                 userId,
@@ -92,6 +99,12 @@ public class AuditLogService : IAuditLogService
     {
         try
         {
+            // Sanitize strings to remove null bytes that cause PostgreSQL UTF-8 encoding errors
+            ipAddress = SanitizeString(ipAddress);
+            userAgent = SanitizeString(userAgent);
+            metadata = SanitizeString(metadata);
+            errorMessage = SanitizeString(errorMessage);
+            
             var auditLog = AuditLog.CreateFailure(
                 tenantId,
                 userId,
@@ -211,5 +224,18 @@ public class AuditLogService : IAuditLogService
             .ToListAsync(cancellationToken);
 
         return (logs, total);
+    }
+
+    /// <summary>
+    /// Sanitizes a string by removing null bytes and other invalid UTF-8 characters.
+    /// PostgreSQL rejects null bytes in string data.
+    /// </summary>
+    private static string? SanitizeString(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        // Remove null bytes and other control characters that cause UTF-8 encoding errors
+        return new string(input.Where(c => c != '\0' && !char.IsControl(c)).ToArray());
     }
 }

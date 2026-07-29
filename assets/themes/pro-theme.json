@@ -298,16 +298,16 @@
                 "formColumns": 2,
                 "infoPosition": "right",
                 "contactInfo": {
-                  "email": "support@store.com",
-                  "phone": "+1 (555) 123-4567",
-                  "address": "123 Main Street, City, State 12345",
-                  "hours": "Monday - Friday: 9AM - 6PM EST"
+                  "email": "",
+                  "phone": "",
+                  "address": "",
+                  "hours": ""
                 },
                 "socialLinks": [
-                  { "platform": "facebook", "url": "https://facebook.com" },
-                  { "platform": "twitter", "url": "https://twitter.com" },
-                  { "platform": "instagram", "url": "https://instagram.com" },
-                  { "platform": "linkedin", "url": "https://linkedin.com" }
+                  { "platform": "facebook", "url": "" },
+                  { "platform": "twitter", "url": "" },
+                  { "platform": "instagram", "url": "" },
+                  { "platform": "linkedin", "url": "" }
                 ]
               }
             }

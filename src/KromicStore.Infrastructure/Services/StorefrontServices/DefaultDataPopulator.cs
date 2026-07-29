@@ -63,13 +63,13 @@ public class DefaultDataPopulator
         // Update storefront with default values
         storefront.UpdateInfo(
             name: storefront.Name,
-            logoUrl: "https://via.placeholder.com/200x60?text=Logo",
-            contactEmail: "support@store.com",
-            contactPhone: "+1 (555) 000-0000",
-            address: "123 Main Street, City, State 12345",
-            currency: storefront.Currency, // Use existing or default
-            country: "US",
-            brandColor: "#000000",
+            logoUrl: "",
+            contactEmail: "",
+            contactPhone: "",
+            address: "",
+            currency: "INR", // Use existing or default
+            country: "IN",
+            brandColor: "",
             copyright: $"© {DateTime.UtcNow.Year} {storefront.Name}. All rights reserved.");
 
         // Mark all mandatory fields as provided (not placeholders)
