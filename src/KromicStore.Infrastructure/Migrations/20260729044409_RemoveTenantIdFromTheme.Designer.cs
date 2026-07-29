@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KromicStore.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260729043516_RemoveTenantIdFromTheme")]
+    [Migration("20260729044409_RemoveTenantIdFromTheme")]
     partial class RemoveTenantIdFromTheme
     {
         /// <inheritdoc />
