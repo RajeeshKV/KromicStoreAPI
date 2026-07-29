@@ -31,27 +31,52 @@ public class ThemeController : BaseController
     }
 
     /// <summary>
-    /// Lists themes:
-    /// - For tenants: Their own themes + public themes (for browsing/cloning)
-    /// - For SU: Platform themes only (TenantId=null)
+    /// Lists public themes (platform themes + public themes from other tenants).
+    /// No authentication required - anyone can browse public themes.
     /// </summary>
-    [HttpGet]
+    [HttpGet("public")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ListThemes(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> ListPublicThemes(CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Listing themes");
+            _logger.LogInformation("Listing public themes");
+            // Platform themes (OwnerTenantId IS NULL) + public themes from any tenant
             var themes = await _unitOfWork.Themes.GetActiveAsync(cancellationToken);
             var responses = themes.Select(MapThemeToResponse).ToList();
             return Ok(responses);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error listing themes");
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Failed to retrieve themes" });
+            _logger.LogError(ex, "Error listing public themes");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Failed to retrieve public themes" });
+        }
+    }
+
+    /// <summary>
+    /// Lists private themes for the authenticated tenant.
+    /// Returns only the tenant's own themes.
+    /// </summary>
+    [HttpGet("private")]
+    [Authorize(Policy = Permissions.StoreRead)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ListPrivateThemes(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Listing private themes for tenant {TenantId}", CurrentTenantId);
+            var themes = await _unitOfWork.Themes.GetByTenantAsync(CurrentTenantId, cancellationToken);
+            var responses = themes.Select(MapThemeToResponse).ToList();
+            return Ok(responses);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing private themes");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Failed to retrieve private themes" });
         }
     }
 

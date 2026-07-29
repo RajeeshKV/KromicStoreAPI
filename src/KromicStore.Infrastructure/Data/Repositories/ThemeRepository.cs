@@ -90,10 +90,12 @@ public class ThemeRepository : Repository<Theme>, IThemeRepository
         var watch = Stopwatch.StartNew();
         try
         {
+            // Return platform themes + all public themes (for public browsing)
             return await _context.Themes
                 .AsNoTracking()
-                .Where(t => t.IsActive && t.OwnerTenantId == null) // Platform themes only
-                .OrderBy(t => t.Name)
+                .Where(t => t.IsActive && (t.OwnerTenantId == null || t.IsPublic))
+                .OrderBy(t => t.OwnerTenantId == null ? 0 : 1)  // Platform themes first
+                .ThenBy(t => t.Name)
                 .ToListAsync(cancellationToken);
         }
         finally
