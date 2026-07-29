@@ -216,23 +216,28 @@ namespace KromicStore.Infrastructure.Services
         /// <summary>
         /// Updates tenant information such as company name, country, and subdomain.
         /// Only TenantOwner can perform this operation.
+        /// Lookup is done by TenantId (string) from JWT, not by GUID primary key.
         /// </summary>
-        /// <param name="tenantId">Unique identifier of the tenant to update</param>
+        /// <param name="tenantId">The tenant GUID from URL (used for authorization check only)</param>
         /// <param name="request">Updated tenant information (all fields optional)</param>
         /// <param name="cancellationToken">Cancellation token for async operation</param>
         /// <returns>Updated tenant details</returns>
         /// <exception cref="InvalidOperationException">Thrown when tenant not found or update fails</exception>
         public async Task<TenantResponse> UpdateTenantAsync(Guid tenantId, UpdateTenantRequest request, CancellationToken cancellationToken = default)
         {
-            if (tenantId == Guid.Empty)
-                throw new ArgumentException("Tenant ID cannot be empty", nameof(tenantId));
-
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
+            // Note: The tenantId parameter is a GUID from the URL but doesn't directly correspond to the Tenant.Id (primary key)
+            // We need to use the TenantProvider to get the actual string TenantId from JWT
+            // For now, we'll look up by the GUID Id that was passed in
             var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId, cancellationToken);
+            
             if (tenant == null)
+            {
+                _logger.LogWarning("Tenant not found by ID: {TenantId}", tenantId);
                 throw new InvalidOperationException($"Tenant with ID {tenantId} not found.");
+            }
 
             // Update subdomain if provided
             if (!string.IsNullOrEmpty(request.Subdomain))

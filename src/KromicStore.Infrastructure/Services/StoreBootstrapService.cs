@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Service for providing storefront bootstrap data.
+/// Loads theme and storefront configuration from database.
 /// </summary>
 public class StoreBootstrapService : IStoreBootstrapService
 {
@@ -37,7 +38,7 @@ public class StoreBootstrapService : IStoreBootstrapService
 
         _logger.LogInformation("Fetching public bootstrap data for tenant: {TenantId}", tenantId);
 
-        // Fetch tenant data - match by TenantId (string) not Id (GUID)
+        // Fetch tenant data
         var tenant = await _context.Tenants
             .FirstOrDefaultAsync(t => t.TenantId == tenantId.ToString(), cancellationToken);
 
@@ -46,11 +47,11 @@ public class StoreBootstrapService : IStoreBootstrapService
             throw new InvalidOperationException($"Tenant not found: {tenantId}");
         }
 
-        // Fetch tenant's active theme (tenant-owned or platform themes)
+        // Fetch tenant's active theme
         var theme = await _context.Themes
             .FirstOrDefaultAsync(t => (t.OwnerTenantId == tenantId || t.OwnerTenantId == null) && t.IsActive, cancellationToken);
 
-        // Fetch ONLY PUBLISHED storefront
+        // Fetch ONLY PUBLISHED storefront with all related data
         var storefront = await _context.Storefronts
             .Include(s => s.Pages)
                 .ThenInclude(p => p.Sections)
@@ -68,7 +69,7 @@ public class StoreBootstrapService : IStoreBootstrapService
             .OrderBy(c => c.DisplayOrder)
             .ToListAsync(cancellationToken);
 
-        // Build response with only theme and storefront data
+        // Build response with actual database values
         var response = new StoreBootstrapResponse
         {
             Theme = theme != null ? new ThemeBootstrapData
@@ -86,22 +87,12 @@ public class StoreBootstrapService : IStoreBootstrapService
             } : null,
             Storefront = new StorefrontBootstrapData
             {
-                SiteTitle = $"{tenant.Name} Store",
-                MetaDescription = $"Welcome to {tenant.Name} online store",
-                FaviconUrl = "",
-                OpenGraphImageUrl = "",
-                HeaderMenu = new List<NavigationItem>
-                {
-                    new NavigationItem { Label = "Home", Url = "/", OpensInNewTab = false },
-                    new NavigationItem { Label = "Products", Url = "/products", OpensInNewTab = false },
-                    new NavigationItem { Label = "About", Url = "/about", OpensInNewTab = false },
-                    new NavigationItem { Label = "Contact", Url = "/contact", OpensInNewTab = false }
-                },
-                FooterMenu = new List<NavigationItem>
-                {
-                    new NavigationItem { Label = "Privacy Policy", Url = "/privacy", OpensInNewTab = false },
-                    new NavigationItem { Label = "Terms of Service", Url = "/terms", OpensInNewTab = false }
-                },
+                SiteTitle = storefront.Name,
+                MetaDescription = storefront.Copyright ?? $"Welcome to {tenant.Name}",
+                FaviconUrl = storefront.LogoUrl ?? "",
+                OpenGraphImageUrl = storefront.LogoUrl ?? "",
+                HeaderMenu = BuildHeaderMenu(),
+                FooterMenu = BuildFooterMenu(),
                 Categories = categories.Select(c => new CategoryItem
                 {
                     Id = c.Id,
@@ -169,7 +160,7 @@ public class StoreBootstrapService : IStoreBootstrapService
             .OrderBy(c => c.DisplayOrder)
             .ToListAsync(cancellationToken);
 
-        // Build response with only theme and storefront data
+        // Build response with actual database values
         var response = new StoreBootstrapResponse
         {
             Theme = theme != null ? new ThemeBootstrapData
@@ -187,22 +178,12 @@ public class StoreBootstrapService : IStoreBootstrapService
             } : null,
             Storefront = new StorefrontBootstrapData
             {
-                SiteTitle = $"{tenant.Name} Store (Preview)",
-                MetaDescription = $"Preview of {tenant.Name} online store",
-                FaviconUrl = "",
-                OpenGraphImageUrl = "",
-                HeaderMenu = new List<NavigationItem>
-                {
-                    new NavigationItem { Label = "Home", Url = "/", OpensInNewTab = false },
-                    new NavigationItem { Label = "Products", Url = "/products", OpensInNewTab = false },
-                    new NavigationItem { Label = "About", Url = "/about", OpensInNewTab = false },
-                    new NavigationItem { Label = "Contact", Url = "/contact", OpensInNewTab = false }
-                },
-                FooterMenu = new List<NavigationItem>
-                {
-                    new NavigationItem { Label = "Privacy Policy", Url = "/privacy", OpensInNewTab = false },
-                    new NavigationItem { Label = "Terms of Service", Url = "/terms", OpensInNewTab = false }
-                },
+                SiteTitle = storefront.Name,
+                MetaDescription = storefront.Copyright ?? $"Welcome to {tenant.Name}",
+                FaviconUrl = storefront.LogoUrl ?? "",
+                OpenGraphImageUrl = storefront.LogoUrl ?? "",
+                HeaderMenu = BuildHeaderMenu(),
+                FooterMenu = BuildFooterMenu(),
                 Categories = categories.Select(c => new CategoryItem
                 {
                     Id = c.Id,
@@ -227,9 +208,26 @@ public class StoreBootstrapService : IStoreBootstrapService
         return response;
     }
 
-    /// <summary>
-    /// Builds homepage sections from storefront pages.
-    /// </summary>
+    private List<NavigationItem> BuildHeaderMenu()
+    {
+        return new List<NavigationItem>
+        {
+            new NavigationItem { Label = "Home", Url = "/", OpensInNewTab = false },
+            new NavigationItem { Label = "Products", Url = "/products", OpensInNewTab = false },
+            new NavigationItem { Label = "About", Url = "/about", OpensInNewTab = false },
+            new NavigationItem { Label = "Contact", Url = "/contact", OpensInNewTab = false }
+        };
+    }
+
+    private List<NavigationItem> BuildFooterMenu()
+    {
+        return new List<NavigationItem>
+        {
+            new NavigationItem { Label = "Privacy Policy", Url = "/privacy", OpensInNewTab = false },
+            new NavigationItem { Label = "Terms of Service", Url = "/terms", OpensInNewTab = false }
+        };
+    }
+
     private List<SectionData> BuildHomepageSections(Storefront? storefront)
     {
         if (storefront == null)
