@@ -26,14 +26,14 @@ public class ThemeCloneService
     /// <summary>
     /// Clones theme pages, sections, and components into a storefront.
     /// </summary>
-    /// <param name="theme">The theme entity to clone from.</param>
+    /// <param name="theme">The theme to clone from.</param>
     /// <param name="storefront">The storefront to clone into.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The storefront with cloned content (reference for chaining).</returns>
     /// <exception cref="ArgumentNullException">Thrown when theme or storefront is null.</exception>
     /// <exception cref="InvalidOperationException">Thrown when theme JSON is invalid or cannot be parsed.</exception>
     public Task<Storefront> CloneThemeToStorefrontAsync(
-        ThemeEntity theme,
+        Theme theme,
         Storefront storefront,
         CancellationToken cancellationToken = default)
     {

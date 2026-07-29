@@ -1120,36 +1120,6 @@
     ],
     "Circuit breaker prevents repeated calls during outages": [
       {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973180
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973300
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996003477
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996003590
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874006
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874107
-      },
-      {
         "executionId": "57e37623-bc98-47cd-9692-c1f32632e593",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784998884311
@@ -1168,6 +1138,36 @@
         "executionId": "3dad0999-5317-4cbe-a9b2-894f71de6ac4",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784999168457
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256943487
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256943681
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257010382
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257010506
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257108184
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257108372
       }
     ],
     "All operations logged with user email and operation result": [
@@ -1619,36 +1619,6 @@
     ],
     "Entities added to AppDbContext DbSets": [
       {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973372
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973449
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996003667
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996003752
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874188
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874276
-      },
-      {
         "executionId": "57e37623-bc98-47cd-9692-c1f32632e593",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784998884897
@@ -1667,6 +1637,36 @@
         "executionId": "3dad0999-5317-4cbe-a9b2-894f71de6ac4",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784999171750
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256943811
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256943935
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257010664
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257010802
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257108569
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257108724
       }
     ],
     "`WebhookEventType` enum defined with values: OrderCreated, OrderStatusChanged, OrderCancelled, PaymentProcessed, PaymentFailed, TenantCreated, SubscriptionChanged, SubscriptionCancelled, ProductPublished, ProductUnpublished, CustomerCreated": [
@@ -2816,36 +2816,6 @@
     ],
     "Proper error handling with validation error details": [
       {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973540
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973603
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996003827
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996003922
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874372
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874443
-      },
-      {
         "executionId": "57e37623-bc98-47cd-9692-c1f32632e593",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784998890681
@@ -2864,6 +2834,36 @@
         "executionId": "3dad0999-5317-4cbe-a9b2-894f71de6ac4",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784999178233
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256944088
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256944244
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257010928
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257011061
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257108833
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257108954
       }
     ],
     "`ConfigController` extends `BaseController` with TenantAdmin authorization": [
@@ -5131,36 +5131,6 @@
     ],
     "Proper error handling": [
       {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973669
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784995973737
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996004049
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996004163
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874528
-      },
-      {
-        "executionId": "5da230d7-dcf1-42c5-b494-5808d0532dea",
-        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
-        "timestamp": 1784996874604
-      },
-      {
         "executionId": "57e37623-bc98-47cd-9692-c1f32632e593",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784998911802
@@ -5179,6 +5149,36 @@
         "executionId": "3dad0999-5317-4cbe-a9b2-894f71de6ac4",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784999204825
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256944386
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256944522
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257011196
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257011320
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257109081
+      },
+      {
+        "executionId": "c994d409-b893-47dd-a163-ef04e2839938",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257109224
       }
     ],
     "`OrderController` extends `BaseController`": [
@@ -8043,6 +8043,732 @@
         "executionId": "3dad0999-5317-4cbe-a9b2-894f71de6ac4",
         "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
         "timestamp": 1784999223438
+      }
+    ],
+    "Multi-stage Dockerfile created: `Dockerfile`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256944654
+      }
+    ],
+    "Build stage uses official Microsoft .NET 8.0 SDK image": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256944804
+      }
+    ],
+    "Build stage restores packages, builds project in Release configuration": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256944981
+      }
+    ],
+    "Runtime stage uses official Microsoft ASP.NET Core 8.0 runtime image (Alpine or Debian)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256945155
+      }
+    ],
+    "Runtime image includes only runtime files (no SDK)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256945312
+      }
+    ],
+    "Startup script copied to image (entrypoint)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256945475
+      }
+    ],
+    "Health check configured: `HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 CMD curl -f http://localhost:${PORT:-8080}/health || exit 1`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256945625
+      }
+    ],
+    "Health check includes both HEAD and GET requests with database connectivity": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256945779
+      }
+    ],
+    "Exposed port configurable via environment variable (default 8080)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256945922
+      }
+    ],
+    "Entrypoint invokes startup script for migration and seeding": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256946134
+      }
+    ],
+    "Image built and tested locally: `docker build -t kromic-store:latest .`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256946338
+      }
+    ],
+    "Image runs successfully: `docker run --env DATABASE_URL=... kromic-store:latest`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256946508
+      },
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785257011450
+      }
+    ],
+    "No production secrets hardcoded in image": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256946697
+      }
+    ],
+    "Image size minimal (< 500MB)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256946853
+      }
+    ],
+    "Startup script `scripts/entrypoint.sh` created (Bash/Shell)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256947039
+      }
+    ],
+    "Script waits for PostgreSQL availability using pg_isready or connection retry loop": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256947182
+      }
+    ],
+    "Retry logic: 30 retries with 2-second sleep between attempts": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256947343
+      }
+    ],
+    "Executes database migrations: `dotnet ef database update --project src/KromicStore.Infrastructure --startup-project src/KromicStore.API`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256947512
+      }
+    ],
+    "Logs migration execution status (start, success, failure)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256947652
+      }
+    ],
+    "Handles migration failures with clear error message and exit code 1": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256947789
+      }
+    ],
+    "If migrations succeed, starts application: `exec dotnet src/KromicStore.API/bin/Release/net8.0/KromicStore.API.dll`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256947922
+      }
+    ],
+    "Script uses environment variables: `DATABASE_URL`, `ASPNETCORE_ENVIRONMENT`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256948057
+      }
+    ],
+    "Script logging sends to STDOUT/STDERR for container logs": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256948208
+      }
+    ],
+    "Script executable: chmod +x scripts/entrypoint.sh": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256948455
+      }
+    ],
+    "Docker image invokes script as entrypoint": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256948610
+      }
+    ],
+    "All secrets loaded from environment variables: DATABASE_URL, JWT_SECRET, RAZORPAY_KEY, GOOGLE_CLIENT_ID, CLOUDINARY_API_KEY, BREVO_API_KEY, REDIS_URL": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256948765
+      }
+    ],
+    "No secrets in source code or default appsettings.json": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256948903
+      }
+    ],
+    "`appsettings.Development.json` for local development with test credentials": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256949016
+      }
+    ],
+    "`appsettings.Production.json` template provided (actual values from environment)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256949205
+      }
+    ],
+    "`appsettings.Staging.json` for staging environment": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256949367
+      }
+    ],
+    "IConfiguration properly injected in Startup (Program.cs)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256949526
+      }
+    ],
+    "Application fails fast with clear error if required configuration missing": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256949694
+      }
+    ],
+    "Environment variable validation on startup: check required keys present": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256949842
+      }
+    ],
+    "Logging configuration via environment (LOG_LEVEL, SERILOG_MINIMUM_LEVEL)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256949983
+      }
+    ],
+    "Database connection string validated on startup": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256950121
+      }
+    ],
+    "Application version/environment logged on startup": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256950289
+      }
+    ],
+    "`GET /health` endpoint returns 200 with liveness status (always returns 200 if app running)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256950480
+      }
+    ],
+    "`GET /health/ready` endpoint returns 200 if ready to receive traffic, 503 if degraded": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256950660
+      }
+    ],
+    "`HEAD /health` endpoint returns 200 (for simpler health check protocols)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256950813
+      }
+    ],
+    "Liveness response: `{ \"status\": \"Healthy\" }` (minimal, fast)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256950951
+      }
+    ],
+    "Readiness response includes checks: `{ \"status\": \"Healthy\", \"checks\": { \"database\": \"Healthy\", \"cache\": \"Healthy\", \"dependencies\": \"Healthy\" } }`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256951072
+      }
+    ],
+    "Database check: attempts SELECT 1 query with timeout": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256951207
+      }
+    ],
+    "Cache check: attempts SET/GET to Redis (if enabled)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256951352
+      }
+    ],
+    "All checks must complete within 10 seconds total": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256951518
+      }
+    ],
+    "Failed database check returns 503 Service Unavailable": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256951772
+      }
+    ],
+    "Failed cache check returns 503 but logs warning": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256951978
+      }
+    ],
+    "Endpoints require no authentication": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256952143
+      }
+    ],
+    "Response includes X-Response-Time header with milliseconds": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256952341
+      }
+    ],
+    "Logging tracks health check calls (limited to DEBUG level to avoid log spam)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256952573
+      }
+    ],
+    "`render.yaml` file created in repository root": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256952755
+      }
+    ],
+    "render.yaml specifies: Docker build image, environment variables (as placeholders), health check path `/health`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256952920
+      }
+    ],
+    "render.yaml configures Dockerfile: `dockerfilePath: ./Dockerfile`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256953060
+      }
+    ],
+    "render.yaml sets health check endpoint: `healthCheckPath: /health`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256953197
+      }
+    ],
+    "render.yaml exposes port: `8080` (matches Dockerfile)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256953426
+      }
+    ],
+    "Environment variables template includes all required keys (database, secrets, etc.)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256953588
+      }
+    ],
+    "Documentation explains: connect GitHub repo, configure environment variables, deploy": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256953745
+      }
+    ],
+    "Documentation includes Render-specific settings (region, instance type, memory)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256953931
+      }
+    ],
+    "Example environment file provided: `.env.render.example`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256954130
+      }
+    ],
+    "Post-deployment verification steps documented": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256954314
+      }
+    ],
+    "Rollback procedure documented (if deployment fails)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256954485
+      }
+    ],
+    "Serilog configured in Program.cs with console sink for container logs": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256954642
+      }
+    ],
+    "Log startup banner: `\"KromicStore API started: version={Version}, environment={Environment}\"`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256954806
+      }
+    ],
+    "Log database connection: `\"Database connection established: {ConnectionString} (masked)\"` (mask password)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256955006
+      }
+    ],
+    "Log migration execution: `\"Executing database migrations...\"` then `\"Database migrations completed successfully\"` or error": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256955143
+      }
+    ],
+    "Log application startup complete: `\"Application ready to receive requests on http://0.0.0.0:8080\"`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256955272
+      }
+    ],
+    "Log startup failures with full exception stack trace and context": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256955404
+      }
+    ],
+    "All startup logs at INFO level (visible by default)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256955563
+      }
+    ],
+    "Correlation IDs propagated to all logs (if enabled)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256955728
+      }
+    ],
+    "Structured fields: `@l (level), @mt (message template), @ts (timestamp), Exception`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256955884
+      }
+    ],
+    "JSON output format for container log aggregation (ELK, CloudWatch, etc.)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256956017
+      }
+    ],
+    "Log levels configurable via environment: `LOG_LEVEL` (Debug, Information, Warning, Error)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256956140
+      }
+    ],
+    "Minimum log level: Information (production), Debug (development)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256956322
+      }
+    ],
+    "Docker image builds successfully: `docker build -t kromic-store:latest .`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256956468
+      }
+    ],
+    "Build logs show no errors or warnings": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256956617
+      }
+    ],
+    "Image size verified: `docker images | grep kromic-store` (< 500MB)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256956791
+      }
+    ],
+    "Container runs locally with test database": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256956946
+      }
+    ],
+    "Health check endpoint responds: `curl http://localhost:8080/health`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256957079
+      }
+    ],
+    "Readiness check endpoint responds: `curl http://localhost:8080/health/ready`": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256957217
+      }
+    ],
+    "Database migrations execute on startup (verify with logs)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256957355
+      }
+    ],
+    "Application logs show startup complete message": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256957512
+      }
+    ],
+    "No manual server configuration required post-deployment": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256957744
+      }
+    ],
+    "Render deployment template tested (dry-run if possible)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256957906
+      }
+    ],
+    "Deployment documentation complete and accurate": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256958060
+      }
+    ],
+    "Rollback procedure tested and documented": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256958216
+      }
+    ],
+    "All tests pass locally": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256958368
+      }
+    ],
+    "Build succeeds in Release configuration": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256958550
+      }
+    ],
+    "Docker image builds without errors": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256958780
+      }
+    ],
+    "Health endpoints respond correctly": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256958986
+      }
+    ],
+    "All environment variables documented": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256959123
+      }
+    ],
+    "Database migrations tested locally": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256959320
+      }
+    ],
+    "Logging configured for production": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256959464
+      }
+    ],
+    "No secrets in source code or default configs": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256959632
+      }
+    ],
+    "API documentation complete (Swagger)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256959806
+      }
+    ],
+    "Monitoring and alerting configured (if applicable)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256959977
+      }
+    ],
+    "Application health check returns 200": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256960132
+      }
+    ],
+    "API endpoints respond with expected status codes": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256960288
+      }
+    ],
+    "Database migrations executed successfully": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256960410
+      }
+    ],
+    "Startup logs show application ready": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256960558
+      }
+    ],
+    "Health check includes database and cache status": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256960780
+      }
+    ],
+    "No errors in application logs after 5 minutes": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256960957
+      }
+    ],
+    "Sample API call succeeds (GET /health, GET /api/v1/products)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256961150
+      }
+    ],
+    "Render dashboard shows application running": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256961298
+      }
+    ],
+    "Response times within SLA (< 500ms for API calls)": [
+      {
+        "executionId": "217c4b00-9b05-4ce1-a43e-5a1d9f5706bf",
+        "chatSessionId": "sess_2f6f5f58-01e7-40eb-9bc8-6fe81849f655",
+        "timestamp": 1785256961413
       }
     ]
   }

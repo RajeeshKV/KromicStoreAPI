@@ -26,6 +26,15 @@ public class ThemeResponse
     /// <summary>Gets a value indicating whether this theme is active and available for use.</summary>
     public bool IsActive { get; set; }
 
+    /// <summary>Gets a value indicating whether this theme is public (shared with other tenants).</summary>
+    public bool IsPublic { get; set; }
+
+    /// <summary>Gets the ID of the theme this was cloned from (null if original).</summary>
+    public Guid? SourceThemeId { get; set; }
+
+    /// <summary>Gets the ID of the tenant who owns/created this theme (null for platform themes).</summary>
+    public Guid? TenantId { get; set; }
+
     /// <summary>
     /// Gets the complete theme definition stored as a JSON object.
     /// Contains default pages, sections, components, branding, navigation, and footer settings.

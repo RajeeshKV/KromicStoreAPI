@@ -46,9 +46,9 @@ public class StoreBootstrapService : IStoreBootstrapService
             throw new InvalidOperationException($"Tenant not found: {tenantId}");
         }
 
-        // Fetch tenant theme
-        var theme = await _context.TenantThemes
-            .FirstOrDefaultAsync(t => t.TenantId == tenantId && t.IsActive, cancellationToken);
+        // Fetch tenant theme (from unified Theme table - tenant or platform themes)
+        var theme = await _context.Themes
+            .FirstOrDefaultAsync(t => (t.OwnerTenantId == tenantId || t.OwnerTenantId == null) && t.IsActive, cancellationToken);
 
         // Fetch categories for navigation
         var categories = await _context.Categories
@@ -84,16 +84,18 @@ public class StoreBootstrapService : IStoreBootstrapService
             },
             Theme = theme != null ? new ThemeBootstrapData
             {
-                PrimaryColor = theme.PrimaryColor,
-                SecondaryColor = theme.SecondaryColor,
-                AccentColor = theme.AccentColor,
-                BackgroundColor = theme.BackgroundColor,
-                TextColor = theme.TextColor,
-                FontFamily = theme.FontFamily,
-                BorderRadius = theme.BorderRadius,
-                SpacingUnit = theme.SpacingUnit,
-                ComponentOverrides = theme.ComponentOverrides,
-                LayoutOptions = theme.LayoutOptions
+                // NOTE: Using legacy color fields for backward compatibility
+                // These will be phased out in favor of parsing DefinitionJson
+                PrimaryColor = theme.PrimaryColor ?? "#000000",
+                SecondaryColor = theme.SecondaryColor ?? "#666666",
+                AccentColor = "#007bff", // Default
+                BackgroundColor = "#ffffff",
+                TextColor = "#333333",
+                FontFamily = "Inter, sans-serif",
+                BorderRadius = 8,
+                SpacingUnit = 16,
+                ComponentOverrides = "{}",
+                LayoutOptions = "{}"
             } : null,
             Navigation = new NavigationBootstrapData
             {
@@ -163,9 +165,9 @@ public class StoreBootstrapService : IStoreBootstrapService
             throw new InvalidOperationException($"Tenant not found: {tenantId}");
         }
 
-        // Fetch tenant theme
-        var theme = await _context.TenantThemes
-            .FirstOrDefaultAsync(t => t.TenantId == tenantId && t.IsActive, cancellationToken);
+        // Fetch tenant theme (from unified Theme table - tenant or platform themes)
+        var theme = await _context.Themes
+            .FirstOrDefaultAsync(t => (t.OwnerTenantId == tenantId || t.OwnerTenantId == null) && t.IsActive, cancellationToken);
 
         // Fetch categories for navigation
         var categories = await _context.Categories
@@ -201,16 +203,18 @@ public class StoreBootstrapService : IStoreBootstrapService
             },
             Theme = theme != null ? new ThemeBootstrapData
             {
-                PrimaryColor = theme.PrimaryColor,
-                SecondaryColor = theme.SecondaryColor,
-                AccentColor = theme.AccentColor,
-                BackgroundColor = theme.BackgroundColor,
-                TextColor = theme.TextColor,
-                FontFamily = theme.FontFamily,
-                BorderRadius = theme.BorderRadius,
-                SpacingUnit = theme.SpacingUnit,
-                ComponentOverrides = theme.ComponentOverrides,
-                LayoutOptions = theme.LayoutOptions
+                // NOTE: Using legacy color fields for backward compatibility
+                // These will be phased out in favor of parsing DefinitionJson
+                PrimaryColor = theme.PrimaryColor ?? "#000000",
+                SecondaryColor = theme.SecondaryColor ?? "#666666",
+                AccentColor = "#007bff", // Default
+                BackgroundColor = "#ffffff",
+                TextColor = "#333333",
+                FontFamily = "Inter, sans-serif",
+                BorderRadius = 8,
+                SpacingUnit = 16,
+                ComponentOverrides = "{}",
+                LayoutOptions = "{}"
             } : null,
             Navigation = new NavigationBootstrapData
             {

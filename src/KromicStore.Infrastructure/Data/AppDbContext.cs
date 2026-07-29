@@ -163,9 +163,9 @@ public class AppDbContext : DbContext
     public DbSet<OrderPayment> OrderPayments { get; set; } = null!;
 
     /// <summary>
-    /// Gets or sets the Themes table (platform-wide themes, not tenant-scoped).
+    /// Gets or sets the Themes table (unified theme entity supporting platform-wide and tenant-scoped themes).
     /// </summary>
-    public DbSet<ThemeEntity> Themes { get; set; } = null!;
+    public DbSet<Theme> Themes { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets the SuperUsers table (platform admins, separate from tenant users).
@@ -181,11 +181,6 @@ public class AppDbContext : DbContext
     /// Gets or sets the TenantDomains table (supports multiple domains per tenant).
     /// </summary>
     public DbSet<TenantDomain> TenantDomains { get; set; } = null!;
-
-    /// <summary>
-    /// Gets or sets the TenantThemes table (tenant-specific theme configurations).
-    /// </summary>
-    public DbSet<TenantTheme> TenantThemes { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets the Storefronts table.
@@ -501,31 +496,6 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure TenantTheme entity
-        modelBuilder.Entity<TenantTheme>(entity =>
-        {
-            entity.ToTable("TenantThemes");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.TenantId).IsRequired();
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.PrimaryColor).IsRequired().HasMaxLength(7);
-            entity.Property(e => e.SecondaryColor).IsRequired().HasMaxLength(7);
-            entity.Property(e => e.AccentColor).IsRequired().HasMaxLength(7);
-            entity.Property(e => e.BackgroundColor).IsRequired().HasMaxLength(7);
-            entity.Property(e => e.TextColor).IsRequired().HasMaxLength(7);
-            entity.Property(e => e.FontFamily).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.BorderRadius).IsRequired();
-            entity.Property(e => e.SpacingUnit).IsRequired();
-            entity.Property(e => e.ComponentOverrides).IsRequired();
-            entity.Property(e => e.LayoutOptions).IsRequired();
-            entity.Property(e => e.IsActive).IsRequired();
-            entity.HasIndex(e => new { e.TenantId, e.IsActive });
-            entity.HasOne<Tenant>()
-                .WithMany()
-                .HasForeignKey(e => e.TenantId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
         // Configure Product entity
         modelBuilder.Entity<Product>(entity =>
         {
@@ -829,19 +799,84 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure ThemeEntity
-        modelBuilder.Entity<ThemeEntity>(entity =>
+        // Configure unified Theme entity
+        // Supports both platform-wide themes (OwnerTenantId = null) and tenant-scoped themes (OwnerTenantId = value)
+        modelBuilder.Entity<Theme>(entity =>
         {
             entity.ToTable("Themes");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Slug).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.Version).IsRequired().HasMaxLength(20);
-            entity.Property(e => e.DefinitionJson).IsRequired();
-            entity.Property(e => e.IsActive).IsRequired();
-            entity.HasIndex(e => e.Slug).IsUnique().HasDatabaseName("UX_Themes_Slug");
-            entity.HasIndex(e => e.IsActive).HasDatabaseName("IX_Themes_IsActive");
+            
+            // Core fields
+            entity.Property(e => e.Slug)
+                .IsRequired()
+                .HasMaxLength(256);
+                
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(255);
+                
+            entity.Property(e => e.Description)
+                .HasMaxLength(1000);
+                
+            entity.Property(e => e.Version)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("1.0.0");
+                
+            entity.Property(e => e.DefinitionJson)
+                .IsRequired();
+                
+            entity.Property(e => e.IsPublic)
+                .IsRequired()
+                .HasDefaultValue(false);
+                
+            entity.Property(e => e.SourceThemeId)
+                .IsRequired(false);
+                
+            entity.Property(e => e.OwnerTenantId)
+                .IsRequired(false);
+                
+            entity.Property(e => e.CreatedByUserId)
+                .IsRequired();
+                
+            entity.Property(e => e.LastModifiedByUserId)
+                .IsRequired(false);
+                
+            entity.Property(e => e.IsActive)
+                .IsRequired()
+                .HasDefaultValue(true);
+            
+            // Legacy fields (for backward compatibility, gradually phase out)
+            entity.Property(e => e.PrimaryColor)
+                .HasMaxLength(7);
+                
+            entity.Property(e => e.SecondaryColor)
+                .HasMaxLength(7);
+            
+            // Indexes
+            entity.HasIndex(e => e.Slug)
+                .IsUnique();
+                
+            entity.HasIndex(e => e.IsActive);
+                
+            entity.HasIndex(e => e.IsPublic);
+                
+            entity.HasIndex(e => e.OwnerTenantId);
+                
+            entity.HasIndex(e => new { e.OwnerTenantId, e.IsActive });
+                
+            entity.HasIndex(e => new { e.OwnerTenantId, e.IsPublic });
+                
+            entity.HasIndex(e => e.SourceThemeId);
+                
+            entity.HasIndex(e => e.CreatedAt);
+                
+            // Relationships - only specify FK when needed for navigation
+            entity.HasOne(e => e.Tenant)
+                .WithMany()
+                .HasForeignKey(e => e.OwnerTenantId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure Storefront entity
@@ -852,6 +887,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.TenantId).IsRequired();
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.PublishedAt).IsRequired(false);
             entity.Property(e => e.ThemeId);
             entity.Property(e => e.LogoUrl).HasMaxLength(500);
             entity.Property(e => e.ContactEmail).HasMaxLength(255);
@@ -1180,17 +1216,37 @@ public class AppDbContext : DbContext
             .HasIndex(e => new { e.TenantId, e.Status })
             .HasDatabaseName("IX_OrderPayments_TenantId_Status");
 
-        // Theme Indexes (Platform-wide, not tenant-scoped)
-        modelBuilder.Entity<ThemeEntity>()
+        // Theme Indexes (Unified: both platform-wide and tenant-scoped)
+        modelBuilder.Entity<Theme>()
             .HasIndex(e => e.Slug)
             .IsUnique()
             .HasDatabaseName("UX_Themes_Slug");
 
-        modelBuilder.Entity<ThemeEntity>()
+        modelBuilder.Entity<Theme>()
             .HasIndex(e => e.IsActive)
             .HasDatabaseName("IX_Themes_IsActive");
+            
+        modelBuilder.Entity<Theme>()
+            .HasIndex(e => e.IsPublic)
+            .HasDatabaseName("IX_Themes_IsPublic");
+            
+        modelBuilder.Entity<Theme>()
+            .HasIndex(e => e.OwnerTenantId)
+            .HasDatabaseName("IX_Themes_OwnerTenantId");
+            
+        modelBuilder.Entity<Theme>()
+            .HasIndex(e => new { e.OwnerTenantId, e.IsActive })
+            .HasDatabaseName("IX_Themes_OwnerTenantId_IsActive");
+            
+        modelBuilder.Entity<Theme>()
+            .HasIndex(e => new { e.OwnerTenantId, e.IsPublic })
+            .HasDatabaseName("IX_Themes_OwnerTenantId_IsPublic");
+            
+        modelBuilder.Entity<Theme>()
+            .HasIndex(e => e.SourceThemeId)
+            .HasDatabaseName("IX_Themes_SourceThemeId");
 
-        modelBuilder.Entity<ThemeEntity>()
+        modelBuilder.Entity<Theme>()
             .HasIndex(e => e.CreatedAt)
             .HasDatabaseName("IX_Themes_CreatedAt");
 

@@ -3,6 +3,7 @@ using System;
 using KromicStore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KromicStore.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728172314_AddPublishedAtToStorefront")]
+    partial class AddPublishedAtToStorefront
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2206,6 +2209,9 @@ namespace KromicStore.Infrastructure.Migrations
                     b.Property<Guid?>("SourceThemeId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2240,11 +2246,14 @@ namespace KromicStore.Infrastructure.Migrations
                     b.HasIndex("SourceThemeId")
                         .HasDatabaseName("IX_Themes_SourceThemeId");
 
-                    b.HasIndex("OwnerTenantId", "IsActive")
-                        .HasDatabaseName("IX_Themes_OwnerTenantId_IsActive");
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("IX_Themes_TenantId");
 
-                    b.HasIndex("OwnerTenantId", "IsPublic")
-                        .HasDatabaseName("IX_Themes_OwnerTenantId_IsPublic");
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("IX_Themes_TenantId_IsActive");
+
+                    b.HasIndex("TenantId", "IsPublic")
+                        .HasDatabaseName("IX_Themes_TenantId_IsPublic");
 
                     b.ToTable("Themes", (string)null);
                 });
@@ -3316,7 +3325,7 @@ namespace KromicStore.Infrastructure.Migrations
                 {
                     b.HasOne("KromicStore.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
-                        .HasForeignKey("OwnerTenantId")
+                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Tenant");

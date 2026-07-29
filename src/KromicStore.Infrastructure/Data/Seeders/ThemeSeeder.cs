@@ -41,7 +41,7 @@ public class ThemeSeeder
 
         _logger.LogInformation("Seeding themes into database...");
 
-        var themes = new List<ThemeEntity>
+        var themes = new List<Theme>
         {
             CreateMinimalTheme(),
             CreateModernTheme(),
@@ -57,8 +57,8 @@ public class ThemeSeeder
     /// <summary>
     /// Creates the Minimal theme with clean, modern design.
     /// </summary>
-    /// <returns>The Minimal theme entity.</returns>
-    private static ThemeEntity CreateMinimalTheme()
+    /// <returns>The Minimal platform theme.</returns>
+    private static Theme CreateMinimalTheme()
     {
         var definition = new
         {
@@ -71,19 +71,20 @@ public class ThemeSeeder
 
         var definitionJson = JsonSerializer.Serialize(definition, new JsonSerializerOptions { WriteIndented = true });
 
-        return ThemeEntity.Create(
+        return Theme.CreatePlatformTheme(
             slug: "minimal",
             name: "Minimal",
             description: "Clean, modern storefront with a minimalist design approach",
             version: "1.0.0",
-            definitionJson: definitionJson);
+            definitionJson: definitionJson,
+            createdByUserId: Guid.Empty);
     }
 
     /// <summary>
     /// Creates the Modern theme with advanced layouts and features.
     /// </summary>
-    /// <returns>The Modern theme entity.</returns>
-    private static ThemeEntity CreateModernTheme()
+    /// <returns>The Modern platform theme.</returns>
+    private static Theme CreateModernTheme()
     {
         var definition = new
         {
@@ -96,19 +97,20 @@ public class ThemeSeeder
 
         var definitionJson = JsonSerializer.Serialize(definition, new JsonSerializerOptions { WriteIndented = true });
 
-        return ThemeEntity.Create(
+        return Theme.CreatePlatformTheme(
             slug: "modern",
             name: "Modern",
             description: "Contemporary storefront with advanced layouts, featured products, and testimonials",
             version: "1.0.0",
-            definitionJson: definitionJson);
+            definitionJson: definitionJson,
+            createdByUserId: Guid.Empty);
     }
 
     /// <summary>
     /// Creates the Pro theme with enterprise-level features.
     /// </summary>
-    /// <returns>The Pro theme entity.</returns>
-    private static ThemeEntity CreateProTheme()
+    /// <returns>The Pro platform theme.</returns>
+    private static Theme CreateProTheme()
     {
         var definition = new
         {
@@ -121,11 +123,12 @@ public class ThemeSeeder
 
         var definitionJson = JsonSerializer.Serialize(definition, new JsonSerializerOptions { WriteIndented = true });
 
-        return ThemeEntity.Create(
+        return Theme.CreatePlatformTheme(
             slug: "pro",
             name: "Pro",
             description: "Professional enterprise theme with advanced layouts, FAQs, category sections, and comprehensive features",
             version: "1.0.0",
-            definitionJson: definitionJson);
+            definitionJson: definitionJson,
+            createdByUserId: Guid.Empty);
     }
 }

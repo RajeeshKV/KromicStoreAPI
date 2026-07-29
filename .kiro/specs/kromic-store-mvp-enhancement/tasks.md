@@ -2174,20 +2174,20 @@ All waves ────────────→ Wave 10 (Build & Verify)
 Create production-ready Dockerfile using multi-stage build pattern. Build stage compiles the ASP.NET Core application, runtime stage prepares lightweight image suitable for Render deployment with health checks and environment variable support.
 
 #### Acceptance Criteria
-- [ ] Multi-stage Dockerfile created: `Dockerfile`
-- [ ] Build stage uses official Microsoft .NET 8.0 SDK image
-- [ ] Build stage restores packages, builds project in Release configuration
-- [ ] Runtime stage uses official Microsoft ASP.NET Core 8.0 runtime image (Alpine or Debian)
-- [ ] Runtime image includes only runtime files (no SDK)
-- [ ] Startup script copied to image (entrypoint)
-- [ ] Health check configured: `HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 CMD curl -f http://localhost:${PORT:-8080}/health || exit 1`
-- [ ] Health check includes both HEAD and GET requests with database connectivity
-- [ ] Exposed port configurable via environment variable (default 8080)
-- [ ] Entrypoint invokes startup script for migration and seeding
-- [ ] Image built and tested locally: `docker build -t kromic-store:latest .`
-- [ ] Image runs successfully: `docker run --env DATABASE_URL=... kromic-store:latest`
-- [ ] No production secrets hardcoded in image
-- [ ] Image size minimal (< 500MB)
+- [~] Multi-stage Dockerfile created: `Dockerfile`
+- [~] Build stage uses official Microsoft .NET 8.0 SDK image
+- [~] Build stage restores packages, builds project in Release configuration
+- [~] Runtime stage uses official Microsoft ASP.NET Core 8.0 runtime image (Alpine or Debian)
+- [~] Runtime image includes only runtime files (no SDK)
+- [~] Startup script copied to image (entrypoint)
+- [~] Health check configured: `HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 CMD curl -f http://localhost:${PORT:-8080}/health || exit 1`
+- [~] Health check includes both HEAD and GET requests with database connectivity
+- [~] Exposed port configurable via environment variable (default 8080)
+- [~] Entrypoint invokes startup script for migration and seeding
+- [~] Image built and tested locally: `docker build -t kromic-store:latest .`
+- [~] Image runs successfully: `docker run --env DATABASE_URL=... kromic-store:latest`
+- [~] No production secrets hardcoded in image
+- [~] Image size minimal (< 500MB)
 
 #### Implementation Notes
 - Use `.dockerignore` to exclude build artifacts, tests, git files
@@ -2220,17 +2220,17 @@ Create production-ready Dockerfile using multi-stage build pattern. Build stage 
 Create `entrypoint.sh` startup script invoked by Docker container. Script waits for database availability, executes pending EF Core migrations, seeds default data if needed, and starts the ASP.NET Core application.
 
 #### Acceptance Criteria
-- [ ] Startup script `scripts/entrypoint.sh` created (Bash/Shell)
-- [ ] Script waits for PostgreSQL availability using pg_isready or connection retry loop
-- [ ] Retry logic: 30 retries with 2-second sleep between attempts
-- [ ] Executes database migrations: `dotnet ef database update --project src/KromicStore.Infrastructure --startup-project src/KromicStore.API`
-- [ ] Logs migration execution status (start, success, failure)
-- [ ] Handles migration failures with clear error message and exit code 1
-- [ ] If migrations succeed, starts application: `exec dotnet src/KromicStore.API/bin/Release/net8.0/KromicStore.API.dll`
-- [ ] Script uses environment variables: `DATABASE_URL`, `ASPNETCORE_ENVIRONMENT`
-- [ ] Script logging sends to STDOUT/STDERR for container logs
-- [ ] Script executable: chmod +x scripts/entrypoint.sh
-- [ ] Docker image invokes script as entrypoint
+- [~] Startup script `scripts/entrypoint.sh` created (Bash/Shell)
+- [~] Script waits for PostgreSQL availability using pg_isready or connection retry loop
+- [~] Retry logic: 30 retries with 2-second sleep between attempts
+- [~] Executes database migrations: `dotnet ef database update --project src/KromicStore.Infrastructure --startup-project src/KromicStore.API`
+- [~] Logs migration execution status (start, success, failure)
+- [~] Handles migration failures with clear error message and exit code 1
+- [~] If migrations succeed, starts application: `exec dotnet src/KromicStore.API/bin/Release/net8.0/KromicStore.API.dll`
+- [~] Script uses environment variables: `DATABASE_URL`, `ASPNETCORE_ENVIRONMENT`
+- [~] Script logging sends to STDOUT/STDERR for container logs
+- [~] Script executable: chmod +x scripts/entrypoint.sh
+- [~] Docker image invokes script as entrypoint
 
 #### Implementation Notes
 - Bash script preferred for Linux container compatibility
@@ -2261,17 +2261,17 @@ Create `entrypoint.sh` startup script invoked by Docker container. Script waits 
 Configure application to load all settings from environment variables. No production secrets hardcoded. Support multiple environments (Development, Staging, Production) with environment-specific configurations.
 
 #### Acceptance Criteria
-- [ ] All secrets loaded from environment variables: DATABASE_URL, JWT_SECRET, RAZORPAY_KEY, GOOGLE_CLIENT_ID, CLOUDINARY_API_KEY, BREVO_API_KEY, REDIS_URL
-- [ ] No secrets in source code or default appsettings.json
-- [ ] `appsettings.Development.json` for local development with test credentials
-- [ ] `appsettings.Production.json` template provided (actual values from environment)
-- [ ] `appsettings.Staging.json` for staging environment
-- [ ] IConfiguration properly injected in Startup (Program.cs)
-- [ ] Application fails fast with clear error if required configuration missing
-- [ ] Environment variable validation on startup: check required keys present
-- [ ] Logging configuration via environment (LOG_LEVEL, SERILOG_MINIMUM_LEVEL)
-- [ ] Database connection string validated on startup
-- [ ] Application version/environment logged on startup
+- [~] All secrets loaded from environment variables: DATABASE_URL, JWT_SECRET, RAZORPAY_KEY, GOOGLE_CLIENT_ID, CLOUDINARY_API_KEY, BREVO_API_KEY, REDIS_URL
+- [~] No secrets in source code or default appsettings.json
+- [~] `appsettings.Development.json` for local development with test credentials
+- [~] `appsettings.Production.json` template provided (actual values from environment)
+- [~] `appsettings.Staging.json` for staging environment
+- [~] IConfiguration properly injected in Startup (Program.cs)
+- [~] Application fails fast with clear error if required configuration missing
+- [~] Environment variable validation on startup: check required keys present
+- [~] Logging configuration via environment (LOG_LEVEL, SERILOG_MINIMUM_LEVEL)
+- [~] Database connection string validated on startup
+- [~] Application version/environment logged on startup
 
 #### Implementation Notes
 - Use configuration builder: `builder.Configuration.AddEnvironmentVariables()`
@@ -2305,19 +2305,19 @@ Configure application to load all settings from environment variables. No produc
 Implement health check endpoints for Render deployment. Endpoints distinguish between liveness (is process running?) and readiness (is app ready to receive traffic?).
 
 #### Acceptance Criteria
-- [ ] `GET /health` endpoint returns 200 with liveness status (always returns 200 if app running)
-- [ ] `GET /health/ready` endpoint returns 200 if ready to receive traffic, 503 if degraded
-- [ ] `HEAD /health` endpoint returns 200 (for simpler health check protocols)
-- [ ] Liveness response: `{ "status": "Healthy" }` (minimal, fast)
-- [ ] Readiness response includes checks: `{ "status": "Healthy", "checks": { "database": "Healthy", "cache": "Healthy", "dependencies": "Healthy" } }`
-- [ ] Database check: attempts SELECT 1 query with timeout
-- [ ] Cache check: attempts SET/GET to Redis (if enabled)
-- [ ] All checks must complete within 10 seconds total
-- [ ] Failed database check returns 503 Service Unavailable
-- [ ] Failed cache check returns 503 but logs warning
-- [ ] Endpoints require no authentication
-- [ ] Response includes X-Response-Time header with milliseconds
-- [ ] Logging tracks health check calls (limited to DEBUG level to avoid log spam)
+- [~] `GET /health` endpoint returns 200 with liveness status (always returns 200 if app running)
+- [~] `GET /health/ready` endpoint returns 200 if ready to receive traffic, 503 if degraded
+- [~] `HEAD /health` endpoint returns 200 (for simpler health check protocols)
+- [~] Liveness response: `{ "status": "Healthy" }` (minimal, fast)
+- [~] Readiness response includes checks: `{ "status": "Healthy", "checks": { "database": "Healthy", "cache": "Healthy", "dependencies": "Healthy" } }`
+- [~] Database check: attempts SELECT 1 query with timeout
+- [~] Cache check: attempts SET/GET to Redis (if enabled)
+- [~] All checks must complete within 10 seconds total
+- [~] Failed database check returns 503 Service Unavailable
+- [~] Failed cache check returns 503 but logs warning
+- [~] Endpoints require no authentication
+- [~] Response includes X-Response-Time header with milliseconds
+- [~] Logging tracks health check calls (limited to DEBUG level to avoid log spam)
 
 #### Implementation Notes
 - Use Microsoft.Extensions.Diagnostics.HealthChecks
@@ -2349,17 +2349,17 @@ Implement health check endpoints for Render deployment. Endpoints distinguish be
 Create configuration and documentation for Render deployment. Include render.yaml, environment variable examples, and deployment procedure documentation.
 
 #### Acceptance Criteria
-- [ ] `render.yaml` file created in repository root
-- [ ] render.yaml specifies: Docker build image, environment variables (as placeholders), health check path `/health`
-- [ ] render.yaml configures Dockerfile: `dockerfilePath: ./Dockerfile`
-- [ ] render.yaml sets health check endpoint: `healthCheckPath: /health`
-- [ ] render.yaml exposes port: `8080` (matches Dockerfile)
-- [ ] Environment variables template includes all required keys (database, secrets, etc.)
-- [ ] Documentation explains: connect GitHub repo, configure environment variables, deploy
-- [ ] Documentation includes Render-specific settings (region, instance type, memory)
-- [ ] Example environment file provided: `.env.render.example`
-- [ ] Post-deployment verification steps documented
-- [ ] Rollback procedure documented (if deployment fails)
+- [~] `render.yaml` file created in repository root
+- [~] render.yaml specifies: Docker build image, environment variables (as placeholders), health check path `/health`
+- [~] render.yaml configures Dockerfile: `dockerfilePath: ./Dockerfile`
+- [~] render.yaml sets health check endpoint: `healthCheckPath: /health`
+- [~] render.yaml exposes port: `8080` (matches Dockerfile)
+- [~] Environment variables template includes all required keys (database, secrets, etc.)
+- [~] Documentation explains: connect GitHub repo, configure environment variables, deploy
+- [~] Documentation includes Render-specific settings (region, instance type, memory)
+- [~] Example environment file provided: `.env.render.example`
+- [~] Post-deployment verification steps documented
+- [~] Rollback procedure documented (if deployment fails)
 
 #### Implementation Notes
 - Render supports build from Dockerfile
@@ -2390,18 +2390,18 @@ Create configuration and documentation for Render deployment. Include render.yam
 Configure structured logging using Serilog to provide clear startup diagnostics. Log application version, environment, database connection, migration status, and startup completion.
 
 #### Acceptance Criteria
-- [ ] Serilog configured in Program.cs with console sink for container logs
-- [ ] Log startup banner: `"KromicStore API started: version={Version}, environment={Environment}"`
-- [ ] Log database connection: `"Database connection established: {ConnectionString} (masked)"` (mask password)
-- [ ] Log migration execution: `"Executing database migrations..."` then `"Database migrations completed successfully"` or error
-- [ ] Log application startup complete: `"Application ready to receive requests on http://0.0.0.0:8080"`
-- [ ] Log startup failures with full exception stack trace and context
-- [ ] All startup logs at INFO level (visible by default)
-- [ ] Correlation IDs propagated to all logs (if enabled)
-- [ ] Structured fields: `@l (level), @mt (message template), @ts (timestamp), Exception`
-- [ ] JSON output format for container log aggregation (ELK, CloudWatch, etc.)
-- [ ] Log levels configurable via environment: `LOG_LEVEL` (Debug, Information, Warning, Error)
-- [ ] Minimum log level: Information (production), Debug (development)
+- [~] Serilog configured in Program.cs with console sink for container logs
+- [~] Log startup banner: `"KromicStore API started: version={Version}, environment={Environment}"`
+- [~] Log database connection: `"Database connection established: {ConnectionString} (masked)"` (mask password)
+- [~] Log migration execution: `"Executing database migrations..."` then `"Database migrations completed successfully"` or error
+- [~] Log application startup complete: `"Application ready to receive requests on http://0.0.0.0:8080"`
+- [~] Log startup failures with full exception stack trace and context
+- [~] All startup logs at INFO level (visible by default)
+- [~] Correlation IDs propagated to all logs (if enabled)
+- [~] Structured fields: `@l (level), @mt (message template), @ts (timestamp), Exception`
+- [~] JSON output format for container log aggregation (ELK, CloudWatch, etc.)
+- [~] Log levels configurable via environment: `LOG_LEVEL` (Debug, Information, Warning, Error)
+- [~] Minimum log level: Information (production), Debug (development)
 
 #### Implementation Notes
 - Serilog setup: `Log.Logger = new LoggerConfiguration()...CreateLogger()`
@@ -2432,18 +2432,18 @@ Configure structured logging using Serilog to provide clear startup diagnostics.
 Verify Docker build process, test health endpoints, and document deployment verification steps. Ensure deployment ready with no manual intervention required.
 
 #### Acceptance Criteria
-- [ ] Docker image builds successfully: `docker build -t kromic-store:latest .`
-- [ ] Build logs show no errors or warnings
-- [ ] Image size verified: `docker images | grep kromic-store` (< 500MB)
-- [ ] Container runs locally with test database
-- [ ] Health check endpoint responds: `curl http://localhost:8080/health`
-- [ ] Readiness check endpoint responds: `curl http://localhost:8080/health/ready`
-- [ ] Database migrations execute on startup (verify with logs)
-- [ ] Application logs show startup complete message
-- [ ] No manual server configuration required post-deployment
-- [ ] Render deployment template tested (dry-run if possible)
-- [ ] Deployment documentation complete and accurate
-- [ ] Rollback procedure tested and documented
+- [~] Docker image builds successfully: `docker build -t kromic-store:latest .`
+- [~] Build logs show no errors or warnings
+- [~] Image size verified: `docker images | grep kromic-store` (< 500MB)
+- [~] Container runs locally with test database
+- [~] Health check endpoint responds: `curl http://localhost:8080/health`
+- [~] Readiness check endpoint responds: `curl http://localhost:8080/health/ready`
+- [~] Database migrations execute on startup (verify with logs)
+- [~] Application logs show startup complete message
+- [~] No manual server configuration required post-deployment
+- [~] Render deployment template tested (dry-run if possible)
+- [~] Deployment documentation complete and accurate
+- [~] Rollback procedure tested and documented
 
 #### Implementation Notes
 - Local testing: use docker-compose with test database
@@ -2469,28 +2469,28 @@ Verify Docker build process, test health endpoints, and document deployment veri
 
 ### Pre-Deployment Checklist
 
-- [ ] All tests pass locally
-- [ ] Build succeeds in Release configuration
-- [ ] Docker image builds without errors
-- [ ] Health endpoints respond correctly
-- [ ] All environment variables documented
-- [ ] Database migrations tested locally
-- [ ] Logging configured for production
-- [ ] No secrets in source code or default configs
-- [ ] API documentation complete (Swagger)
-- [ ] Monitoring and alerting configured (if applicable)
+- [~] All tests pass locally
+- [~] Build succeeds in Release configuration
+- [~] Docker image builds without errors
+- [~] Health endpoints respond correctly
+- [~] All environment variables documented
+- [~] Database migrations tested locally
+- [~] Logging configured for production
+- [~] No secrets in source code or default configs
+- [~] API documentation complete (Swagger)
+- [~] Monitoring and alerting configured (if applicable)
 
 ### Post-Deployment Verification
 
-- [ ] Application health check returns 200
-- [ ] API endpoints respond with expected status codes
-- [ ] Database migrations executed successfully
-- [ ] Startup logs show application ready
-- [ ] Health check includes database and cache status
-- [ ] No errors in application logs after 5 minutes
-- [ ] Sample API call succeeds (GET /health, GET /api/v1/products)
-- [ ] Render dashboard shows application running
-- [ ] Response times within SLA (< 500ms for API calls)
+- [~] Application health check returns 200
+- [~] API endpoints respond with expected status codes
+- [~] Database migrations executed successfully
+- [~] Startup logs show application ready
+- [~] Health check includes database and cache status
+- [~] No errors in application logs after 5 minutes
+- [~] Sample API call succeeds (GET /health, GET /api/v1/products)
+- [~] Render dashboard shows application running
+- [~] Response times within SLA (< 500ms for API calls)
 
 ---
 

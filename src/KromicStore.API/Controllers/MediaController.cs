@@ -69,8 +69,10 @@ public class MediaController : BaseController
                 return BadRequest(new { error = $"File size exceeds maximum allowed size of {maxFileSize / 1024 / 1024}MB" });
             }
 
-            // Use tenant-specific folder if not provided
-            var folderPath = folder ?? $"{CurrentTenantId}/uploads";
+            // Construct folder path with TenantId prefix
+            var folderPath = string.IsNullOrEmpty(folder)
+                ? $"{CurrentTenantId}/uploads"
+                : $"{CurrentTenantId}/{folder}";
 
             using var stream = file.OpenReadStream();
             var result = await _mediaProxy.UploadAsync(
@@ -154,8 +156,10 @@ public class MediaController : BaseController
                 fileStreams.Add((file.OpenReadStream(), file.FileName));
             }
 
-            // Use tenant-specific folder if not provided
-            var folderPath = folder ?? $"{CurrentTenantId}/uploads";
+            // Construct folder path with TenantId prefix
+            var folderPath = string.IsNullOrEmpty(folder)
+                ? $"{CurrentTenantId}/uploads"
+                : $"{CurrentTenantId}/{folder}";
 
             var results = await _mediaProxy.BulkUploadAsync(
                 fileStreams,

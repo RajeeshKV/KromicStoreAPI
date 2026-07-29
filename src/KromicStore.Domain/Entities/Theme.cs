@@ -1,174 +1,268 @@
 namespace KromicStore.Domain.Entities;
 
-/// <summary>
-/// Represents a tenant's theme configuration for storefront customization.
-/// </summary>
-public class TenantTheme : BaseEntity
-{
-    /// <summary>Gets the tenant ID this theme belongs to.</summary>
-    public Guid TenantId { get; private set; }
+using System.Text.Json;
 
-    /// <summary>Gets the theme name.</summary>
+/// <summary>
+/// Represents a unified theme entity for storefront customization.
+/// 
+/// Architecture:
+/// - Platform Themes: Created by SuperUser (TenantId = null, IsPublic = true)
+/// - Tenant Themes: Created by Tenant (TenantId = tenantId, IsPublic = false/true)
+/// - Cloned Themes: Tenant-created copy of platform/shared themes (SourceThemeId != null)
+/// 
+/// A single entity consolidates platform templates and tenant customizations.
+/// </summary>
+public class Theme : BaseEntity
+{
+    /// <summary>Gets the unique slug identifier for the theme.</summary>
+    public string Slug { get; private set; } = string.Empty;
+
+    /// <summary>Gets the display name of the theme.</summary>
     public string Name { get; private set; } = string.Empty;
 
-    /// <summary>Gets the primary color (hex code).</summary>
-    public string PrimaryColor { get; private set; } = string.Empty;
+    /// <summary>Gets the description of the theme.</summary>
+    public string Description { get; private set; } = string.Empty;
 
-    /// <summary>Gets the secondary color (hex code).</summary>
-    public string SecondaryColor { get; private set; } = string.Empty;
+    /// <summary>Gets the semantic version of the theme.</summary>
+    public string Version { get; private set; } = "1.0.0";
 
-    /// <summary>Gets the accent color (hex code).</summary>
-    public string AccentColor { get; private set; } = string.Empty;
+    /// <summary>Gets the complete theme definition stored as JSON.</summary>
+    /// <remarks>
+    /// This contains the full theme configuration including colors, fonts, layouts,
+    /// default pages, sections, components, branding, navigation, and footer settings.
+    /// Can be used as a fallback or as the primary definition.
+    /// </remarks>
+    public string DefinitionJson { get; private set; } = string.Empty;
 
-    /// <summary>Gets the background color (hex code).</summary>
-    public string BackgroundColor { get; private set; } = string.Empty;
-
-    /// <summary>Gets the text color (hex code).</summary>
-    public string TextColor { get; private set; } = string.Empty;
-
-    /// <summary>Gets the font family.</summary>
-    public string FontFamily { get; private set; } = string.Empty;
-
-    /// <summary>Gets the border radius (in pixels).</summary>
-    public int BorderRadius { get; private set; }
-
-    /// <summary>Gets the spacing unit (in pixels).</summary>
-    public int SpacingUnit { get; private set; }
-
-    /// <summary>Gets the component overrides as JSON.</summary>
-    public string ComponentOverrides { get; private set; } = string.Empty;
-
-    /// <summary>Gets the layout options as JSON.</summary>
-    public string LayoutOptions { get; private set; } = string.Empty;
-
-    /// <summary>Gets a value indicating whether this is the active theme for the tenant.</summary>
-    public bool IsActive { get; private set; }
-
-    /// <summary>Gets a value indicating whether this theme is public (available to all tenants) or private (tenant-specific).</summary>
+    /// <summary>Gets a value indicating whether this theme is public (available to other tenants).</summary>
     public bool IsPublic { get; private set; }
 
-    /// <summary>Gets the ID of the tenant who created this theme (null for admin-created public themes).</summary>
-    public Guid? CreatedByTenantId { get; private set; }
+    /// <summary>Gets the ID of the theme this was cloned from (null if original or platform theme).</summary>
+    public Guid? SourceThemeId { get; private set; }
 
-    /// <summary>Navigation property to the tenant.</summary>
+    /// <summary>Gets the ID of the tenant who owns/created this theme (null for SuperUser-created platform themes).</summary>
+    public Guid? OwnerTenantId { get; private set; }
+
+    /// <summary>Gets the ID of the user who created this theme.</summary>
+    public Guid CreatedByUserId { get; private set; }
+
+    /// <summary>Gets the ID of the user who last modified this theme.</summary>
+    public Guid? LastModifiedByUserId { get; private set; }
+
+    /// <summary>Gets a value indicating whether this theme is active and available for use.</summary>
+    public bool IsActive { get; private set; } = true;
+
+    // Legacy individual color/font fields (for backward compatibility, gradually phase out)
+    // These are optional and can be populated from DefinitionJson if needed
+
+    /// <summary>Gets the primary color (hex code) - legacy field.</summary>
+    [Obsolete("Use DefinitionJson instead. This field is for backward compatibility only.")]
+    public string? PrimaryColor { get; private set; }
+
+    /// <summary>Gets the secondary color (hex code) - legacy field.</summary>
+    [Obsolete("Use DefinitionJson instead. This field is for backward compatibility only.")]
+    public string? SecondaryColor { get; private set; }
+
+    /// <summary>Navigation property to the owning tenant.</summary>
     public Tenant? Tenant { get; private set; }
 
     /// <summary>
-    /// Creates a new instance of TenantTheme with default values.
+    /// Creates a new platform theme (SuperUser only).
     /// </summary>
-    public static TenantTheme Create(Guid tenantId, string name, bool isPublic = false, Guid? createdByTenantId = null)
+    public static Theme CreatePlatformTheme(
+        string slug,
+        string name,
+        string description,
+        string version,
+        string definitionJson,
+        Guid createdByUserId)
     {
-        if (tenantId == Guid.Empty)
-            throw new ArgumentException("Tenant ID is required.", nameof(tenantId));
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Theme name is required.", nameof(name));
+        ValidateThemeInput(slug, name, definitionJson);
 
-        return new TenantTheme
+        return new Theme
         {
-            TenantId = tenantId,
+            Id = Guid.NewGuid(),
+            Slug = slug.ToLowerInvariant(),
             Name = name,
-            PrimaryColor = "#000000",
-            SecondaryColor = "#666666",
-            AccentColor = "#007bff",
-            BackgroundColor = "#ffffff",
-            TextColor = "#333333",
-            FontFamily = "Inter, sans-serif",
-            BorderRadius = 8,
-            SpacingUnit = 16,
-            ComponentOverrides = "{}",
-            LayoutOptions = "{}",
+            Description = description,
+            Version = version,
+            DefinitionJson = definitionJson,
+            IsPublic = true,
+            SourceThemeId = null,
+            OwnerTenantId = null,
+            CreatedByUserId = createdByUserId,
+            LastModifiedByUserId = null,
             IsActive = true,
-            IsPublic = isPublic,
-            CreatedByTenantId = createdByTenantId
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Updates the color scheme.
+    /// Creates a new tenant-owned theme.
     /// </summary>
-    public void UpdateColors(string primary, string secondary, string accent, string background, string text)
+    public static Theme CreateTenantTheme(
+        Guid tenantId,
+        string name,
+        string definitionJson,
+        bool isPublic,
+        Guid createdByUserId,
+        Guid? sourceThemeId = null)
     {
-        if (!string.IsNullOrWhiteSpace(primary))
-            PrimaryColor = primary;
-        if (!string.IsNullOrWhiteSpace(secondary))
-            SecondaryColor = secondary;
-        if (!string.IsNullOrWhiteSpace(accent))
-            AccentColor = accent;
-        if (!string.IsNullOrWhiteSpace(background))
-            BackgroundColor = background;
-        if (!string.IsNullOrWhiteSpace(text))
-            TextColor = text;
+        if (tenantId == Guid.Empty)
+            throw new ArgumentException("Tenant ID is required.", nameof(tenantId));
+
+        ValidateThemeInput(Guid.NewGuid().ToString("N").Substring(0, 8), name, definitionJson);
+
+        return new Theme
+        {
+            Id = Guid.NewGuid(),
+            Slug = $"{tenantId:N}-{name.ToLowerInvariant().Replace(" ", "-")}",
+            Name = name,
+            Description = string.Empty,
+            Version = "1.0.0",
+            DefinitionJson = definitionJson,
+            IsPublic = isPublic,
+            SourceThemeId = sourceThemeId,
+            OwnerTenantId = tenantId,
+            CreatedByUserId = createdByUserId,
+            LastModifiedByUserId = null,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
     }
 
     /// <summary>
-    /// Updates the typography settings.
+    /// Clones an existing theme (tenant-specific clone).
     /// </summary>
-    public void UpdateTypography(string fontFamily)
+    public Theme Clone(Guid tenantId, Guid createdByUserId, string? newName = null)
     {
-        if (!string.IsNullOrWhiteSpace(fontFamily))
-            FontFamily = fontFamily;
+        if (tenantId == Guid.Empty)
+            throw new ArgumentException("Tenant ID is required.", nameof(tenantId));
+
+        return new Theme
+        {
+            Id = Guid.NewGuid(),
+            Slug = $"{tenantId:N}-{(newName ?? Name).ToLowerInvariant().Replace(" ", "-")}",
+            Name = newName ?? $"{Name} (Clone)",
+            Description = Description,
+            Version = Version,
+            DefinitionJson = DefinitionJson,
+            IsPublic = false, // Cloned themes default to private
+            SourceThemeId = this.Id,
+            OwnerTenantId = tenantId,
+            CreatedByUserId = createdByUserId,
+            LastModifiedByUserId = null,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
     }
 
     /// <summary>
-    /// Updates the spacing and border settings.
+    /// Updates the theme definition JSON.
     /// </summary>
-    public void UpdateSpacing(int borderRadius, int spacingUnit)
+    public void UpdateDefinition(string newDefinitionJson, Guid modifiedByUserId)
     {
-        if (borderRadius >= 0)
-            BorderRadius = borderRadius;
-        if (spacingUnit >= 0)
-            SpacingUnit = spacingUnit;
+        if (string.IsNullOrWhiteSpace(newDefinitionJson))
+            throw new ArgumentException("Definition JSON cannot be empty.", nameof(newDefinitionJson));
+
+        // Validate JSON
+        try
+        {
+            JsonDocument.Parse(newDefinitionJson);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("Definition JSON is not valid JSON.", nameof(newDefinitionJson), ex);
+        }
+
+        DefinitionJson = newDefinitionJson;
+        LastModifiedByUserId = modifiedByUserId;
+        UpdateTimestamp();
     }
 
     /// <summary>
-    /// Updates the component overrides.
+    /// Updates the theme metadata (name, description, version).
     /// </summary>
-    public void UpdateComponentOverrides(string overrides)
+    public void UpdateMetadata(string name, string? description, string? version, Guid modifiedByUserId)
     {
-        if (!string.IsNullOrWhiteSpace(overrides))
-            ComponentOverrides = overrides;
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name cannot be empty.", nameof(name));
+
+        Name = name;
+        if (!string.IsNullOrWhiteSpace(description))
+            Description = description;
+        if (!string.IsNullOrWhiteSpace(version))
+            Version = version;
+
+        LastModifiedByUserId = modifiedByUserId;
+        UpdateTimestamp();
     }
 
     /// <summary>
-    /// Updates the layout options.
+    /// Makes this theme public (available to other tenants).
     /// </summary>
-    public void UpdateLayoutOptions(string options)
-    {
-        if (!string.IsNullOrWhiteSpace(options))
-            LayoutOptions = options;
-    }
-
-    /// <summary>
-    /// Activates this theme for the tenant.
-    /// </summary>
-    public void Activate()
-    {
-        IsActive = true;
-    }
-
-    /// <summary>
-    /// Deactivates this theme for the tenant.
-    /// </summary>
-    public void Deactivate()
-    {
-        IsActive = false;
-    }
-
-    /// <summary>
-    /// Makes this theme public (available to all tenants).
-    /// </summary>
-    public void MakePublic()
+    public void MakePublic(Guid modifiedByUserId)
     {
         IsPublic = true;
+        LastModifiedByUserId = modifiedByUserId;
         UpdateTimestamp();
     }
 
     /// <summary>
     /// Makes this theme private (tenant-specific only).
     /// </summary>
-    public void MakePrivate()
+    public void MakePrivate(Guid modifiedByUserId)
     {
         IsPublic = false;
+        LastModifiedByUserId = modifiedByUserId;
         UpdateTimestamp();
+    }
+
+    /// <summary>
+    /// Activates this theme.
+    /// </summary>
+    public void Activate(Guid modifiedByUserId)
+    {
+        IsActive = true;
+        LastModifiedByUserId = modifiedByUserId;
+        UpdateTimestamp();
+    }
+
+    /// <summary>
+    /// Deactivates this theme.
+    /// </summary>
+    public void Deactivate(Guid modifiedByUserId)
+    {
+        IsActive = false;
+        LastModifiedByUserId = modifiedByUserId;
+        UpdateTimestamp();
+    }
+
+    /// <summary>
+    /// Validates theme input parameters.
+    /// </summary>
+    private static void ValidateThemeInput(string slug, string name, string definitionJson)
+    {
+        if (string.IsNullOrWhiteSpace(slug))
+            throw new ArgumentException("Slug cannot be empty.", nameof(slug));
+
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name cannot be empty.", nameof(name));
+
+        if (string.IsNullOrWhiteSpace(definitionJson))
+            throw new ArgumentException("Definition JSON cannot be empty.", nameof(definitionJson));
+
+        // Validate JSON
+        try
+        {
+            JsonDocument.Parse(definitionJson);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("Definition JSON is not valid JSON.", nameof(definitionJson), ex);
+        }
     }
 }

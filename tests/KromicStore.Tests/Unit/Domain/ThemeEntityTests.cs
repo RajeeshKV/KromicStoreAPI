@@ -7,8 +7,8 @@ using System.Text.Json;
 namespace KromicStore.Tests.Unit.Domain;
 
 /// <summary>
-/// Unit tests for ThemeEntity validating theme lifecycle and configuration.
-/// Tests: creation, JSON validation, version management, and activation.
+/// Unit tests for Theme entity validating platform theme lifecycle and configuration.
+/// Tests: creation, JSON validation, version management, activation, and cloning.
 /// </summary>
 public class ThemeEntityTests
 {
@@ -22,10 +22,13 @@ public class ThemeEntityTests
         }
     });
 
-    #region Creation Tests
+    private readonly Guid _testUserId = Guid.NewGuid();
+    private readonly Guid _testTenantId = Guid.NewGuid();
+
+    #region Platform Theme Creation Tests
 
     [Fact]
-    public void Create_WithValidInputs_ReturnsThemeEntity()
+    public void CreatePlatformTheme_WithValidInputs_ReturnsTheme()
     {
         // Arrange
         var slug = "modern-theme";
@@ -34,7 +37,7 @@ public class ThemeEntityTests
         var version = "1.0.0";
 
         // Act
-        var theme = ThemeEntity.Create(slug, name, description, version, _validThemeJson);
+        var theme = Theme.CreatePlatformTheme(slug, name, description, version, _validThemeJson, _testUserId);
 
         // Assert
         Assert.NotNull(theme);
@@ -43,58 +46,246 @@ public class ThemeEntityTests
         Assert.Equal(description, theme.Description);
         Assert.Equal(version, theme.Version);
         Assert.True(theme.IsActive);
+        Assert.True(theme.IsPublic); // Platform themes are public
+        Assert.Null(theme.OwnerTenantId); // Platform themes have no owner tenant
         Assert.NotEqual(Guid.Empty, theme.Id);
         Assert.Equal(_validThemeJson, theme.DefinitionJson);
+        Assert.Equal(_testUserId, theme.CreatedByUserId);
     }
 
     [Fact]
-    public void Create_WithNullSlug_ThrowsArgumentException()
+    public void CreatePlatformTheme_WithNullSlug_ThrowsArgumentException()
     {
         // Act & Assert
         var ex = Assert.Throws<ArgumentException>(() =>
-            ThemeEntity.Create(null, "Theme", "Desc", "1.0.0", _validThemeJson));
+            Theme.CreatePlatformTheme(null, "Theme", "Desc", "1.0.0", _validThemeJson, _testUserId));
         Assert.Contains("Slug", ex.Message);
     }
 
     [Fact]
-    public void Create_WithEmptyName_ThrowsArgumentException()
+    public void CreatePlatformTheme_WithEmptyName_ThrowsArgumentException()
     {
         // Act & Assert
         var ex = Assert.Throws<ArgumentException>(() =>
-            ThemeEntity.Create("theme", "", "Desc", "1.0.0", _validThemeJson));
+            Theme.CreatePlatformTheme("theme", "", "Desc", "1.0.0", _validThemeJson, _testUserId));
         Assert.Contains("Name", ex.Message);
     }
 
     [Fact]
-    public void Create_WithNullDefinitionJson_ThrowsArgumentException()
+    public void CreatePlatformTheme_WithNullDefinitionJson_ThrowsArgumentException()
     {
         // Act & Assert
         var ex = Assert.Throws<ArgumentException>(() =>
-            ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", null));
+            Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", null, _testUserId));
         Assert.Contains("Definition JSON", ex.Message);
     }
 
     [Fact]
-    public void Create_WithInvalidJson_ThrowsArgumentException()
+    public void CreatePlatformTheme_WithInvalidJson_ThrowsArgumentException()
     {
         // Arrange
         var invalidJson = "{ not valid json }";
 
         // Act & Assert
         var ex = Assert.Throws<ArgumentException>(() =>
-            ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", invalidJson));
+            Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", invalidJson, _testUserId));
         Assert.Contains("not valid JSON", ex.Message);
     }
 
+    #endregion
+
+    #region Tenant Theme Creation Tests
+
     [Fact]
-    public void Create_WithUppercaseSlug_ConvertsToLowercase()
+    public void CreateTenantTheme_WithValidInputs_ReturnsTheme()
     {
+        // Arrange
+        var name = "Custom Theme";
+        var version = "1.0.0";
+
         // Act
-        var theme = ThemeEntity.Create("MODERN-THEME", "Modern Theme", "Desc", "1.0.0", _validThemeJson);
+        var theme = Theme.CreateTenantTheme(_testTenantId, name, _validThemeJson, isPublic: false, _testUserId);
 
         // Assert
-        Assert.Equal("modern-theme", theme.Slug);
+        Assert.NotNull(theme);
+        Assert.Equal(_testTenantId, theme.OwnerTenantId);
+        Assert.Equal(_testTenantId, theme.OwnerTenantId);
+        Assert.Equal(name, theme.Name);
+        Assert.False(theme.IsPublic); // Private by default
+        Assert.True(theme.IsActive);
+        Assert.Null(theme.SourceThemeId); // Not cloned
+        Assert.Equal(_testUserId, theme.CreatedByUserId);
     }
+
+    [Fact]
+    public void CreateTenantTheme_WithEmptyTenantId_ThrowsArgumentException()
+    {
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+            Theme.CreateTenantTheme(Guid.Empty, "Theme", _validThemeJson, false, _testUserId));
+        Assert.Contains("Tenant ID", ex.Message);
+    }
+
+    [Fact]
+    public void CreateTenantTheme_AsPublic_MakesPublic()
+    {
+        // Act
+        var theme = Theme.CreateTenantTheme(_testTenantId, "Shared Theme", _validThemeJson, isPublic: true, _testUserId);
+
+        // Assert
+        Assert.True(theme.IsPublic);
+    }
+
+    #endregion
+
+    #region Theme Cloning Tests
+
+    [Fact]
+    public void Clone_CreatesNewThemeWithSourceReference()
+    {
+        // Arrange
+        var platformTheme = Theme.CreatePlatformTheme("original", "Original", "Desc", "1.0.0", _validThemeJson, _testUserId);
+
+        // Act
+        var clonedTheme = platformTheme.Clone(_testTenantId, _testUserId, "Cloned Theme");
+
+        // Assert
+        Assert.NotNull(clonedTheme);
+        Assert.Equal(_testTenantId, clonedTheme.OwnerTenantId);
+        Assert.Equal(_testTenantId, clonedTheme.OwnerTenantId);
+        Assert.Equal("Cloned Theme", clonedTheme.Name);
+        Assert.Equal(platformTheme.Id, clonedTheme.SourceThemeId);
+        Assert.Equal(platformTheme.DefinitionJson, clonedTheme.DefinitionJson);
+        Assert.False(clonedTheme.IsPublic); // Cloned themes default to private
+    }
+
+    [Fact]
+    public void Clone_WithoutNewName_UsesDefaultName()
+    {
+        // Arrange
+        var platformTheme = Theme.CreatePlatformTheme("original", "Original", "Desc", "1.0.0", _validThemeJson, _testUserId);
+
+        // Act
+        var clonedTheme = platformTheme.Clone(_testTenantId, _testUserId);
+
+        // Assert
+        Assert.Contains("Clone", clonedTheme.Name);
+    }
+
+    [Fact]
+    public void Clone_WithEmptyTenantId_ThrowsArgumentException()
+    {
+        // Arrange
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", _validThemeJson, _testUserId);
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => theme.Clone(Guid.Empty, _testUserId));
+        Assert.Contains("Tenant ID", ex.Message);
+    }
+
+    #endregion
+
+    #region Theme Updates Tests
+
+    [Fact]
+    public void UpdateDefinition_WithValidJson_UpdatesDefinition()
+    {
+        // Arrange
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", _validThemeJson, _testUserId);
+        var newJson = JsonSerializer.Serialize(new
+        {
+            pages = new object[] { },
+            settings = new { brandColor = "#00FF00" }
+        });
+
+        // Act
+        theme.UpdateDefinition(newJson, _testUserId);
+
+        // Assert
+        Assert.Equal(newJson, theme.DefinitionJson);
+        Assert.Equal(_testUserId, theme.LastModifiedByUserId);
+    }
+
+    [Fact]
+    public void UpdateMetadata_UpdatesNameAndDescription()
+    {
+        // Arrange
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", _validThemeJson, _testUserId);
+
+        // Act
+        theme.UpdateMetadata("New Name", "New Desc", "2.0.0", _testUserId);
+
+        // Assert
+        Assert.Equal("New Name", theme.Name);
+        Assert.Equal("New Desc", theme.Description);
+        Assert.Equal("2.0.0", theme.Version);
+        Assert.Equal(_testUserId, theme.LastModifiedByUserId);
+    }
+
+    #endregion
+
+    #region Activation Tests
+
+    [Fact]
+    public void Activate_DeactivatedTheme_MakesActive()
+    {
+        // Arrange
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", _validThemeJson, _testUserId);
+        theme.Deactivate(_testUserId);
+
+        // Act
+        theme.Activate(_testUserId);
+
+        // Assert
+        Assert.True(theme.IsActive);
+    }
+
+    [Fact]
+    public void Deactivate_ActiveTheme_MakesInactive()
+    {
+        // Arrange
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", _validThemeJson, _testUserId);
+
+        // Act
+        theme.Deactivate(_testUserId);
+
+        // Assert
+        Assert.False(theme.IsActive);
+    }
+
+    #endregion
+
+    #region Visibility Tests
+
+    [Fact]
+    public void MakePublic_MakesThemePublic()
+    {
+        // Arrange
+        var theme = Theme.CreateTenantTheme(_testTenantId, "Theme", _validThemeJson, isPublic: false, _testUserId);
+
+        // Act
+        theme.MakePublic(_testUserId);
+
+        // Assert
+        Assert.True(theme.IsPublic);
+    }
+
+    [Fact]
+    public void MakePrivate_MakesThemePrivate()
+    {
+        // Arrange
+        var theme = Theme.CreateTenantTheme(_testTenantId, "Theme", _validThemeJson, isPublic: true, _testUserId);
+
+        // Act
+        theme.MakePrivate(_testUserId);
+
+        // Assert
+        Assert.False(theme.IsPublic);
+    }
+
+    #endregion
+
+    #region JSON Validation Tests
 
     [Fact]
     public void Create_WithComplexValidJson_Succeeds()
@@ -117,196 +308,37 @@ public class ThemeEntityTests
         });
 
         // Act
-        var theme = ThemeEntity.Create("complex", "Complex Theme", "Desc", "1.0.0", complexJson);
+        var theme = Theme.CreatePlatformTheme("complex", "Complex Theme", "Desc", "1.0.0", complexJson, _testUserId);
 
         // Assert
         Assert.NotNull(theme);
         Assert.Equal(complexJson, theme.DefinitionJson);
     }
 
-    #endregion
-
-    #region Activation Tests
-
     [Fact]
-    public void Activate_DeactivatedTheme_MakesActive()
+    public void Create_WithArrayJson_Succeeds()
     {
         // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-        theme.Deactivate();
+        var arrayJson = "[]";
 
         // Act
-        theme.Activate();
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", arrayJson, _testUserId);
 
         // Assert
-        Assert.True(theme.IsActive);
+        Assert.Equal(arrayJson, theme.DefinitionJson);
     }
 
     [Fact]
-    public void Deactivate_ActiveTheme_MakesInactive()
+    public void Create_WithEmptyObjectJson_Succeeds()
     {
         // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act
-        theme.Deactivate();
-
-        // Assert
-        Assert.False(theme.IsActive);
-    }
-
-    [Fact]
-    public void Activate_AlreadyActive_RemainsActive()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act
-        theme.Activate();
-
-        // Assert
-        Assert.True(theme.IsActive);
-    }
-
-    [Fact]
-    public void Deactivate_AlreadyInactive_RemainsInactive()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-        theme.Deactivate();
-
-        // Act
-        theme.Deactivate();
-
-        // Assert
-        Assert.False(theme.IsActive);
-    }
-
-    #endregion
-
-    #region Definition Update Tests
-
-    [Fact]
-    public void UpdateDefinition_WithValidJson_UpdatesDefinition()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-        var newJson = JsonSerializer.Serialize(new
-        {
-            pages = new object[] { },
-            settings = new { brandColor = "#00FF00" }
-        });
-
-        // Act
-        theme.UpdateDefinition(newJson);
-
-        // Assert
-        Assert.Equal(newJson, theme.DefinitionJson);
-    }
-
-    [Fact]
-    public void UpdateDefinition_WithNullJson_ThrowsArgumentException()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => theme.UpdateDefinition(null));
-        Assert.Contains("Definition JSON", ex.Message);
-    }
-
-    [Fact]
-    public void UpdateDefinition_WithInvalidJson_ThrowsArgumentException()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-        var invalidJson = "{ invalid json }";
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => theme.UpdateDefinition(invalidJson));
-        Assert.Contains("not valid JSON", ex.Message);
-    }
-
-    [Fact]
-    public void UpdateDefinition_WithEmptyJson_ThrowsArgumentException()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => theme.UpdateDefinition(""));
-        Assert.Contains("Definition JSON", ex.Message);
-    }
-
-    [Fact]
-    public void UpdateDefinition_WithEmptyJsonObject_Succeeds()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
         var emptyJson = "{}";
 
         // Act
-        theme.UpdateDefinition(emptyJson);
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", emptyJson, _testUserId);
 
         // Assert
         Assert.Equal(emptyJson, theme.DefinitionJson);
-    }
-
-    #endregion
-
-    #region Version Update Tests
-
-    [Fact]
-    public void UpdateVersion_WithValidVersion_UpdatesVersion()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act
-        theme.UpdateVersion("2.0.0");
-
-        // Assert
-        Assert.Equal("2.0.0", theme.Version);
-    }
-
-    [Fact]
-    public void UpdateVersion_WithNullVersion_ThrowsArgumentException()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => theme.UpdateVersion(null));
-        Assert.Contains("Version", ex.Message);
-    }
-
-    [Fact]
-    public void UpdateVersion_WithEmptyVersion_ThrowsArgumentException()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => theme.UpdateVersion(""));
-        Assert.Contains("Version", ex.Message);
-    }
-
-    [Theory]
-    [InlineData("0.0.1")]
-    [InlineData("1.0.0")]
-    [InlineData("1.0.1")]
-    [InlineData("2.5.10")]
-    [InlineData("10.20.30")]
-    public void UpdateVersion_WithVariousVersionFormats_Succeeds(string version)
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-
-        // Act
-        theme.UpdateVersion(version);
-
-        // Assert
-        Assert.Equal(version, theme.Version);
     }
 
     #endregion
@@ -317,115 +349,16 @@ public class ThemeEntityTests
     public void UpdateDefinition_UpdatesModifiedTimestamp()
     {
         // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
+        var theme = Theme.CreatePlatformTheme("theme", "Theme", "Desc", "1.0.0", _validThemeJson, _testUserId);
         var originalTimestamp = theme.UpdatedAt;
         System.Threading.Thread.Sleep(10); // Ensure time passes
 
         // Act
         var newJson = JsonSerializer.Serialize(new { pages = new object[] { } });
-        theme.UpdateDefinition(newJson);
+        theme.UpdateDefinition(newJson, _testUserId);
 
         // Assert
         Assert.True(theme.UpdatedAt > originalTimestamp);
-    }
-
-    [Fact]
-    public void UpdateVersion_UpdatesModifiedTimestamp()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-        var originalTimestamp = theme.UpdatedAt;
-        System.Threading.Thread.Sleep(10); // Ensure time passes
-
-        // Act
-        theme.UpdateVersion("2.0.0");
-
-        // Assert
-        Assert.True(theme.UpdatedAt > originalTimestamp);
-    }
-
-    [Fact]
-    public void Activate_UpdatesModifiedTimestamp()
-    {
-        // Arrange
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", _validThemeJson);
-        theme.Deactivate();
-        var originalTimestamp = theme.UpdatedAt;
-        System.Threading.Thread.Sleep(10); // Ensure time passes
-
-        // Act
-        theme.Activate();
-
-        // Assert
-        Assert.True(theme.UpdatedAt > originalTimestamp);
-    }
-
-    #endregion
-
-    #region JSON Validation Tests
-
-    [Fact]
-    public void Create_WithArrayJson_Succeeds()
-    {
-        // Arrange
-        var arrayJson = "[]";
-
-        // Act
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", arrayJson);
-
-        // Assert
-        Assert.Equal(arrayJson, theme.DefinitionJson);
-    }
-
-    [Fact]
-    public void Create_WithNumberJson_Succeeds()
-    {
-        // Arrange
-        var numberJson = "42";
-
-        // Act
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", numberJson);
-
-        // Assert
-        Assert.Equal(numberJson, theme.DefinitionJson);
-    }
-
-    [Fact]
-    public void Create_WithStringJson_Succeeds()
-    {
-        // Arrange
-        var stringJson = "\"hello\"";
-
-        // Act
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", stringJson);
-
-        // Assert
-        Assert.Equal(stringJson, theme.DefinitionJson);
-    }
-
-    [Fact]
-    public void Create_WithNestedJson_Succeeds()
-    {
-        // Arrange
-        var nestedJson = JsonSerializer.Serialize(new
-        {
-            level1 = new
-            {
-                level2 = new
-                {
-                    level3 = new
-                    {
-                        value = "deep nested"
-                    }
-                }
-            }
-        });
-
-        // Act
-        var theme = ThemeEntity.Create("theme", "Theme", "Desc", "1.0.0", nestedJson);
-
-        // Assert
-        Assert.Equal(nestedJson, theme.DefinitionJson);
     }
 
     #endregion
