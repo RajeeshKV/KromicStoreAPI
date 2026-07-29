@@ -65,8 +65,8 @@ public class StoreController : ControllerBase
 
             var response = await _bootstrapService.GetBootstrapDataAsync(cancellationToken);
 
-            // Generate ETag based on tenant ID and last updated timestamp
-            var eTag = $"\"{response.Tenant?.Id}-{DateTime.UtcNow:yyyyMMddHHmm}\"";
+            // Generate ETag based on timestamp
+            var eTag = $"\"{DateTime.UtcNow:yyyyMMddHHmm}\"";
 
             // Check if client has cached version
             if (Request.Headers.TryGetValue("If-None-Match", out var clientEtag) && clientEtag == eTag)

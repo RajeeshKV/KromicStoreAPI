@@ -19,31 +19,37 @@ public interface IStoreBootstrapService
 }
 
 /// <summary>
-/// Response containing all data required to bootstrap the storefront.
+/// Response containing theme and storefront configuration data.
 /// </summary>
 public class StoreBootstrapResponse
 {
-    public TenantBootstrapData? Tenant { get; set; }
+    /// <summary>Theme configuration data.</summary>
     public ThemeBootstrapData? Theme { get; set; }
-    public NavigationBootstrapData? Navigation { get; set; }
-    public HomepageBootstrapData? Homepage { get; set; }
-    public FeaturesBootstrapData? Features { get; set; }
-    public SeoBootstrapData? Seo { get; set; }
+
+    /// <summary>Storefront configuration data (navigation, homepage, features, SEO).</summary>
+    public StorefrontBootstrapData? Storefront { get; set; }
 }
 
 /// <summary>
-/// Tenant bootstrap data.
+/// Storefront bootstrap data (consolidated view).
 /// </summary>
-public class TenantBootstrapData
+public class StorefrontBootstrapData
 {
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Slug { get; set; } = string.Empty;
-    public string LogoUrl { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string Locale { get; set; } = string.Empty;
-    public string Currency { get; set; } = string.Empty;
-    public string Timezone { get; set; } = string.Empty;
+    public string SiteTitle { get; set; } = string.Empty;
+    public string MetaDescription { get; set; } = string.Empty;
+    public string FaviconUrl { get; set; } = string.Empty;
+    public string OpenGraphImageUrl { get; set; } = string.Empty;
+    public List<NavigationItem> HeaderMenu { get; set; } = new();
+    public List<NavigationItem> FooterMenu { get; set; } = new();
+    public List<CategoryItem> Categories { get; set; } = new();
+    public string HomepageLayoutType { get; set; } = string.Empty;
+    public List<SectionData> HomepageSections { get; set; } = new();
+    public bool WishlistEnabled { get; set; }
+    public bool ReviewsEnabled { get; set; }
+    public bool BlogEnabled { get; set; }
+    public bool CouponsEnabled { get; set; }
+    public bool MultiCurrencyEnabled { get; set; }
+    public bool MultiLanguageEnabled { get; set; }
 }
 
 /// <summary>
@@ -61,16 +67,6 @@ public class ThemeBootstrapData
     public int SpacingUnit { get; set; }
     public string ComponentOverrides { get; set; } = string.Empty;
     public string LayoutOptions { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Navigation bootstrap data.
-/// </summary>
-public class NavigationBootstrapData
-{
-    public List<NavigationItem> HeaderMenu { get; set; } = new();
-    public List<NavigationItem> FooterMenu { get; set; } = new();
-    public List<CategoryItem> Categories { get; set; } = new();
 }
 
 /// <summary>
@@ -96,15 +92,6 @@ public class CategoryItem
 }
 
 /// <summary>
-/// Homepage bootstrap data.
-/// </summary>
-public class HomepageBootstrapData
-{
-    public string LayoutType { get; set; } = string.Empty;
-    public List<SectionData> Sections { get; set; } = new();
-}
-
-/// <summary>
 /// Section data for homepage.
 /// </summary>
 public class SectionData
@@ -113,28 +100,4 @@ public class SectionData
     public string Name { get; set; } = string.Empty;
     public int DisplayOrder { get; set; }
     public Dictionary<string, object> Config { get; set; } = new();
-}
-
-/// <summary>
-/// Features bootstrap data (feature flags).
-/// </summary>
-public class FeaturesBootstrapData
-{
-    public bool WishlistEnabled { get; set; }
-    public bool ReviewsEnabled { get; set; }
-    public bool BlogEnabled { get; set; }
-    public bool CouponsEnabled { get; set; }
-    public bool MultiCurrencyEnabled { get; set; }
-    public bool MultiLanguageEnabled { get; set; }
-}
-
-/// <summary>
-/// SEO bootstrap data.
-/// </summary>
-public class SeoBootstrapData
-{
-    public string SiteTitle { get; set; } = string.Empty;
-    public string MetaDescription { get; set; } = string.Empty;
-    public string FaviconUrl { get; set; } = string.Empty;
-    public string OpenGraphImageUrl { get; set; } = string.Empty;
 }

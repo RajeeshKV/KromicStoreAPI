@@ -38,7 +38,6 @@ public class StoreBootstrapService : IStoreBootstrapService
         _logger.LogInformation("Fetching public bootstrap data for tenant: {TenantId}", tenantId);
 
         // Fetch tenant data - match by TenantId (string) not Id (GUID)
-        // The JWT contains the string TenantId, not the GUID primary key
         var tenant = await _context.Tenants
             .FirstOrDefaultAsync(t => t.TenantId == tenantId.ToString(), cancellationToken);
 
@@ -47,17 +46,11 @@ public class StoreBootstrapService : IStoreBootstrapService
             throw new InvalidOperationException($"Tenant not found: {tenantId}");
         }
 
-        // Fetch tenant theme (from unified Theme table - tenant or platform themes)
+        // Fetch tenant's active theme (tenant-owned or platform themes)
         var theme = await _context.Themes
             .FirstOrDefaultAsync(t => (t.OwnerTenantId == tenantId || t.OwnerTenantId == null) && t.IsActive, cancellationToken);
 
-        // Fetch categories for navigation
-        var categories = await _context.Categories
-            .Where(c => c.TenantId == tenantId && c.ParentCategoryId == null)
-            .OrderBy(c => c.DisplayOrder)
-            .ToListAsync(cancellationToken);
-
-        // Fetch ONLY PUBLISHED storefront for homepage
+        // Fetch ONLY PUBLISHED storefront
         var storefront = await _context.Storefronts
             .Include(s => s.Pages)
                 .ThenInclude(p => p.Sections)
@@ -69,27 +62,20 @@ public class StoreBootstrapService : IStoreBootstrapService
             throw new InvalidOperationException("Storefront is not published");
         }
 
-        // Build response
+        // Fetch categories for navigation
+        var categories = await _context.Categories
+            .Where(c => c.TenantId == tenantId && c.ParentCategoryId == null)
+            .OrderBy(c => c.DisplayOrder)
+            .ToListAsync(cancellationToken);
+
+        // Build response with only theme and storefront data
         var response = new StoreBootstrapResponse
         {
-            Tenant = new TenantBootstrapData
-            {
-                Id = tenant.Id,
-                Name = tenant.Name,
-                Slug = tenant.Subdomain,
-                LogoUrl = "", // TODO: Load from tenant settings
-                Status = tenant.IsActive ? "active" : "inactive",
-                Locale = _tenantContext.Locale,
-                Currency = _tenantContext.Currency,
-                Timezone = _tenantContext.Timezone
-            },
             Theme = theme != null ? new ThemeBootstrapData
             {
-                // NOTE: Using legacy color fields for backward compatibility
-                // These will be phased out in favor of parsing DefinitionJson
                 PrimaryColor = theme.PrimaryColor ?? "#000000",
                 SecondaryColor = theme.SecondaryColor ?? "#666666",
-                AccentColor = "#007bff", // Default
+                AccentColor = "#007bff",
                 BackgroundColor = "#ffffff",
                 TextColor = "#333333",
                 FontFamily = "Inter, sans-serif",
@@ -98,8 +84,12 @@ public class StoreBootstrapService : IStoreBootstrapService
                 ComponentOverrides = "{}",
                 LayoutOptions = "{}"
             } : null,
-            Navigation = new NavigationBootstrapData
+            Storefront = new StorefrontBootstrapData
             {
+                SiteTitle = $"{tenant.Name} Store",
+                MetaDescription = $"Welcome to {tenant.Name} online store",
+                FaviconUrl = "",
+                OpenGraphImageUrl = "",
                 HeaderMenu = new List<NavigationItem>
                 {
                     new NavigationItem { Label = "Home", Url = "/", OpensInNewTab = false },
@@ -116,27 +106,18 @@ public class StoreBootstrapService : IStoreBootstrapService
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    Slug = c.Name.ToLowerInvariant().Replace(' ', '-'), // Generate slug from name
+                    Slug = c.Name.ToLowerInvariant().Replace(' ', '-'),
                     DisplayOrder = c.DisplayOrder,
-                    Children = new List<CategoryItem>() // TODO: Load children recursively
-                }).ToList()
-            },
-            Homepage = BuildHomepageData(storefront),
-            Features = new FeaturesBootstrapData
-            {
-                WishlistEnabled = true, // TODO: Load from tenant settings
+                    Children = new List<CategoryItem>()
+                }).ToList(),
+                HomepageLayoutType = storefront.Pages.FirstOrDefault(p => p.Slug == "home")?.LayoutType ?? "default",
+                HomepageSections = BuildHomepageSections(storefront),
+                WishlistEnabled = true,
                 ReviewsEnabled = true,
                 BlogEnabled = false,
                 CouponsEnabled = true,
                 MultiCurrencyEnabled = false,
                 MultiLanguageEnabled = false
-            },
-            Seo = new SeoBootstrapData
-            {
-                SiteTitle = $"{tenant.Name} Store",
-                MetaDescription = $"Welcome to {tenant.Name} online store",
-                FaviconUrl = "", // TODO: Load from tenant settings
-                OpenGraphImageUrl = "" // TODO: Load from tenant settings
             }
         };
 
@@ -157,8 +138,7 @@ public class StoreBootstrapService : IStoreBootstrapService
 
         _logger.LogInformation("Fetching preview bootstrap data for tenant: {TenantId}", tenantId);
 
-        // Fetch tenant data - match by TenantId (string) not Id (GUID)
-        // The JWT contains the string TenantId, not the GUID primary key
+        // Fetch tenant data
         var tenant = await _context.Tenants
             .FirstOrDefaultAsync(t => t.TenantId == tenantId.ToString(), cancellationToken);
 
@@ -167,15 +147,9 @@ public class StoreBootstrapService : IStoreBootstrapService
             throw new InvalidOperationException($"Tenant not found: {tenantId}");
         }
 
-        // Fetch tenant theme (from unified Theme table - tenant or platform themes)
+        // Fetch tenant's active theme
         var theme = await _context.Themes
             .FirstOrDefaultAsync(t => (t.OwnerTenantId == tenantId || t.OwnerTenantId == null) && t.IsActive, cancellationToken);
-
-        // Fetch categories for navigation
-        var categories = await _context.Categories
-            .Where(c => c.TenantId == tenantId && c.ParentCategoryId == null)
-            .OrderBy(c => c.DisplayOrder)
-            .ToListAsync(cancellationToken);
 
         // Fetch ANY storefront (draft or published) for preview
         var storefront = await _context.Storefronts
@@ -189,27 +163,20 @@ public class StoreBootstrapService : IStoreBootstrapService
             throw new InvalidOperationException("Storefront not configured");
         }
 
-        // Build response with preview metadata
+        // Fetch categories for navigation
+        var categories = await _context.Categories
+            .Where(c => c.TenantId == tenantId && c.ParentCategoryId == null)
+            .OrderBy(c => c.DisplayOrder)
+            .ToListAsync(cancellationToken);
+
+        // Build response with only theme and storefront data
         var response = new StoreBootstrapResponse
         {
-            Tenant = new TenantBootstrapData
-            {
-                Id = tenant.Id,
-                Name = tenant.Name,
-                Slug = tenant.Subdomain,
-                LogoUrl = "", // TODO: Load from tenant settings
-                Status = tenant.IsActive ? "active" : "inactive",
-                Locale = _tenantContext.Locale,
-                Currency = _tenantContext.Currency,
-                Timezone = _tenantContext.Timezone
-            },
             Theme = theme != null ? new ThemeBootstrapData
             {
-                // NOTE: Using legacy color fields for backward compatibility
-                // These will be phased out in favor of parsing DefinitionJson
                 PrimaryColor = theme.PrimaryColor ?? "#000000",
                 SecondaryColor = theme.SecondaryColor ?? "#666666",
-                AccentColor = "#007bff", // Default
+                AccentColor = "#007bff",
                 BackgroundColor = "#ffffff",
                 TextColor = "#333333",
                 FontFamily = "Inter, sans-serif",
@@ -218,8 +185,12 @@ public class StoreBootstrapService : IStoreBootstrapService
                 ComponentOverrides = "{}",
                 LayoutOptions = "{}"
             } : null,
-            Navigation = new NavigationBootstrapData
+            Storefront = new StorefrontBootstrapData
             {
+                SiteTitle = $"{tenant.Name} Store (Preview)",
+                MetaDescription = $"Preview of {tenant.Name} online store",
+                FaviconUrl = "",
+                OpenGraphImageUrl = "",
                 HeaderMenu = new List<NavigationItem>
                 {
                     new NavigationItem { Label = "Home", Url = "/", OpensInNewTab = false },
@@ -239,24 +210,15 @@ public class StoreBootstrapService : IStoreBootstrapService
                     Slug = c.Name.ToLowerInvariant().Replace(' ', '-'),
                     DisplayOrder = c.DisplayOrder,
                     Children = new List<CategoryItem>()
-                }).ToList()
-            },
-            Homepage = BuildHomepageData(storefront),
-            Features = new FeaturesBootstrapData
-            {
+                }).ToList(),
+                HomepageLayoutType = storefront.Pages.FirstOrDefault(p => p.Slug == "home")?.LayoutType ?? "default",
+                HomepageSections = BuildHomepageSections(storefront),
                 WishlistEnabled = true,
                 ReviewsEnabled = true,
                 BlogEnabled = false,
                 CouponsEnabled = true,
                 MultiCurrencyEnabled = false,
                 MultiLanguageEnabled = false
-            },
-            Seo = new SeoBootstrapData
-            {
-                SiteTitle = $"{tenant.Name} Store (Preview)",
-                MetaDescription = $"Preview of {tenant.Name} online store",
-                FaviconUrl = "",
-                OpenGraphImageUrl = ""
             }
         };
 
@@ -265,35 +227,34 @@ public class StoreBootstrapService : IStoreBootstrapService
         return response;
     }
 
-    private HomepageBootstrapData? BuildHomepageData(Storefront? storefront)
+    /// <summary>
+    /// Builds homepage sections from storefront pages.
+    /// </summary>
+    private List<SectionData> BuildHomepageSections(Storefront? storefront)
     {
         if (storefront == null)
         {
-            return null;
+            return new List<SectionData>();
         }
 
         var homePage = storefront.Pages.FirstOrDefault(p => p.Slug == "home");
         if (homePage == null)
         {
-            return null;
+            return new List<SectionData>();
         }
 
-        return new HomepageBootstrapData
+        return homePage.Sections.OrderBy(s => s.DisplayOrder).Select(s => new SectionData
         {
-            LayoutType = homePage.LayoutType,
-            Sections = homePage.Sections.OrderBy(s => s.DisplayOrder).Select(s => new SectionData
+            Type = s.Name,
+            Name = s.Name,
+            DisplayOrder = s.DisplayOrder,
+            Config = new Dictionary<string, object>
             {
-                Type = s.Name, // Use Name as the section type
-                Name = s.Name,
-                DisplayOrder = s.DisplayOrder,
-                Config = new Dictionary<string, object>
-                {
-                    { "isVisible", s.IsVisible },
-                    { "cssClass", s.CssClass ?? string.Empty },
-                    { "backgroundColor", s.BackgroundColor ?? string.Empty },
-                    { "backgroundImageUrl", s.BackgroundImageUrl ?? string.Empty }
-                }
-            }).ToList()
-        };
+                { "isVisible", s.IsVisible },
+                { "cssClass", s.CssClass ?? string.Empty },
+                { "backgroundColor", s.BackgroundColor ?? string.Empty },
+                { "backgroundImageUrl", s.BackgroundImageUrl ?? string.Empty }
+            }
+        }).ToList();
     }
 }
