@@ -240,6 +240,15 @@ public class AuthController : ControllerBase
                 Message = "Refresh token is invalid or expired."
             });
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning("Token refresh failed - unauthorized: {Message}", ex.Message);
+            return Unauthorized(new ErrorResponse
+            {
+                Code = "INVALID_REFRESH_TOKEN",
+                Message = "Refresh token is invalid or expired."
+            });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Token refresh error");
