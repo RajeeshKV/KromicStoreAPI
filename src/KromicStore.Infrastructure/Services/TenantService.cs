@@ -197,7 +197,12 @@ namespace KromicStore.Infrastructure.Services
             if (tenantId == Guid.Empty)
                 throw new ArgumentException("Tenant ID cannot be empty", nameof(tenantId));
 
-            var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId, cancellationToken);
+            // Look up by TenantId string field
+            var tenants = await _unitOfWork.Tenants.FindAsync(
+                t => t.TenantId == tenantId.ToString(), 
+                cancellationToken);
+            
+            var tenant = tenants.FirstOrDefault();
             if (tenant == null)
                 return null;
 
@@ -228,14 +233,16 @@ namespace KromicStore.Infrastructure.Services
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            // Note: The tenantId parameter is a GUID from the URL but doesn't directly correspond to the Tenant.Id (primary key)
-            // We need to use the TenantProvider to get the actual string TenantId from JWT
-            // For now, we'll look up by the GUID Id that was passed in
-            var tenant = await _unitOfWork.Tenants.GetByIdAsync(tenantId, cancellationToken);
+            // The tenantId parameter is a UUID from the URL path
+            // We need to look up the tenant by TenantId string field (from JWT/context)
+            var tenants = await _unitOfWork.Tenants.FindAsync(
+                t => t.TenantId == tenantId.ToString(), 
+                cancellationToken);
             
+            var tenant = tenants.FirstOrDefault();
             if (tenant == null)
             {
-                _logger.LogWarning("Tenant not found by ID: {TenantId}", tenantId);
+                _logger.LogWarning("Tenant not found by TenantId: {TenantId}", tenantId);
                 throw new InvalidOperationException($"Tenant with ID {tenantId} not found.");
             }
 
@@ -244,7 +251,7 @@ namespace KromicStore.Infrastructure.Services
             {
                 // Check subdomain uniqueness (case-insensitive)
                 var existingTenant = (await _unitOfWork.Tenants.FindAsync(
-                    t => t.Subdomain.ToLower() == request.Subdomain.ToLower() && t.Id != tenantId, 
+                    t => t.Subdomain.ToLower() == request.Subdomain.ToLower() && t.TenantId != tenantId.ToString(), 
                     cancellationToken)).FirstOrDefault();
                 
                 if (existingTenant != null)
