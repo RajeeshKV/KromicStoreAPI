@@ -90,6 +90,12 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
             var fileContent = new StreamContent(fileStream);
             content.Add(fileContent, "file", fileName);
 
+            // Add API key for authenticated upload (not unsigned)
+            var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
+            if (string.IsNullOrEmpty(apiKey))
+                throw new InvalidOperationException("CLOUDINARY_API_KEY environment variable is not set");
+            content.Add(new StringContent(apiKey), "api_key");
+
             // Add folder (organizes by tenant and entity type)
             content.Add(new StringContent(folderPath), "folder");
 
