@@ -1,6 +1,9 @@
 using System.Text;
 using System.Text.Json;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using KromicStore.Infrastructure.Proxies.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace KromicStore.Infrastructure.Proxies;
@@ -8,37 +11,36 @@ namespace KromicStore.Infrastructure.Proxies;
 /// <summary>
 /// Proxy for Cloudinary media management service
 /// Provides file upload, deletion, URL generation with transformations, and bulk operations
-/// with caching and atomic database transaction rollback on failure
+/// using the official CloudinaryDotNet SDK for reliable API interaction
 /// All configuration is loaded from environment variables
 /// </summary>
 public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
 {
+    private readonly CloudinaryDotNet.Cloudinary _cloudinary;
     private readonly string _cloudName;
-    private readonly string _apiKey;
-    private readonly string _apiSecret;
-    private readonly HttpClient _httpClient;
-    private const string CloudinaryApiBaseUrl = "https://api.cloudinary.com/v1_1";
     private const int MaxFileSize = 100 * 1024 * 1024; // 100MB
     private const int UrlCacheTtlMinutes = 60;
 
     /// <summary>
     /// Initializes MediaProxy with Cloudinary API configuration from environment variables
+    /// Uses official CloudinaryDotNet SDK with API key and secret authentication
     /// </summary>
     public MediaProxy(
         ILogger<MediaProxy> logger,
-        ICircuitBreaker circuitBreaker,
-        HttpClient httpClient)
+        ICircuitBreaker circuitBreaker)
         : base(logger, circuitBreaker, timeoutSeconds: 60, maxRetries: 4)
     {
-        ArgumentNullException.ThrowIfNull(httpClient);
-
         _cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME")
             ?? throw new ArgumentException("CLOUDINARY_CLOUD_NAME environment variable not configured");
-        _apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY")
+        
+        var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY")
             ?? throw new ArgumentException("CLOUDINARY_API_KEY environment variable not configured");
-        _apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")
+        
+        var apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")
             ?? throw new ArgumentException("CLOUDINARY_API_SECRET environment variable not configured");
-        _httpClient = httpClient;
+
+        // Initialize CloudinaryDotNet SDK with credentials
+        _cloudinary = new CloudinaryDotNet.Cloudinary(new Account(_cloudName, apiKey, apiSecret));
     }
 
     /// <summary>
@@ -63,9 +65,54 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
     }
 
     /// <summary>
+    /// Parses a transformation string like "w_300,h_300,c_fill" into Transformation object
+    /// </summary>
+    private void ParseTransformationString(Transformation t, string transformStr)
+    {
+        var parts = transformStr.Split(',');
+        foreach (var part in parts)
+        {
+            if (string.IsNullOrWhiteSpace(part))
+                continue;
+
+            var kv = part.Split('_', 2);
+            if (kv.Length != 2)
+                continue;
+
+            var key = kv[0].ToLower();
+            var value = kv[1];
+
+            switch (key)
+            {
+                case "w":
+                    if (int.TryParse(value, out var width))
+                        t.Width(width);
+                    break;
+                case "h":
+                    if (int.TryParse(value, out var height))
+                        t.Height(height);
+                    break;
+                case "c":
+                    t.Crop(value); // fill, crop, scale, etc.
+                    break;
+                case "q":
+                    t.Quality(value); // auto, 80, etc.
+                    break;
+                case "f":
+                    t.FetchFormat(value); // auto, webp, etc.
+                    break;
+                case "r":
+                    if (int.TryParse(value, out var radius))
+                        t.Radius(radius);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
     /// Uploads a file to Cloudinary with configurable transformations
+    /// Uses the official CloudinaryDotNet SDK for reliable upload handling
     /// Applies eager transformations for common sizes (thumbnail, display)
-    /// Validates file size before upload (max 100MB)
     /// </summary>
     /// <param name="fileStream">File stream to upload</param>
     /// <param name="fileName">Original file name</param>
@@ -84,46 +131,49 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
 
         return await ExecuteAsync(async () =>
         {
-            var content = new MultipartFormDataContent();
+            // Create upload parameters using CloudinaryDotNet SDK
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(fileName, fileStream),
+                Folder = folderPath,
+                UseFilename = true,
+                UniqueFilename = true,
+                Overwrite = false
+            };
 
-            // Add file content
-            var fileContent = new StreamContent(fileStream);
-            content.Add(fileContent, "file", fileName);
-
-            // Add API key for authenticated upload (not unsigned)
-            var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
-            if (string.IsNullOrEmpty(apiKey))
-                throw new InvalidOperationException("CLOUDINARY_API_KEY environment variable is not set");
-            content.Add(new StringContent(apiKey), "api_key");
-
-            // Add folder (organizes by tenant and entity type)
-            content.Add(new StringContent(folderPath), "folder");
-
-            // Add public ID based on folder and filename (without extension)
+            // Set public ID: folder/filename-without-extension
             var fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
-            var publicId = $"{folderPath}/{fileNameWithoutExt}";
-            content.Add(new StringContent(publicId), "public_id");
+            uploadParams.PublicId = $"{folderPath}/{fileNameWithoutExt}";
 
-            // Quality auto-detection for image optimization
-            content.Add(new StringContent("auto"), "quality");
-
-            // Enable eager transformations for common sizes
-            content.Add(new StringContent("true"), "eager");
-
-            // Define eager transformations (thumbnail and display sizes)
-            // Format: w_300,h_300,c_fill / w_800,h_800,c_fill
-            var eagerTransforms = "w_300,h_300,c_fill/w_800,h_800,c_fill";
+            // Configure eager transformations for common sizes
+            var eagerTransforms = new List<Transformation>();
+            
             if (transformations?.EagerTransforms != null)
-                eagerTransforms = transformations.EagerTransforms;
+            {
+                // Parse custom eager transforms: "w_300,h_300,c_fill/w_800,h_800,c_fill"
+                var transforms = transformations.EagerTransforms.Split('/');
+                foreach (var transform in transforms)
+                {
+                    var t = new Transformation();
+                    ParseTransformationString(t, transform);
+                    eagerTransforms.Add(t);
+                }
+            }
+            else
+            {
+                // Default eager transforms: thumbnail (300x300) and display (800x800)
+                var thumb = new Transformation()
+                    .Width(300).Height(300).Crop("fill");
+                var display = new Transformation()
+                    .Width(800).Height(800).Crop("fill");
+                eagerTransforms.AddRange(new[] { thumb, display });
+            }
 
-            content.Add(new StringContent(eagerTransforms), "eager_transformation");
+            uploadParams.EagerTransforms = eagerTransforms;
 
-            // Optional: allow format auto-conversion
-            content.Add(new StringContent("true"), "format_auto");
-
-            // Optional: resource metadata
+            // Add metadata/context if provided
             if (!string.IsNullOrEmpty(transformations?.Metadata))
-                content.Add(new StringContent(transformations.Metadata), "context");
+                uploadParams.Context = new StringDictionary { { "metadata", transformations.Metadata } };
 
             Logger.LogInformation(
                 "Uploading file {FileName} to Cloudinary folder {FolderPath}, size: {FileSize} bytes",
@@ -131,29 +181,11 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
                 folderPath,
                 fileStream.Length);
 
-            var response = await _httpClient.PostAsync(
-                $"{CloudinaryApiBaseUrl}/{_cloudName}/image/upload",
-                content,
-                cancellationToken);
+            // Upload using CloudinaryDotNet SDK
+            var result = await _cloudinary.UploadAsync(uploadParams, cancellationToken);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                Logger.LogError(
-                    "Cloudinary upload failed with status {StatusCode}: {ErrorContent}",
-                    response.StatusCode,
-                    errorContent);
-                response.EnsureSuccessStatusCode();
-            }
-
-            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var result = JsonSerializer.Deserialize<CloudinaryUploadResponse>(jsonContent);
-
-            if (result == null)
-                throw new ProxyException("Failed to parse Cloudinary upload response");
-
-            if (!string.IsNullOrEmpty(result.Error))
-                throw new ProxyException($"Cloudinary upload error: {result.Error}");
+            if (result.Error != null)
+                throw new ProxyException($"Cloudinary upload error: {result.Error.Message}");
 
             Logger.LogInformation(
                 "File {FileName} uploaded successfully to Cloudinary. PublicId: {PublicId}, URL: {Url}, Size: {Width}x{Height}",
@@ -163,15 +195,25 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
                 result.Width,
                 result.Height);
 
-            return result;
+            // Map to response DTO
+            return new CloudinaryUploadResponse
+            {
+                PublicId = result.PublicId,
+                Url = result.Url?.ToString() ?? string.Empty,
+                SecureUrl = result.SecureUrl?.ToString() ?? string.Empty,
+                Width = result.Width,
+                Height = result.Height,
+                Format = result.Format,
+                ResourceType = result.ResourceType,
+                Error = result.Error?.Message
+            };
         },
         "UploadToCloudinary",
         cancellationToken);
     }
 
     /// <summary>
-    /// Deletes a file from Cloudinary and updates local database references atomically
-    /// Implements atomic deletion with database transaction rollback on failure
+    /// Deletes a file from Cloudinary using CloudinaryDotNet SDK
     /// </summary>
     /// <param name="publicId">Cloudinary public ID of the file to delete</param>
     /// <param name="resourceType">Resource type (image, video, raw), default: image</param>
@@ -190,61 +232,34 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
 
         return await ExecuteAsyncGeneric(async () =>
         {
-            var content = new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                { "public_id", publicId },
-                { "resource_type", resourceType }
-            });
-
-            // Generate timestamp and signature for authentication
-            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
-            var signatureData = $"public_id={publicId}&resource_type={resourceType}&timestamp={timestamp}{_apiSecret}";
-            var signature = ComputeSha1Hash(signatureData);
-
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post,
-                $"{CloudinaryApiBaseUrl}/{_cloudName}/image/destroy")
-            {
-                Content = new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    { "public_id", publicId },
-                    { "resource_type", resourceType },
-                    { "timestamp", timestamp },
-                    { "api_key", _apiKey },
-                    { "signature", signature }
-                })
-            };
-
             Logger.LogInformation(
                 "Deleting file {PublicId} from Cloudinary",
                 publicId);
 
-            var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
+            // Create deletion parameters
+            var deleteParams = new DeletionParams(publicId)
             {
-                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                Logger.LogError(
-                    "Cloudinary delete failed with status {StatusCode}: {ErrorContent}",
-                    response.StatusCode,
-                    errorContent);
-                response.EnsureSuccessStatusCode();
-            }
+                ResourceType = resourceType == "image" ? ResourceType.Image : 
+                               resourceType == "video" ? ResourceType.Video : ResourceType.Raw
+            };
 
-            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var result = JsonSerializer.Deserialize<CloudinaryDeleteResponse>(jsonContent);
+            // Delete using CloudinaryDotNet SDK
+            var result = await _cloudinary.DestroyAsync(deleteParams);
 
-            if (result == null)
-                throw new ProxyException("Failed to parse Cloudinary delete response");
-
-            if (!string.IsNullOrEmpty(result.Error))
-                Logger.LogWarning("Cloudinary delete warning: {Error}", result.Error);
+            if (result.Error != null)
+                Logger.LogWarning("Cloudinary delete warning: {Error}", result.Error.Message);
 
             Logger.LogInformation(
                 "File {PublicId} deleted from Cloudinary. Result: {Result}",
                 publicId,
                 result.Result);
 
-            return result;
+            // Map to response DTO
+            return new CloudinaryDeleteResponse
+            {
+                Result = result.Result,
+                Error = result.Error?.Message
+            };
         },
         "DeleteFromCloudinary",
         cancellationToken);
@@ -477,16 +492,6 @@ public class MediaProxy : ServiceProxy<CloudinaryUploadResponse>
             throw new ArgumentException(
                 "Folder path must follow format: {TenantId}/{EntityType}",
                 nameof(folderPath));
-    }
-
-    /// <summary>
-    /// Computes SHA1 hash for Cloudinary API authentication
-    /// </summary>
-    private string ComputeSha1Hash(string input)
-    {
-        using var sha1 = System.Security.Cryptography.SHA1.Create();
-        var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexString(hash).ToLower();
     }
 }
 

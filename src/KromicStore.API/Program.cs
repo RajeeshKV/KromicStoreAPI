@@ -313,8 +313,7 @@ builder.Services.AddScoped<OAuthProxy>(sp => new OAuthProxy(
 
 builder.Services.AddScoped<MediaProxy>(sp => new MediaProxy(
     sp.GetRequiredService<ILogger<MediaProxy>>(),
-    new CircuitBreaker(),
-    sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(MediaProxy))));
+    new CircuitBreaker()));
 
 builder.Services.AddScoped<NotificationProxy>(sp => new NotificationProxy(
     sp.GetRequiredService<ILogger<NotificationProxy>>(),
